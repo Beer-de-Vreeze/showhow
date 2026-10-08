@@ -67,7 +67,13 @@ Need docker 'Docker.DockerDesktop' # render --docker (reproducible renders); ask
 Step 'Kokoro voice and MusicGen music (Python venv)'
 $venv = "$HOME\.cache\hyperframes\kokoro-venv"
 $venvPython = "$venv\Scripts\python.exe"
-if (-not (Test-Path $venvPython)) { Run 'uv' @('venv', '--python', '3.12', $venv) }
+# Always x64: torch/kokoro wheels exist for it everywhere, and Windows on ARM runs it emulated.
+$x64Python = 'cpython-3.12-windows-x86_64-none'
+if ((Test-Path $venvPython) -and ((& $venvPython -c 'import platform; print(platform.machine())') -ne 'AMD64')) {
+  Write-Host 'redo venv is not x64'
+  Remove-Item -Recurse -Force $venv
+}
+if (-not (Test-Path $venvPython)) { Run 'uv' @('venv', '--python', $x64Python, $venv) }
 Run 'uv' @('pip', 'install', '--python', $venvPython, 'kokoro-onnx', 'soundfile', 'transformers', 'torch', 'numpy')
 [Environment]::SetEnvironmentVariable('HYPERFRAMES_PYTHON', $venvPython, 'User')
 $env:HYPERFRAMES_PYTHON = $venvPython
