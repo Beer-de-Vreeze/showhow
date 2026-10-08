@@ -10,7 +10,7 @@
 It reads your code, docs and git history, writes a script and storyboard, rebuilds the real UI, and renders an MP4 with voice-over, captions, music and sound effects.
 No screen recording, no live URL, no video editor.
 
-[![How showhow works: watch the 41-second video](docs/how-showhow-works.jpg)](https://github.com/Beer-de-Vreeze/showhow/raw/main/docs/how-showhow-works.mp4)
+[![How showhow works: watch the 41-second video](docs/how-showhow-works.jpg)](https://cdn.jsdelivr.net/gh/Beer-de-Vreeze/showhow@main/docs/how-showhow-works.mp4)
 
 *How showhow works, made with showhow (41s, click to play).*
 
