@@ -1,0 +1,11 @@
+{
+  "name": "showhow",
+  "owner": { "name": "Beer de Vreeze", "url": "https://github.com/Beer-de-Vreeze" },
+  "plugins": [
+    {
+      "name": "showhow",
+      "source": "./",
+      "description": "Turn a project, release or any process into a narrated how-to or what's-new video, built with Hyperframes."
+    }
+  ]
+}

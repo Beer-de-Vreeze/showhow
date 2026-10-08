@@ -1,0 +1,10 @@
+{
+  "name": "showhow",
+  "version": "1.0.0",
+  "description": "Turn a project, release or any process into a narrated how-to or what's-new video, built with Hyperframes.",
+  "author": { "name": "Beer de Vreeze", "url": "https://github.com/Beer-de-Vreeze" },
+  "homepage": "https://github.com/Beer-de-Vreeze/showhow",
+  "repository": "https://github.com/Beer-de-Vreeze/showhow",
+  "license": "MIT",
+  "keywords": ["video", "tutorial", "how-to", "release-notes", "hyperframes", "skill"]
+}
