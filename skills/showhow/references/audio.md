@@ -257,6 +257,7 @@ All tracks are "Happy Beats / Business Moves" by ende.app. Upbeat, clean, corpor
 
 The bundled tracks are by Sascha Ende ([ende.app](https://ende.app/en)), licensed [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 When a video uses one, add a line to `credits.txt`: `Music: "Happy Beats / Business Moves Vol. <n>" by Sascha Ende (ende.app), CC BY 4.0, https://creativecommons.org/licenses/by/4.0/`.
+Also credit it in the video itself, so the credit travels with the file: the short line `Music: Sascha Ende (ende.app), CC BY 4.0` on the outro (step-3-compose.md, Credit line).
 
 The bundled tracks are all upbeat business music: they suit the teaching styles, `playful`, `polished` and `app-store`.
 For `cinematic`, `deadpan`, `chaotic` or `yc-parody`, generate a bed with MusicGen (Generated bed, below) in the style's mood; if generation fails, use the closest bundled track and say so.

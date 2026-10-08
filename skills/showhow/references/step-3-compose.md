@@ -96,6 +96,7 @@ Scene summary:
 - Cursor: [system-like arrow], smooth 0.5-0.8s moves, visible click feedback
 - Captions: [band position], max 2 lines x ~42 chars, high contrast plate, never over the highlight
 - Title and outro cards: [text]
+- Credit line: [the short credits from `credits.txt`, or none]
 
 ## Audio
 - Narration: `assets/voice/scene-NN.wav`, track per scene, volume 1.0, start ~0.3s into each scene
@@ -199,6 +200,15 @@ A pooled element re-tweened with `tl.to` picks up whatever state the last seek l
 Dialogs, sheets and menus open **below the app header**, so the step counter stays visible in every frame.
 Dim only the content area under a sheet, not the header.
 
+## Credit line
+
+When `credits.txt` has lines (bundled music, CC BY images), show them in the video too, so the credit travels with the file wherever it is shared.
+- Short form, one line per source: `Music: Sascha Ende (ende.app), CC BY 4.0`, `Photo: <author>, <license>`. Two lines at most; join more with ` · `.
+- On the outro, from the moment it settles to the last frame, at least 2.5s.
+- Bottom edge inside the safe area, centered or aligned with the outro text, in the theme's secondary text color at about 2% of the frame height (20-22px at 1080p), no plate.
+- No caption on screen at the same time; end the last caption before the credit line appears.
+- It fades in with the outro and gets no motion or sound of its own.
+
 ---
 
 ## Audio asset preparation
@@ -241,6 +251,7 @@ Before moving to delivery, verify:
 - [ ] Every claim about what the product does, its names and numbers, appears in the project; fictional demo data is listed in the plan.
 - [ ] The step or change counter is present and consistent.
 - [ ] Captions are timed and never cover the highlighted target.
+- [ ] When `credits.txt` has lines, the outro shows the credit line for at least 2.5s with no caption over it.
 - [ ] No real personal data, hostnames, IDs or secrets appear anywhere.
 - [ ] Total duration is within the mode limits.
 - [ ] `hyperframes check` passes, or any blocker is documented for the user.
