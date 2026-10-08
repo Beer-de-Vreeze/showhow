@@ -15,7 +15,7 @@ https://github.com/user-attachments/assets/185ce832-b266-4fd0-8f93-ffb733b11a3a
 *How showhow works, made with showhow (45s).*
 
 ```text
-/showhow how to connect Confluence
+/showhow how to export a report
 /showhow what's new in 2.4.0
 /showhow --mode general how to share a calendar in Outlook
 ```
