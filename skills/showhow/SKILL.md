@@ -61,7 +61,7 @@ If it is still unclear, ask one question.
 | Option | Values | Default |
 |---|---|---|
 | `--mode` | `howto`, `update`, `general` | inferred |
-| `--style` (alias `--tone`, as in /brag) | preset or freeform description | `clean` for howto and general, `release` for update |
+| `--style` (alias `--tone`) | preset or freeform description | `clean` for howto and general, `release` for update |
 | `--format` | `landscape`, `vertical`, `square` | `landscape` |
 | `--duration` | seconds | set by the narration (see limits below) |
 | `--audience` | freeform, e.g. "new users", "admins" | inferred from the feature |
@@ -178,9 +178,9 @@ Full definitions and the rules every style follows: [references/tones.md](refere
 |---|---|---|
 | `clean` | Neutral, precise, product-docs | Most how-tos; admins and power users |
 | `friendly` | Warm, encouraging, first-time-user | Onboarding, non-technical audiences |
-| `release` | /brag energy around clear demos: punchy hook, beat-locked change cards, full SFX palette | Feature updates and release videos |
+| `release` | High energy around clear demos: punchy hook, beat-locked change cards, full SFX palette | Feature updates and release videos |
 | `quick-tip` | One task, as fast as it can still be followed | Single small tricks, shortcuts, 20-40s |
-| `playful`, `polished`, `yc-parody`, `chaotic`, `deadpan`, `cinematic`, `app-store` | The /brag tones, at teaching length | When a video should have more personality |
+| `playful`, `polished`, `yc-parody`, `chaotic`, `deadpan`, `cinematic`, `app-store` | The energy tones, at teaching length | When a video should have more personality |
 
 **Themes.** `--theme <preset>` dresses any video in one of the frame presets from `../hyperframes-creative/frame-presets/` (title cards, captions, step cards, counter); rebuilt product screens keep their own look.
 Default: the product's theme (howto, update), or a preset picked for the topic (general, see general.md).

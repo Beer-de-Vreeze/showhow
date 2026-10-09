@@ -77,9 +77,9 @@ Plan about 2.5 words per second.
 |---|---|---|
 | `clean` | Neutral, precise, product docs; little or no music | 6-12s per step; cuts between screens |
 | `friendly` | Warm, patient, explains why in half a sentence | 8-15s per step, max 5 steps; soft fades |
-| `release` | Like /brag around clear demos: punchy hook, change cards with "New"/"Fixed" tags, beat-locked reveals; "You can now..." | 10-20s per change; fast slides/zooms between changes, calm demos inside |
+| `release` | High energy around clear demos: punchy hook, change cards with "New"/"Fixed" tags, beat-locked reveals; "You can now..." | 10-20s per change; fast slides/zooms between changes, calm demos inside |
 | `quick-tip` | One trick, 1-3 actions | 5-8s per action; cuts, no recap |
-| `playful`, `polished`, `yc-parody`, `chaotic`, `deadpan`, `cinematic`, `app-store` | The /brag tones at teaching length: their hook, typography, transitions and outro; steps keep the script rules | Rhythm from `references/tones.md`, length from the narration and the shapes above; `chaotic` (1-2s), `playful` and `app-store` (2-3s) also cut inside narration lines for topic points and steps without a UI; scored like `release` |
+| `playful`, `polished`, `yc-parody`, `chaotic`, `deadpan`, `cinematic`, `app-store` | The energy tones at teaching length: their hook, typography, transitions and outro; steps keep the script rules | Rhythm from `references/tones.md`, length from the narration and the shapes above; `chaotic` (1-2s), `playful` and `app-store` (2-3s) also cut inside narration lines for topic points and steps without a UI; scored like `release` |
 
 All eleven work in every mode; `references/tones.md` has the full definitions and shared rules.
 
@@ -92,7 +92,7 @@ Transcribe the clips to catch mispronounced product names; fix by respelling the
 Music is a quiet bed ducked under the voice (about 0.1 under narration, 0.3 without), never cut off abruptly.
 Use a bundled track; for `cinematic`, `deadpan`, `chaotic` and `yc-parody`, or when the user asks, generate one with MusicGen in the style's mood (`references/audio.md`, Generated bed).
 How-tos: SFX mainly confirm visible actions (a soft click per click, soft ticks on typing, one accent on the result).
-Updates: score it like /brag around the demos (a soft reveal hit, card sounds, tag ticks, a payoff (bells allowed), music up and beat-locked on the hook, cards and outro), clicks and typing inside the demos.
+Updates: score it with high energy around the demos (a soft reveal hit, card sounds, tag ticks, a payoff (bells allowed), music up and beat-locked on the hook, cards and outro), clicks and typing inside the demos.
 The full sound effect library is fair game in both; never mask a narrated word.
 
 ## 3. Build, check, render

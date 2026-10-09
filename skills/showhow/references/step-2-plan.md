@@ -157,9 +157,9 @@ If a step's narration needs more than ~15s, the step is too big; split it.
 ## Audio planning
 
 - **Voice** leads. Everything else sits under it.
-- **Music**: a quiet bed (see `audio.md` for levels) or none for `clean` how-tos where it would distract. `release` and the energy styles plan music like /brag: louder on the hook, bridges and outro, ducked under the voice, with strong cues picked for the hook, change cards and outro.
+- **Music**: a quiet bed (see `audio.md` for levels) or none for `clean` how-tos where it would distract. `release` and the energy styles plan music louder on the hook, bridges and outro, ducked under the voice, with strong cues picked for the hook, change cards and outro.
 - **SFX (howto)**: mainly for visible actions - a soft click on each click, soft key ticks on typing, one gentle accent on the final result.
-- **SFX (update)**: plan them like /brag around the demos - a soft hit on the hook reveal, card sounds as each change card arrives, a tick for each "New"/"Fixed" tag, a payoff on the outro (a bell is fine). Inside the UI demo, clicks and typing only.
+- **SFX (update)**: plan them around the demos - a soft hit on the hook reveal, card sounds as each change card arrives, a tick for each "New"/"Fixed" tag, a payoff on the outro (a bell is fine). Inside the UI demo, clicks and typing only.
 - The full library is available (see `audio.md`); note the moment and intent in the plan, not the filename.
 
 Do not pick exact SFX filenames in the plan; Hyperframes picks them after the animation exists.

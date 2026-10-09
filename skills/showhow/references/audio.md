@@ -22,7 +22,7 @@ Levels with narration:
 ## Audio-reactive visuals
 
 Off by default for how-tos: nothing should move except what the viewer needs to look at.
-`release` style uses it like /brag does: a subtle audio-reactive treatment on the hook, the change cards and the outro, never on the UI while a step is being shown. This does not mean beat detection. It means Hyperframes can pre-extract per-frame audio data and use RMS/frequency-band energy to modulate existing visual elements.
+`release` style uses it as a subtle audio-reactive treatment on the hook, the change cards and the outro, never on the UI while a step is being shown. This does not mean beat detection. It means Hyperframes can pre-extract per-frame audio data and use RMS/frequency-band energy to modulate existing visual elements.
 
 Good uses:
 - Hero glow or sky warmth breathes slightly with RMS
@@ -182,7 +182,7 @@ Specific but great for swipe/deal/stack moments.
 |---|---|
 | `clean` | `ui/mouseclick1` or `ui/click*` on each simulated click, sparse `keyboard/` ticks on typing, one `interface/drop_001` on the final result. Nothing else. |
 | `friendly` | As `clean`, plus `interface/drop_*` when a new panel or dialog opens. |
-| `release` | Brag energy around the demos: a soft reveal hit on the hook (`impactSoft_medium_*`), card sounds (`casino/card-slide-*`, `card-place-*`, `card-fan-*`) as change cards arrive, `interface/drop_*` or `chips-stack-*` for "New"/"Fixed" tags and counters, a light payoff (`chips-collide-*` or `interface/drop_*`) on the outro. Inside a change's UI demo, back to `clean`: clicks and typing. |
+| `release` | High energy around the demos: a soft reveal hit on the hook (`impactSoft_medium_*`), card sounds (`casino/card-slide-*`, `card-place-*`, `card-fan-*`) as change cards arrive, `interface/drop_*` or `chips-stack-*` for "New"/"Fixed" tags and counters, a light payoff (`chips-collide-*` or `interface/drop_*`) on the outro. Inside a change's UI demo, back to `clean`: clicks and typing. |
 | `quick-tip` | Clicks and typing only. |
 | `playful` | 3-5 accents: `interface/drop_*` or `click_*` for pop-ins, `impactBell_heavy_000` for success, `impactSoft_medium_*` for reveals. |
 | `polished` | 2-3 very subtle accents: `interface/drop_001` for a gentle reveal. Nothing aggressive. |
@@ -346,7 +346,7 @@ Planning rules (apply to whichever source you have):
 - Use cue metadata to bias timing, not control it.
 - Major reveals may move toward strong cues within about `±0.15s`.
 - Smaller entrances may align to nearby beat points within about `±0.10s`.
-- `release` style uses cues like /brag: lock the hook, each change-card reveal and the outro to strong cues (±0.15s), and snap sequential tags/counters to the beat grid (±0.10s). How-tos use cues only for the title and outro, if at all.
+- `release` style uses cues: lock the hook, each change-card reveal and the outro to strong cues (±0.15s), and snap sequential tags/counters to the beat grid (±0.10s). How-tos use cues only for the title and outro, if at all.
 - Narrated demo scenes follow the voice, never the beat.
 - Ignore cues when they harm copy readability, scene pacing, or the product story.
 

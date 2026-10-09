@@ -6,11 +6,11 @@ Defaults: `clean` for howto and general, `release` for update.
 | Group | Styles |
 |---|---|
 | Teaching | `clean`, `friendly`, `release`, `quick-tip` |
-| Energy (from /brag) | `playful`, `polished`, `yc-parody`, `chaotic`, `deadpan`, `cinematic`, `app-store` |
+| Energy | `playful`, `polished`, `yc-parody`, `chaotic`, `deadpan`, `cinematic`, `app-store` |
 
 Rules for every style:
 
-- **Length follows the mode.** Scene lengths come from the narration and the mode limits in `SKILL.md`. The scene counts and seconds in the energy styles were written for 15-25s brag reels: their fast timings apply to the hook, title and change cards, transitions and the outro; every step still lasts its narration plus the 0.5s result hold. Styles with a **Beats** line carry their brag pacing through the middle too: one narration line spans several visual cuts, so the video keeps its normal length but never sits still.
+- **Length follows the mode.** Scene lengths come from the narration and the mode limits in `SKILL.md`. The scene counts and seconds in the energy styles were written for 15-25s launch reels: their fast timings apply to the hook, title and change cards, transitions and the outro; every step still lasts its narration plus the 0.5s result hold. Styles with a **Beats** line carry their fast pacing through the middle too: one narration line spans several visual cuts, so the video keeps its normal length but never sits still.
 - **The teaching laws win.** Exact labels, one action per step, the counter, verbatim captions, and every on-screen label settled for 1.5s, in every style. `chaotic` gets its speed from cuts and motion, never from text that flashes past.
 - **The style owns the frame, the steps stay clear.** Hook, title cards, transitions, typography and outro take the style fully; step narration keeps the /showhow script rules in the style's wording (`deadpan`: flat and short; `cinematic`: weightier verbs).
 - **Humor only from the topic**, never at the viewer's expense, and only in styles that call for it.
@@ -72,7 +72,7 @@ Click Add knowledge. Anything you add here, the assistant can use in every chat 
 
 **Default for:** `update`.
 
-**Feel:** A /brag video that also teaches. Punchy hook, energetic change cards, confident music and sound, then a calm, clear demo of each change on the real UI. The changes are the stars, not the adjectives.
+**Feel:** A launch video that also teaches. Punchy hook, energetic change cards, confident music and sound, then a calm, clear demo of each change on the real UI. The changes are the stars, not the adjectives.
 
 **Voice:** "You can now...", "We fixed...". One plain sentence on what is new, one on why it matters.
 ```
@@ -81,7 +81,7 @@ You can now restore an earlier version of any prompt. Open the prompt, click Ver
 
 **Typography:** Bold title card with the version number. A change counter ("2 of 3") and a short title per change.
 
-**Hook:** The first 2-3 seconds earn the rest, like /brag: the version number slams in, or the most visual new thing plays before the title. Then "What's new in [version]" with the change list as a preview.
+**Hook:** The first 2-3 seconds earn the rest: the version number slams in, or the most visual new thing plays before the title. Then "What's new in [version]" with the change list as a preview.
 
 **Pacing:** 10-20s per change. Fast, beat-locked transitions and card reveals between changes; normal step pacing inside the demo.
 
@@ -91,7 +91,7 @@ You can now restore an earlier version of any prompt. Open the prompt, click Ver
 
 **Music:** Upbeat bed (vol-1 or vol-9), up on the hook, bridges and outro, ducked under the voice. Beat-locked hook, cards and outro. Subtle audio-reactive glow on cards and title allowed.
 
-**SFX:** Brag-level accents around the demos (reveal hits, card slides, tag ticks, payoff, bells allowed), clicks and typing inside the demos. See `audio.md`.
+**SFX:** Full accents around the demos (reveal hits, card slides, tag ticks, payoff, bells allowed), clicks and typing inside the demos. See `audio.md`.
 
 **Transitions:** Slide, wipe or zoom between changes; camera moves within a change.
 

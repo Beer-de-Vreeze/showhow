@@ -177,7 +177,7 @@ It never signs in to a site or types a password for you.
 ## Credits
 
 - Built on [Hyperframes](https://github.com/heygen-com/hyperframes) by HeyGen.
-- Styles, audio pipeline and parts of the workflow come from [brag](https://github.com/latent-spaces/brag) by Shunit Haviv Hakimi (MIT).
+- Started as a fork of [brag](https://github.com/latent-spaces/brag) by Shunit Haviv Hakimi (MIT); the energy styles and parts of the audio pipeline still come from it.
 - Music: "Happy Beats / Business Moves" by Sascha Ende ([ende.app](https://ende.app/en)), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Videos that use a bundled track get the credit line in `credits.txt`.
 - Sound effects: [Kenney](https://kenney.nl) and [unicae_games](https://opengameart.org/content/keyboard-soundpack-1-typing-and-single-keystrokes), CC0.
 

@@ -116,7 +116,7 @@ Requirements:
 - Captions match the script verbatim and are timed to the voice.
 - Keep all text readable in the final render; UI text that the narration names must be legible at the chosen zoom.
 - Music never competes with the voice.
-- Update videos: hook, change cards, tags and outro get /brag-style motion, SFX accents and beat locks; the UI demos inside each change stay calm and follow the teaching sequence.
+- Update videos: hook, change cards, tags and outro get high-energy motion, SFX accents and beat locks; the UI demos inside each change stay calm and follow the teaching sequence.
 - Run `hyperframes check` before render.
 - Keep creation and rendering local. Remote or publishing workflows require a separate explicit user request.
 ```
@@ -229,7 +229,7 @@ Hyperframes copies any SFX it selects into the same `assets/` tree after choosin
 
 For how-tos, don't sync to the music: the voice sets the timing.
 
-For update videos (`release` style), sync the non-demo moments like /brag does.
+For update videos (`release` style), sync the non-demo moments to the music.
 Get a cue source (see `audio.md` -> "Beat and cue sources": bundled preset, `analyze_music_cues.py`, or `npx hyperframes beats`), then:
 
 - **Strong cues** (`strongCues`, or the highest-`strength` beats): lock the hook reveal, each change-card entrance and the outro within ±0.15s. Mark them `// beat-locked: 12.40s`.
