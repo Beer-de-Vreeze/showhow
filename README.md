@@ -81,6 +81,7 @@ On Windows, let the skill do it:
 ```
 
 This installs Node.js LTS, ffmpeg, Python 3.12, uv, Docker Desktop, whisper-cpp, a Python venv for Kokoro voices and MusicGen music, and the Hyperframes browser.
+It also tries to install [earshot](https://github.com/Leonxlnx/earshot) for an optional audio check of the finished video; if that fails, showhow works without it.
 Restart your agent app afterwards so it picks up the new `PATH` and `HYPERFRAMES_PYTHON`.
 
 On macOS and Linux, install these yourself:
@@ -92,6 +93,7 @@ On macOS and Linux, install these yourself:
 | Python 3.12 + [uv](https://docs.astral.sh/uv/) | Helper scripts |
 | A venv with `kokoro-onnx soundfile transformers torch numpy`, exported as `HYPERFRAMES_PYTHON` | Voice-over and generated music |
 | [whisper.cpp](https://github.com/ggml-org/whisper.cpp) (`whisper-cli` on `PATH`) | Caption timing |
+| Optional: [earshot](https://github.com/Leonxlnx/earshot) v0.2.0 (`earshot` on `PATH`) | Listening to the finished video |
 
 Then run `npx hyperframes browser ensure`.
 

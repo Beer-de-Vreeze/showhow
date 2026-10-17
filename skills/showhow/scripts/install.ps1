@@ -97,6 +97,15 @@ if (Has 'whisper-cli') {
   Write-Host "ok   whisper-cli ($bin)"
 }
 
+Step 'earshot (optional audio QA, CPU torch, ~1.4 GB of models)'
+# Optional: a failure here warns instead of stopping the install; /showhow skips audio QA without it.
+& uv tool install 'earshot[mcp] @ git+https://github.com/Leonxlnx/earshot@v0.2.0' --python 3.12 `
+  --index https://download.pytorch.org/whl/cpu --index-strategy unsafe-best-match
+if ($LASTEXITCODE -eq 0) { Add-KnownPaths; & earshot doctor --load }
+if ($LASTEXITCODE -eq 0) { Write-Host 'ok   earshot' } else {
+  Write-Host 'note earshot did not install; /showhow works without it and skips audio QA.' -ForegroundColor Yellow
+}
+
 Step 'Hyperframes skills'
 if ((Test-Path "$HOME\.claude\skills\hyperframes-core") -or (Test-Path "$HOME\.agents\skills\hyperframes-core")) {
   Write-Host 'ok   already installed'

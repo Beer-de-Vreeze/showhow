@@ -95,6 +95,29 @@ Add `--crop x,y,w,h` (video pixels) to zoom every frame on one region when a rin
 A ring that shows in snapshots but not in the mp4 is a renderer problem: bake it into the still (step-3-compose.md, "Screenshot videos") rather than trying render flags.
 `HF_STATIC_DEDUP=0` disables static-frame dedup if you suspect frozen frames.
 
+### Listen to the mp4 (optional, earshot)
+
+Skip this section without comment when `earshot` is not on `PATH` or `--no-sfx` and `--no-music` are both set.
+[earshot](https://github.com/Leonxlnx/earshot) measures the rendered soundtrack; it does not judge taste.
+Pass every SFX `data-start` from `index.html` as cues, so it reports where each one actually sounds:
+
+```bash
+earshot measure ../<video-name>.mp4
+earshot timeline ../<video-name>.mp4 --cues "2.6,2.8,9.4" --out ../work/timeline.json
+```
+
+For a 45 s video, `measure` takes about 20 s and `timeline` about 50 s (most of it model loading), so run both once per render, not per fix.
+Trust its measurements (loudness, true peak, onsets, offsets, gaps); treat its event tags (`VOICE?`, `WHOOSH?`) as hints.
+Read the summary line `Sync to N cues: X% have an onset within 40 ms` and every row marked `<- CHECK`, then fix and re-render when:
+- **True peak is above -1 dBTP**: lower the loudest SFX accent or the outro music.
+- **A click or accent cue reads `near` at +40 ms or later**: the file has leading silence; trim it (`ffmpeg -af silenceremove=start_periods=1`) or move the clip earlier.
+  Typing ticks overlap each other and the voice, so ignore `near` inside a typing run.
+- **A click or accent cue reads `no onset ... <- CHECK`**: the clip is missing, muted or masked; check its `src` and volume.
+- **A `GAP` mid-video that the plan didn't ask for**, or the loudest section sitting under narration (ducking didn't apply).
+
+Skip `earshot critique`: it scores against launch films, which a voice-led how-to is not meant to match.
+Add one line to the delivery report: integrated LUFS, true peak, and the share of cues within 40 ms.
+
 ## Pick the poster frame
 
 The poster is the still shown before the video plays.
