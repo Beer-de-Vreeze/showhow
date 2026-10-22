@@ -97,6 +97,19 @@ The family SFX (casino, impact, interface, ui) live directly under `sfx/`; the i
 
 Read `sfx-analysis.md` before choosing files - it lists safer picks by use case and flags files with high-frequency risk. Prefer low/medium HF risk for polished and repeated moments; reserve high-risk files for tiny isolated accents or chaotic tones.
 
+### When nothing here fits
+
+For a sound the library lacks (a camera shutter, a door, a train horn in a general video), fetch one with media-use: CC0 or CC BY from Openverse, else its bundled offline set.
+
+```bash
+npx hyperframes media-use resolve --type sfx --intent "<concrete sound, e.g. camera shutter>" --project <output-dir>/composition --json
+```
+
+Copy the printed `path` into `assets/sfx/fetched/` and reference it from there.
+Name the sound concretely (`glass shatter`, not `dramatic sound`), and listen before using it: these files have no HF-risk rating, so keep them to single accents at volume 0.35 or lower, never repeated UI sounds.
+Write its `provenance.source_url` and `provenance.license` into `work/sources.md`; when the license is `by`, add `provenance.credit` to `credits.txt` as well.
+If resolve finds nothing, skip the sound; never block the video on it.
+
 ### `keyboard/` - Individual keypress sounds
 
 32 CC0 single keypress WAV files (`keypress-001.wav` through `keypress-032.wav`). Each is a distinct key sound at a slightly different velocity and character. Use these for per-character typing animations - randomize across the set so repeated characters don't sound robotic.

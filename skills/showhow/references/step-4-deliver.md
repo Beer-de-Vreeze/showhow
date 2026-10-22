@@ -277,7 +277,7 @@ After this step, `<output-dir>/` should contain:
   chapters.txt
   showhow.md
   share-copy.md
-  credits.txt          (only when a bundled music track is used or an image license asks for attribution)
+  credits.txt          (only when a bundled music track is used or an image or sound license asks for attribution)
 ```
 
 ## Tell the user
