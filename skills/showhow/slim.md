@@ -90,7 +90,7 @@ Generate it per scene with `npx hyperframes tts "<text>" --voice <voice> --outpu
 Transcribe the clips to catch mispronounced product names; fix by respelling the TTS input only.
 `npx hyperframes transcribe` overwrites `transcript.json` on every run: copy it to `work/tx/words-NN.json` after each clip.
 Music is a quiet bed ducked under the voice (about 0.1 under narration, 0.3 without), never cut off abruptly.
-Use a bundled track; for `cinematic`, `deadpan`, `chaotic` and `yc-parody`, or when the user asks, generate one with MusicGen in the style's mood (`references/audio.md`, Generated bed).
+Use a bundled track; when none fits the style's mood, and always for `cinematic`, `deadpan`, `chaotic` and `yc-parody`, an Incompetech track (CC BY); generate one with MusicGen only when the user asks or Incompetech has nothing (`references/audio.md`, Music).
 How-tos: SFX mainly confirm visible actions (a soft click per click, soft ticks on typing, one accent on the result).
 Updates: score it with high energy around the demos (a soft reveal hit, card sounds, tag ticks, a payoff (bells allowed), music up and beat-locked on the hook, cards and outro), clicks and typing inside the demos.
 The full sound effect library is fair game in both; never mask a narrated word.
@@ -126,6 +126,6 @@ Keep creation and rendering local; publishing or uploading needs a separate expl
 - **`captions.srt`:** the script phrases with their absolute times, even when captions are burned in.
 - **`chapters.txt`:** `00:00 Title` style, one line per step or change, from the real scene start times.
 - **`showhow.md`:** the written companion. howto: "How to [task]", prerequisites, numbered steps with labels in bold, result, tip. update: "What's new in [version]", one short section per change with where to find it, then how to get it.
-- **`credits.txt`:** only when a bundled music track is used (line format in `references/audio.md`) or an image license asks for attribution (title, author, license, URL, one line each). The same credits also appear in the video as the outro credit line (`references/step-3-compose.md`).
+- **`credits.txt`:** only when a bundled or Incompetech music track is used (line format in `references/audio.md`) or an image or sound license asks for attribution (title, author, license, URL, one line each). The same credits also appear in the video as the outro credit line (`references/step-3-compose.md`).
 - **`share-copy.md`:** a business post to send with the video ("Post", 3-8 short lines: what it is, what it helps the reader do in their work, the prerequisites or 2-4 changes, one concrete action) and a "One-liner". If `~/VOICE.md` exists, write as its owner following its business sections; otherwise direct and plain. Audience's language, no hype or invented claims, no em dashes, `[link]` for anything you don't have (`references/step-4-deliver.md`).
 - **Tell the user** where everything is, the share post ready to paste, the goal line and the step or change list (so they can spot a wrong step without watching), the fictional substitutions, any label you couldn't verify in the code, and offer to redo a scene, change the voice, or make a vertical or quick-tip cut.

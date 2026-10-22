@@ -202,7 +202,7 @@ Dim only the content area under a sheet, not the header.
 
 ## Credit line
 
-When `credits.txt` has lines (bundled music, CC BY images or sounds), show them in the video too, so the credit travels with the file wherever it is shared.
+When `credits.txt` has lines (bundled or Incompetech music, CC BY images or sounds), show them in the video too, so the credit travels with the file wherever it is shared.
 - Short form, one line per source: `Music: Sascha Ende (ende.app), CC BY 4.0`, `Photo: <author>, <license>`. Two lines at most; join more with ` · `.
 - On the outro, from the moment it settles to the last frame, at least 2.5s.
 - Bottom edge inside the safe area, centered or aligned with the outro text, in the theme's secondary text color at about 2% of the frame height (20-22px at 1080p), no plate.

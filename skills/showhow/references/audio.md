@@ -273,11 +273,31 @@ When a video uses one, add a line to `credits.txt`: `Music: "Happy Beats / Busin
 Also credit it in the video itself, so the credit travels with the file: the short line `Music: Sascha Ende (ende.app), CC BY 4.0` on the outro (step-3-compose.md, Credit line).
 
 The bundled tracks are all upbeat business music: they suit the teaching styles, `playful`, `polished` and `app-store`.
-For `cinematic`, `deadpan`, `chaotic` or `yc-parody`, generate a bed with MusicGen (Generated bed, below) in the style's mood; if generation fails, use the closest bundled track and say so.
+When none fits the style's mood, and always for `cinematic`, `deadpan`, `chaotic` or `yc-parody`, pick an Incompetech track (below).
+Generate a bed with MusicGen (Generated bed, below) only when the user asks for generated or original music, or when Incompetech is unreachable or has nothing that fits; if that fails too, use the closest bundled track and say so.
+
+### Incompetech (Kevin MacLeod)
+
+About 1,400 recorded tracks by Kevin MacLeod, free under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), each tagged with feels such as Bright, Uplifting, Bouncy, Calming, Relaxed, Humorous, Mysterious, Epic, Somber, Driving and Intense.
+From `<output-dir>/composition`, list tracks with one feel that run at least the video's length in seconds:
+
+```bash
+curl -s --compressed https://incompetech.com/music/royalty-free/pieces.json -o ../work/incompetech.json
+node -e 'const p=require("../work/incompetech.json"),[feel,min]=process.argv.slice(1);for(const x of p){const [h,m,s]=x.length.split(":").map(Number);if((x.feel||"").includes(feel)&&h*3600+m*60+s>=+min)console.log(x.filename,x.length,x.bpm,"|",x.feel,"|",x.instruments)}' Uplifting 60 | head -20
+```
+
+Prefer instrumental beds without lead vocals or a busy melody under narration, then download the pick (filenames have spaces, so encode them) and listen before using it:
+
+```bash
+f="Angel Share.mp3"; curl -s -f -o "assets/music/$f" "https://incompetech.com/music/royalty-free/mp3-royaltyfree/${f// /%20}"
+```
+
+Add to `credits.txt`: `Music: "<title>" by Kevin MacLeod (incompetech.com), CC BY 4.0, https://creativecommons.org/licenses/by/4.0/`, and put `Music: Kevin MacLeod (incompetech.com), CC BY 4.0` on the outro credit line.
+Then run the beat analysis on it like a custom track.
 
 ### Generated bed (MusicGen)
 
-Use it for `cinematic`, `deadpan`, `chaotic` and `yc-parody`, and whenever the user asks for generated or original music; every other style uses a bundled track. It runs locally with the media-use audio engine (MusicGen via `HYPERFRAMES_PYTHON`; nothing leaves the machine).
+Use it when the user asks for generated or original music, or when Incompetech is unreachable or has nothing that fits; otherwise use a bundled or Incompetech track. It runs locally with the media-use audio engine (MusicGen via `HYPERFRAMES_PYTHON`; nothing leaves the machine).
 From `<output-dir>/composition`:
 
 ```bash

@@ -172,6 +172,7 @@ Every video follows the same teaching rules: say the outcome first, highlight a 
 ## Privacy
 
 Rendering, voice-over, captions and generated music run on your machine.
+Two things can be downloaded per video: a music track from [Incompetech](https://incompetech.com) when no bundled track fits, and a sound effect from Openverse (through Hyperframes media-use) when the bundled library has none; only the search terms are sent.
 Only `general` mode and outside steps go online, to read official docs and capture public pages.
 showhow skips `.env` files, keys and credentials while it reads your project, and replaces names, emails, hostnames, IDs and tokens with fictional values before anything reaches the video.
 It never signs in to a site or types a password for you.
@@ -181,9 +182,11 @@ It never signs in to a site or types a password for you.
 - Built on [Hyperframes](https://github.com/heygen-com/hyperframes) by HeyGen.
 - Started as a fork of [brag](https://github.com/latent-spaces/brag) by Shunit Haviv Hakimi (MIT); the energy styles and parts of the audio pipeline still come from it.
 - Music: "Happy Beats / Business Moves" by Sascha Ende ([ende.app](https://ende.app/en)), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Videos that use a bundled track get the credit line in `credits.txt`.
+- Extra music: Kevin MacLeod ([incompetech.com](https://incompetech.com)), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), downloaded per video when no bundled track fits.
+- Every CC BY track, sound effect or photo a video uses gets a line in `credits.txt` and on the outro.
 - Sound effects: [Kenney](https://kenney.nl) and [unicae_games](https://opengameart.org/content/keyboard-soundpack-1-typing-and-single-keystrokes), CC0.
 
 ## License
 
 [MIT](LICENSE) for the skill.
-Bundled music and sound effects keep their own licenses, listed above.
+Bundled and downloaded music, sound effects and photos keep their own licenses, listed above.
