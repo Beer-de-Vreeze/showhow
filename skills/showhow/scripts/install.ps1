@@ -107,7 +107,8 @@ if ($LASTEXITCODE -eq 0) { Write-Host 'ok   earshot' } else {
 }
 
 Step 'Hyperframes skills'
-if ((Test-Path "$HOME\.claude\skills\hyperframes-core") -or (Test-Path "$HOME\.agents\skills\hyperframes-core")) {
+# frame-presets only exists in the current single-skill layout, so an old install gets refreshed.
+if ((Test-Path "$HOME\.claude\skills\hyperframes\assets\frame-presets") -or (Test-Path "$HOME\.agents\skills\hyperframes\assets\frame-presets")) {
   Write-Host 'ok   already installed'
 } else {
   Run 'npx.cmd' @('-y', 'skills', 'add', 'heygen-com/hyperframes', '-g', '-a', 'claude-code', '-s', '*', '-y')

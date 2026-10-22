@@ -14,7 +14,7 @@ On Windows, run `powershell -NoProfile -ExecutionPolicy Bypass -File <skill-dir>
 Tell the user to restart their agent app afterwards: a running session keeps the PATH and environment it started with, so `ffmpeg`, `whisper-cli` and `HYPERFRAMES_PYTHON` stay invisible to it.
 Elsewhere, say the installer is Windows-only, list what it installs (Node.js LTS, ffmpeg, Python 3.12, uv, Docker Desktop (for `render --docker`), a Python venv for Kokoro voice and MusicGen music (`kokoro-onnx soundfile transformers torch numpy`, pointed to by `HYPERFRAMES_PYTHON`, with the `facebook/musicgen-small` model pre-downloaded), whisper-cpp (`whisper-cli` on PATH), optionally earshot for audio QA (`uv tool install` from `github.com/Leonxlnx/earshot` v0.2.0 with CPU torch, models pre-downloaded by `earshot doctor --load`), the Hyperframes skills via `npx skills add heygen-com/hyperframes`, then `npx hyperframes browser ensure`), and stop.
 
-**Options.** If the input is exactly `options`, don't make a video: list the 11 styles (one line each, from the Style system tables), the themes (the folder names in `../hyperframes-creative/frame-presets/` next to this skill), and the voices (`npx hyperframes tts --list`), each with the flag that picks it, and stop.
+**Options.** If the input is exactly `options`, don't make a video: list the 11 styles (one line each, from the Style system tables), the themes (the folder names in `../hyperframes/assets/frame-presets/` next to this skill), and the voices (`npx hyperframes tts --list`), each with the flag that picks it, and stop.
 
 **Model check.** If you are Claude Opus 5.5 and the invocation doesn't ask for the full workflow (`--full`, "use the full showhow"), switch to showhow-slim: read `<skill-dir>/slim.md` (bundled here) and follow it for the rest of this run instead of this file.
 Pass along the user's input and pass any other options (`--mode`, `--no-voice`, ...) as plain-language direction.
@@ -142,8 +142,8 @@ The duration fits the mode limits.
 
 ## Step 3: Hand off to Hyperframes
 
-**Read:** The Hyperframes domain skills - `hyperframes-core`, `hyperframes-animation`, `hyperframes-creative`, `hyperframes-keyframes`, `hyperframes-cli`, and `media-use` for TTS and captions.
-/showhow is its own workflow: do not enter the `hyperframes` entry-point intent interview or route into its generic promo, explainer or launch-video workflows.
+**Read:** The Hyperframes skills - `hyperframes` (the contract, `references/motion.md`, `references/format.md`, `references/captions.md`), `hyperframes-cli`, and `media-use` for TTS and captions.
+/showhow is its own workflow: skip the `hyperframes` storylines, `SPEC.md` and type files; the /showhow plan replaces them.
 **Read:** [references/step-3-compose.md](references/step-3-compose.md)
 **Read:** [references/audio.md](references/audio.md)
 
@@ -182,7 +182,7 @@ Full definitions and the rules every style follows: [references/tones.md](refere
 | `quick-tip` | One task, as fast as it can still be followed | Single small tricks, shortcuts, 20-40s |
 | `playful`, `polished`, `yc-parody`, `chaotic`, `deadpan`, `cinematic`, `app-store` | The energy tones, at teaching length | When a video should have more personality |
 
-**Themes.** `--theme <preset>` dresses any video in one of the frame presets from `../hyperframes-creative/frame-presets/` (title cards, captions, step cards, counter); rebuilt product screens keep their own look.
+**Themes.** `--theme <preset>` dresses any video in one of the frame presets from `../hyperframes/assets/frame-presets/` (title cards, captions, step cards, counter); rebuilt product screens keep their own look.
 Default: the product's theme (howto, update), or a preset picked for the topic (general, see general.md).
 
 **Voices.** `--voice <id>` picks any Kokoro voice from `npx hyperframes tts --list` (default `af_heart`); use it for every scene.

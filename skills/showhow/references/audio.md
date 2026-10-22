@@ -22,12 +22,12 @@ Levels with narration:
 ## Audio-reactive visuals
 
 Off by default for how-tos: nothing should move except what the viewer needs to look at.
-`release` style uses it as a subtle audio-reactive treatment on the hook, the change cards and the outro, never on the UI while a step is being shown. This does not mean beat detection. It means Hyperframes can pre-extract per-frame audio data and use RMS/frequency-band energy to modulate existing visual elements.
+`release` style uses it as a subtle audio-reactive treatment on the hook, the change cards and the outro, never on the UI while a step is being shown. Hyperframes no longer ships an audio-data extractor, so drive it from the music's beat times: a soft swell on each strong beat, eased back before the next.
 
 Good uses:
-- Hero glow or sky warmth breathes slightly with RMS
-- Product card, phone, or metric panel gains subtle presence on bass
-- Title, quote, or logo gets a soft treble glow on stronger musical moments
+- Hero glow or sky warmth breathes slightly on the beat
+- Product card, phone, or metric panel gains subtle presence on strong beats
+- Title, quote, or logo gets a soft glow on the strongest musical moments
 - Background depth, vignette, or light layer gently swells with the bed
 
 Avoid:
@@ -38,10 +38,10 @@ Avoid:
 
 Suggested plan notation:
 ```
-Audio-reactive treatment: subtle; use music RMS/bass to make the hero glow and product card presence breathe. No waveform/equalizer visuals.
+Audio-reactive treatment: subtle; the hero glow and product card presence breathe on strong beats. No waveform/equalizer visuals.
 ```
 
-Hyperframes implementation note: follow the audio-reactive guidance owned by the `hyperframes-creative` skill (let that skill locate its own files), to extract per-frame audio data and sample it synchronously inside the composition timeline. The extraction helper ships with that skill - `/showhow` does not provide it, so don't hardcode a path to it.
+Hyperframes implementation note: run `npx hyperframes beats --json` in the composition (`hyperframes-cli` `references/beats.md`) and key each swell into the timeline at a beat time minus the scene's `data-start`. On calm music with low `bpmConfidence`, use only the hook, card and outro swells.
 
 ---
 
@@ -350,7 +350,7 @@ Planning rules (apply to whichever source you have):
 - Narrated demo scenes follow the voice, never the beat.
 - Ignore cues when they harm copy readability, scene pacing, or the product story.
 
-Cue/beat metadata is not a substitute for Hyperframes audio-reactive visuals: it helps with beat/swell timing; audio-reactive data helps subtle visual properties breathe with the music.
+Cue/beat metadata sets the timing; the audio-reactive swells above are what make subtle visual properties breathe with the music.
 
 If no source is available (no preset, no Python deps, and `hyperframes beats` not run), write:
 

@@ -18,7 +18,7 @@ Usage: `/showhow-slim [task or release] [options]`. Options (flags or plain lang
 | `--style <name>` (alias `--tone`; 11 styles, see Styles) or freeform | `clean` for howto and general, `release` for update |
 | `--format landscape\|vertical\|square` | landscape (1920x1080; vertical 1080x1920, square 1080x1080), 30fps |
 | `--audience <who>` | inferred |
-| `--theme <frame preset>` (`../hyperframes-creative/frame-presets/`) | product theme; general: picked per topic |
+| `--theme <frame preset>` (`../hyperframes/assets/frame-presets/`) | product theme; general: picked per topic |
 | `--voice <Kokoro id>` (`npx hyperframes tts --list`) | `af_heart` |
 | `--no-voice`, `--no-captions`, `--no-music`, `--no-sfx` | all on |
 

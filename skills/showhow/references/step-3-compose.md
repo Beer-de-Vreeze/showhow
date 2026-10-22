@@ -105,8 +105,8 @@ Scene summary:
 - Audio files: copy everything used into `<output-dir>/composition/assets/`
 
 ## Hyperframes Instructions
-Load `hyperframes-core`, `hyperframes-animation`, `hyperframes-creative`, `hyperframes-keyframes`, `hyperframes-cli`, and `media-use` for voice and captions.
-/showhow is its own workflow: do not enter the `hyperframes` entry-point intent interview and do not route into its promo, explainer or launch-video workflows.
+Load `hyperframes` (the contract, `references/motion.md`, `references/format.md`, `references/captions.md`), `hyperframes-cli`, and `media-use` for voice and captions.
+/showhow is its own workflow: skip the `hyperframes` storylines, `SPEC.md` and type files; this brief replaces them.
 Prefer native Hyperframes conventions over anything in `/showhow`.
 
 Requirements:

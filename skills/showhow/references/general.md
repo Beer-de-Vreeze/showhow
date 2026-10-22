@@ -43,10 +43,10 @@ Also screenshot the doc images you relied on, for reference.
 
 ## Step 2: Plan the story
 
-Use the howto shape from SKILL.md; it is the `how-to-process` structure from faceless-explainer: 3-6 steps on one consistent stage, one move each, the object being acted on carried from step to step.
+Use the howto shape from SKILL.md; it follows the `hyperframes` explainer shape (one concrete example worked through): 3-6 steps on one consistent stage, one move each, the object being acted on carried from step to step.
 For a concept the viewer needs before the steps make sense, add one short "why" scene after the outcome, no more.
 A topic without steps ("how a train gets its power") uses the points shape: Outcome (what you'll understand) -> 3-6 points, one idea and one visual each, with a "2 of 5" counter -> Recap. Same length limits as howto.
-Read `../faceless-explainer/references/story-design.md` (sibling skill) for hook and clarity techniques; keep /showhow's script rules where they differ.
+Read `../hyperframes/references/types/explainer.md` (sibling skill) for hook and clarity techniques; keep /showhow's script rules where they differ.
 
 In `showhow-plan.md`, tag each step `code` or `outside`, and add "Sources" (what each outside step is based on, with URLs) and "Unverified" sections.
 In `general` mode, also set **Mode** to `general` and replace "Visual identity (from the project)" with "Visual identity (preset)".
@@ -77,13 +77,12 @@ State carries forward across the switch: the token copied on the outside page is
 Mixed videos keep the product's theme; rebuilt third-party screens keep their own look inside it.
 In `general` mode there is no product theme to read. Unless the user names brand colors or fonts:
 
-1. Browse `../hyperframes-creative/frame-presets/` and pick the preset that fits the topic and audience (`clean` -> calm and neutral, `friendly` -> warm).
-2. In `<output-dir>/composition/`, write `capture/extracted/tokens.json` as `{"title": "<title>", "description": "<goal line>", "colors": [], "fonts": []}` (add the user's brand colors or fonts if given).
-3. Run `node ../faceless-explainer/scripts/build-frame.mjs --preset <name> --hyperframes .` from `<output-dir>/composition/` (with the sibling skill's real path). It writes `frame.md`; take the video's `:root` colors and fonts from it.
+1. Browse `../hyperframes/assets/frame-presets/` (the table in `../hyperframes/references/look.md`) and pick the preset that fits the topic and audience (`blue-professional` -> calm and neutral, `capsule` -> warm).
+2. Copy its `FRAME.md` to `<output-dir>/composition/frame.md` and take the video's `:root` colors and fonts from it; add the user's brand colors or fonts if given. Fonts that aren't bundled need `@font-face` files.
 
-If faceless-explainer isn't installed, choose a calm palette and an embeddable font pairing from `/hyperframes-creative` `references/typography.md` and write it into the plan.
+If the presets aren't installed, choose a calm palette and an embeddable font pairing per `../hyperframes/references/look.md` and write it into the plan.
 
 ## Borrow, don't hand off
 
-Borrow faceless-explainer's story structure, presets and catalog search, and general-video's habits (catalog search before building a look, scope stays exactly what was asked).
-Don't run their pipelines, scripts other than `build-frame.mjs`, or directory layouts: /showhow keeps its own steps, gates and output folder.
+Borrow the `hyperframes` explainer shape, presets and registry search, and its habits (catalog search before building a look, scope stays exactly what was asked).
+Don't run its storylines, `SPEC.md` or directory layouts: /showhow keeps its own steps, gates and output folder.
