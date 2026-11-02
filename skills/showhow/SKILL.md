@@ -160,7 +160,7 @@ Hyperframes owns the composition structure, animation mechanics, runtime choices
 
 **Read:** [references/step-4-deliver.md](references/step-4-deliver.md)
 
-Render `<output-dir>/<video-name>.mp4`, bake a poster into frame 0 (`<video-name>.jpg`), and write `captions.srt`, `chapters.txt`, `showhow.md` (the written companion) and `share-copy.md` (a business post to share the video, in the user's voice when `~/VOICE.md` exists).
+Render `<output-dir>/<video-name>.mp4`, bake a poster into frame 0 (`<video-name>.jpg`), and write `captions.srt`, `chapters.txt`, `showhow.md` (the written companion) and `share-copy.md` (a business post to share the video, in the user's voice when `~/VOICE.md` exists, plus a title and description for the upload page).
 
 **Gate:** `<video-name>.mp4`, `<video-name>.jpg`, `captions.srt`, `chapters.txt`, `showhow.md` and `share-copy.md` exist.
 
