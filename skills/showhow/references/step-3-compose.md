@@ -143,33 +143,37 @@ If the app needs a backend you cannot run, rebuild the screens from its componen
 ## Place highlights and the cursor by element, not by pixels
 
 Hand-computed ring and cursor coordinates drift once fonts load and layouts settle, and put rings in the wrong place.
-Give every highlight or click target an `id`, and measure it once inside `document.fonts.ready`, while building the timeline:
+Use the showhow kit for rings, the cursor, click ripples and the step counter: it measures each target by element and writes every tween as a `fromTo`.
 
-```js
-// Layout box of an element in root pixels, ignoring transforms. Call after fonts load.
-function R(sel, p = 6) {
-  let el = document.querySelector(sel);
-  const w = el.offsetWidth, h = el.offsetHeight;
-  let x = 0, y = 0;
-  while (el && el.id !== "root") { x += el.offsetLeft; y += el.offsetTop; el = el.offsetParent; }
-  return [x - p, y - p, w + 2 * p, h + 2 * p];
-}
-// dy: known growth of content above the target by time t (it isn't laid out yet when you measure).
-const ring = (t, sel, d, p = 6, dy = 0) => {
-  const [x, y, width, height] = R(sel, p);
-  tl.set("#ring", { x, y: y + dy, width, height, opacity: 0 }, t);
-  tl.to("#ring", { opacity: 1, duration: 0.25 }, t);
-  tl.to("#ring", { opacity: 0, duration: 0.15 }, t + d);
-};
-// Cursor tip onto the centre of the target (adjust the offset to your arrow's tip).
-const move = (t, sel, d = 0.6, dy = 0) => {
-  const r = R(sel, 0);
-  tl.to("#cur", { x: r[0] + r[2] / 2 - 8, y: r[1] + r[3] / 2 - 5 + dy, duration: d, ease: "power2.inOut" }, t);
-};
+1. Copy `<skill-dir>/assets/kit/showhow-kit.js` and `showhow-kit.css` into `composition/assets/kit/`.
+2. In each scene that uses it, inside `<template>`: `<link rel="stylesheet" href="assets/kit/showhow-kit.css" />` and `<script src="assets/kit/showhow-kit.js"></script>` before the scene's own script.
+3. Set `--sh-accent` in the theme `:root` block (optional: `--sh-ring-width`, `--sh-ring-radius`, `--sh-ripple-size`, `--sh-ripple-fill`).
+4. Write every kit element in the HTML with a stable id, as direct children of the scene root (or of a `#world` camera layer at 0,0): one `.sh-ring` per ring, one `.sh-ripple` per click, one `.sh-cursor`, and a `.sh-counter` with one span per step. Give rings, ripples and the cursor `data-layout-ignore`.
+5. Call the kit after fonts load, then register the timeline:
+
+```html
+<div class="sh-counter"><span id="sh-count-1">Step 1 of 2</span><span id="sh-count-2">Step 2 of 2</span></div>
+<div id="ring-01" class="sh-ring" data-layout-ignore></div>
+<div id="ripple-01" class="sh-ripple" data-layout-ignore></div>
+<svg id="sh-cursor" class="sh-cursor" data-layout-ignore>…</svg>
+<script>
+  const tl = gsap.timeline({ paused: true });
+  document.fonts.ready.then(() => {
+    const kit = showhowKit(tl, { root: "#root", cursorStart: [960, 900] });
+    kit.move(0.8, "#btn-new");                    // cursor tip to the target centre; call moves in time order
+    kit.ring(1.4, "#btn-new", "#ring-01", 1.4);   // { pad, dy, fadeIn, fadeOut }
+    kit.ripple(1.5, "#btn-new", "#ripple-01");    // { dy, duration }
+    kit.counter(3.0, 2);                          // span 1 out, span 2 in
+    window.__timelines["<scene-id>"] = tl;
+  });
+</script>
 ```
 
-- Measure eagerly, once, inside `document.fonts.ready` before building the timeline - never with function values (`x: () => ...`). `check` flags those as `gsap_function_value_hazard`: each render worker initializes tweens on its own and gets a different answer once layout animates.
-- Measurement sees the layout at build time. When something above a target grows later (a file chip row opening above the text box), add the known growth as a `y` offset for targets below it.
+`kit.R(sel, pad)` returns a target's `[x, y, w, h]` in root pixels for anything else you place by element; `move` takes `{ tip: [x, y] }` for the arrow tip's offset.
+`scripts/fixtures/kit-demo/` is a working example; render it after changing the kit or upgrading HyperFrames.
+
+- Measure eagerly, once, inside `document.fonts.ready` before building the timeline - never with function values (`x: () => ...`). `check` flags those as `gsap_function_value_hazard`: each render worker initializes tweens on its own and gets a different answer once layout animates. The kit measures when you call it, so call it there.
+- Measurement sees the layout at build time. When something above a target grows later (a file chip row opening above the text box), pass the known growth as `dy` for targets below it.
 - Put every element's starting state (hidden, offset, unselected) in CSS. A `tl.set` at time 0 does not show on frame 0.
 - `offsetLeft`/`offsetTop` ignore GSAP transforms, so an element's entrance slide doesn't shift its ring. If the element's container is still moving at ring time, ring after it settles.
 - Give targets explicit sizes where their box would otherwise stretch (a full-width row when you mean the button in it).
@@ -188,7 +192,7 @@ Image swaps always rendered, so draw the ring into a copy of the still and fade 
    Fade it in at `in` over `in_dur` and out at `out` over `out_dur`.
 4. Copy the ringed stills (`src` in each entry, relative to the spec) into the composition's assets.
 
-Cursor and click ripples can stay DOM elements; give each ripple its own element.
+Cursor and click ripples can stay DOM elements from the kit; give each ripple its own element.
 
 ## Every tween is a `fromTo`
 

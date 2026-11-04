@@ -1,0 +1,86 @@
+<template>
+  <link rel="stylesheet" href="assets/kit/showhow-kit.css" />
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      background: #f4f6fa;
+      font-family: Inter, sans-serif;
+      --sh-accent: #e5484d;
+    }
+    #demo-header {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 96px;
+      background: #1f2937;
+      color: #f9fafb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 120px;
+      box-sizing: border-box;
+      font-size: 34px;
+      font-weight: 700;
+    }
+    #demo-header .sh-counter {
+      font-size: 30px;
+      font-weight: 400;
+    }
+    .demo-btn {
+      position: absolute;
+      width: 360px;
+      height: 96px;
+      border-radius: 12px;
+      background: #2563eb;
+      color: #fff;
+      font-size: 36px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #btn-new {
+      left: 360px;
+      top: 480px;
+    }
+    #btn-export {
+      left: 1200px;
+      top: 640px;
+    }
+  </style>
+  <div id="root" data-composition-id="demo" data-width="1920" data-height="1080">
+    <div id="demo-header">
+      <span id="demo-title">Reports</span>
+      <div class="sh-counter">
+        <span id="sh-count-1">Step 1 of 2</span>
+        <span id="sh-count-2">Step 2 of 2</span>
+      </div>
+    </div>
+    <div id="btn-new" class="demo-btn">New report</div>
+    <div id="btn-export" class="demo-btn">Export</div>
+    <div id="ring-01" class="sh-ring" data-layout-ignore></div>
+    <div id="ring-02" class="sh-ring" data-layout-ignore></div>
+    <div id="ripple-01" class="sh-ripple" data-layout-ignore></div>
+    <div id="ripple-02" class="sh-ripple" data-layout-ignore></div>
+    <svg id="sh-cursor" class="sh-cursor" width="36" height="44" viewBox="0 0 36 44" data-layout-ignore>
+      <path d="M2 2 L2 38 L12 28 L19 42 L25 39 L18 26 L32 26 Z" fill="#111827" stroke="#fff" stroke-width="2.5" />
+    </svg>
+  </div>
+  <script src="assets/kit/showhow-kit.js"></script>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    document.fonts.ready.then(() => {
+      const kit = showhowKit(tl, { root: "#root", cursorStart: [960, 900] });
+      kit.move(0.8, "#btn-new");
+      kit.ring(1.4, "#btn-new", "#ring-01", 1.4);
+      kit.ripple(1.5, "#btn-new", "#ripple-01");
+      kit.counter(3.0, 2);
+      kit.move(3.2, "#btn-export");
+      kit.ring(3.8, "#btn-export", "#ring-02", 1.6);
+      kit.ripple(3.9, "#btn-export", "#ripple-02");
+      window.__timelines["demo"] = tl;
+    });
+  </script>
+</template>
