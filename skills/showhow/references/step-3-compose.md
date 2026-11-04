@@ -147,8 +147,11 @@ Use the showhow kit for rings, the cursor, click ripples and the step counter: i
 
 1. Copy `<skill-dir>/assets/kit/showhow-kit.js` and `showhow-kit.css` into `composition/assets/kit/`.
 2. In each scene that uses it, inside `<template>`: `<link rel="stylesheet" href="assets/kit/showhow-kit.css" />` and `<script src="assets/kit/showhow-kit.js"></script>` before the scene's own script.
-3. Set `--sh-accent` in the theme `:root` block (optional: `--sh-ring-width`, `--sh-ring-radius`, `--sh-ripple-size`, `--sh-ripple-fill`).
-4. Write every kit element in the HTML with a stable id, as direct children of the scene root (or of a `#world` camera layer at 0,0): one `.sh-ring` per ring, one `.sh-ripple` per click, one `.sh-cursor`, and a `.sh-counter` with one span per step. Give rings, ripples and the cursor `data-layout-ignore`.
+3. Set `--sh-accent` in the theme `:root` block to the same accent you pass to `bake_highlights.py` as `color` (optional: `--sh-ring-width`, `--sh-ring-radius`, `--sh-ripple-size`, `--sh-ripple-fill`).
+4. Write every kit element in the HTML with a stable id, as direct children of the scene root (or of a `#world` camera layer at 0,0): one `.sh-ring` per ring, one `.sh-ripple` per click, one `.sh-cursor`, and a `.sh-counter` with one span per step.
+   Give rings, ripples and the cursor `data-layout-ignore`.
+   Ids must be unique across the whole video, so with more than one scene prefix them per scene (`#s2-cursor`, `#s2-count-1`) and pass `cursor: "#s2-cursor"` and `countPrefix: "#s2-count-"` to `showhowKit`.
+   Keep the counter inside the 80% title-safe box.
 5. Call the kit after fonts load, then register the timeline:
 
 ```html
@@ -159,6 +162,7 @@ Use the showhow kit for rings, the cursor, click ripples and the step counter: i
 <script>
   const tl = gsap.timeline({ paused: true });
   document.fonts.ready.then(() => {
+    // defaults: cursor "#sh-cursor", countPrefix "#sh-count-", cursorStart [0, 0]
     const kit = showhowKit(tl, { root: "#root", cursorStart: [960, 900] });
     kit.move(0.8, "#btn-new");                    // cursor tip to the target centre; call moves in time order
     kit.ring(1.4, "#btn-new", "#ring-01", 1.4);   // { pad, dy, fadeIn, fadeOut }
@@ -172,7 +176,8 @@ Use the showhow kit for rings, the cursor, click ripples and the step counter: i
 `kit.R(sel, pad)` returns a target's `[x, y, w, h]` in root pixels for anything else you place by element; `move` takes `{ tip: [x, y] }` for the arrow tip's offset.
 `scripts/fixtures/kit-demo/` is a working example; render it after changing the kit or upgrading HyperFrames.
 
-- Measure eagerly, once, inside `document.fonts.ready` before building the timeline - never with function values (`x: () => ...`). `check` flags those as `gsap_function_value_hazard`: each render worker initializes tweens on its own and gets a different answer once layout animates. The kit measures when you call it, so call it there.
+- Measure eagerly, once, inside `document.fonts.ready` before building the timeline - never with function values (`x: () => ...`). `check` flags those as `gsap_function_value_hazard`: each render worker initializes tweens on its own and gets a different answer once layout animates.
+  The kit measures when you call it, so call it there.
 - Measurement sees the layout at build time. When something above a target grows later (a file chip row opening above the text box), pass the known growth as `dy` for targets below it.
 - Put every element's starting state (hidden, offset, unselected) in CSS. A `tl.set` at time 0 does not show on frame 0.
 - `offsetLeft`/`offsetTop` ignore GSAP transforms, so an element's entrance slide doesn't shift its ring. If the element's container is still moving at ring time, ring after it settles.

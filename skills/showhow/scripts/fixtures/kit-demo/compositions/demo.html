@@ -24,9 +24,16 @@
       font-size: 34px;
       font-weight: 700;
     }
-    #demo-header .sh-counter {
+    /* Video chrome, not app UI: inside the 80% title-safe box (top 108px, right edge 1728px). */
+    #demo-counter {
+      position: absolute;
+      right: 220px;
+      top: 130px;
+      padding: 8px 18px;
+      border-radius: 999px;
+      background: #1f2937;
+      color: #f9fafb;
       font-size: 30px;
-      font-weight: 400;
     }
     .demo-btn {
       position: absolute;
@@ -53,10 +60,10 @@
   <div id="root" data-composition-id="demo" data-width="1920" data-height="1080">
     <div id="demo-header">
       <span id="demo-title">Reports</span>
-      <div class="sh-counter">
-        <span id="sh-count-1">Step 1 of 2</span>
-        <span id="sh-count-2">Step 2 of 2</span>
-      </div>
+    </div>
+    <div id="demo-counter" class="sh-counter">
+      <span id="sh-count-1">Step 1 of 2</span>
+      <span id="sh-count-2">Step 2 of 2</span>
     </div>
     <div id="btn-new" class="demo-btn">New report</div>
     <div id="btn-export" class="demo-btn">Export</div>

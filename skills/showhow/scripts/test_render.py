@@ -6,7 +6,7 @@ import os
 import tempfile
 from pathlib import Path
 
-from render import render
+from render import parse, render
 
 
 class FakeRunner:
@@ -58,6 +58,12 @@ def main() -> None:
         assert len(empty.calls) == 2, empty.calls
         out.unlink()
 
+        # nonzero_exit_with_mp4_is_failure: a crashed render can leave a truncated file.
+        crashed = FakeRunner(out, 4, 512, "Error: worker exited\n")
+        expect_exit(lambda: render(comp, out, work, run=crashed), "worker exited")
+        assert len(crashed.calls) == 2, crashed.calls
+        out.unlink()
+
         # stale_mp4_is_not_success: an mp4 from an earlier run doesn't prove this render.
         out.write_bytes(b"old" * 100)
         os.utime(out, (0, 0))
@@ -76,6 +82,12 @@ def main() -> None:
         extra = FakeRunner(out, 0, 1024)
         render(comp, out, work, extra=["--docker", "--quality", "high"], run=extra)
         assert extra.calls[0][-3:] == ["--docker", "--quality", "high"], extra.calls[0]
+
+    # cli_args: --work after the positionals and flags after -- both parse.
+    a, extra = parse(["comp", "out.mp4", "--work", "w", "--no-fast-capture", "--", "--docker"])
+    assert (a.work, a.no_fast_capture, extra) == (Path("w"), True, ["--docker"]), (a, extra)
+    a, extra = parse(["comp", "out.mp4", "--work", "w"])
+    assert extra == [] and not a.no_fast_capture, (a, extra)
 
     print("render self-check passed")
 

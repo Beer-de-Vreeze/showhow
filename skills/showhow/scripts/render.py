@@ -2,8 +2,9 @@
 """Render a HyperFrames composition to mp4, loudly.
 
 A `--quiet` render can exit non-zero with no message and no file, so this never
-passes it: it logs everything to <work>/render.log, succeeds only when the mp4
-exists and is not empty, retries once, and prints the log tail on failure.
+passes it: it logs everything to <work>/render.log, succeeds only when the CLI
+exits 0 and this run wrote a non-empty mp4, retries once, and prints the log
+tail on failure.
 
   uv run --project <skill-dir>/scripts <skill-dir>/scripts/render.py \
       <output-dir>/composition <output-dir>/<video-name>.mp4 --work <output-dir>/work [--no-fast-capture] [-- --docker --quality high]
@@ -17,6 +18,7 @@ from __future__ import annotations
 import argparse
 import shutil
 import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Callable
@@ -26,7 +28,15 @@ TAIL_LINES = 20
 
 
 def run_cli(cmd: list[str]) -> tuple[int, str]:
-    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace", check=False)
+    result = subprocess.run(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+    )
     return result.returncode, result.stdout
 
 
@@ -48,14 +58,14 @@ def render(
     log = work / "render.log"
     log.write_text("", encoding="utf-8")
     # An mp4 left from an earlier run proves nothing; only one written after this start counts.
+    # The 1s slack covers filesystems that store modification times in whole seconds.
     started = time.time() - 1
     for attempt in range(1, ATTEMPTS + 1):
         code, text = run(cmd)
         with log.open("a", encoding="utf-8") as f:
             f.write(f"=== attempt {attempt}: {' '.join(cmd)}\n{text}\n=== exit {code}\n")
-        if output.is_file() and output.stat().st_size > 0 and output.stat().st_mtime >= started:
-            if code != 0:
-                print(f"render exited {code} but wrote {output}; check {log}")
+        # A non-zero exit fails even with a file: a crashed render can leave a truncated mp4.
+        if code == 0 and output.is_file() and output.stat().st_size > 0 and output.stat().st_mtime >= started:
             print(f"rendered {output} ({output.stat().st_size} bytes), log: {log}")
             return
 
@@ -63,15 +73,19 @@ def render(
     raise SystemExit(f"render failed: no mp4 at {output} after {ATTEMPTS} attempts (check free disk space). Log tail ({log}):\n{tail}")
 
 
-def main() -> None:
+def parse(argv: list[str]) -> tuple[argparse.Namespace, list[str]]:
+    # Everything after "--" goes to hyperframes render; argparse.REMAINDER would also swallow --work.
+    ours, extra = (argv[: argv.index("--")], argv[argv.index("--") + 1 :]) if "--" in argv else (argv, [])
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("composition", type=Path)
     p.add_argument("output", type=Path)
     p.add_argument("--work", type=Path, required=True, help="folder for render.log")
     p.add_argument("--no-fast-capture", action="store_true")
-    p.add_argument("extra", nargs=argparse.REMAINDER, help="after --: flags passed to hyperframes render, e.g. -- --docker --quality high")
-    a = p.parse_args()
-    extra = a.extra[1:] if a.extra[:1] == ["--"] else a.extra
+    return p.parse_args(ours), extra
+
+
+def main() -> None:
+    a, extra = parse(sys.argv[1:])
     render(a.composition, a.output, a.work, fast_capture=not a.no_fast_capture, extra=extra)
 
 
