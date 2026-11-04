@@ -66,24 +66,23 @@ If the user approves or asks to render:
 
 ## Render
 
-Render without `--quiet` and keep the log: with `--quiet` a failed render can exit non-zero (seen: exit 4) with no error message and no file.
+Render with the wrapper, never `npx hyperframes render` directly: with `--quiet` a failed render can exit non-zero (seen: exit 4) with no error message and no file.
+The wrapper never passes `--quiet`, logs everything to `work/render.log`, succeeds only when this run wrote a non-empty mp4, retries once, and prints the log tail when it fails twice.
 
 ```bash
-npx hyperframes render --output ../<video-name>.mp4 > ../work/render.log 2>&1; echo "exit $?"
-ls -la ../<video-name>.mp4 && tail -5 ../work/render.log
+uv run --project <skill-dir>/scripts <skill-dir>/scripts/render.py <output-dir>/composition <output-dir>/<video-name>.mp4 --work <output-dir>/work
 ```
 
-The render is done only when the mp4 exists and the log ends with "Render complete".
-When `docker info` succeeds, prefer `--docker` for the final render: the same pinned Chrome and ffmpeg every time, so a re-render matches the one that was checked.
+Flags after `--` go to `hyperframes render` unchanged.
+When `docker info` succeeds, prefer `-- --docker` for the final render: the same pinned Chrome and ffmpeg every time, so a re-render matches the one that was checked.
 The first Docker render builds the image (a few minutes); if it fails, render locally and say so.
-If not: read `work/render.log` for the cause, check free disk space (`df -h .`; a render needs a few GB of scratch), and retry once.
-If it fails twice, report the log lines to the user instead of retrying further.
+If the wrapper fails twice, check free disk space (`df -h .`; a render needs a few GB of scratch) and report its log tail to the user instead of retrying further.
 
-Add `--quality draft` for faster iteration, `--quality high` for final delivery.
+Add `-- --quality draft` for faster iteration, `-- --quality high` for final delivery.
 
 **Layout changes need screenshot capture.** Fast `drawelement` capture (the render log's summary says which capture ran) drops tweens of layout properties such as `height` and `width`: a row that grows to show an attached file stays closed, a slider fill stays put.
 Snapshots use screenshot capture, so they look right while the mp4 is wrong.
-When the composition tweens `height`, `width`, `top`/`left` or padding, render with `--experimental-fast-capture=false`.
+When the composition tweens `height`, `width`, `top`/`left` or padding, add `--no-fast-capture` to the wrapper (it passes `--experimental-fast-capture=false`).
 
 **Check the mp4, not only the snapshots.** Pull frames from the rendered file at every ring and result moment into one sheet and look at it:
 
