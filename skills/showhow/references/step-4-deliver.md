@@ -239,7 +239,7 @@ Otherwise: direct, plain, the point first, no corporate warmth.
 Either way: plain hyphens, no em dashes, no "excited to announce", "seamless", "game-changer" or invented claims; only say what the video shows.
 Write in the audience's language (ask if unclear); labels stay as they appear on screen.
 
-Two versions, in this order:
+Four parts, in this order: two messages to send, then the title and description for where the video is uploaded (Stream, SharePoint, YouTube, an intranet page).
 
 ```markdown
 ## Post
@@ -254,9 +254,27 @@ Two versions, in this order:
 ## One-liner
 
 [One sentence for a caption, a chat or an email subject.]
+
+## Title
+
+[howto: "How to [task] in [product]". update: "What's new in [product] [version]". Under 70 characters.]
+
+## Description
+
+[What the viewer can do after watching, in one or two lines.]
+
+[howto: prerequisites. update: nothing.]
+
+Chapters
+[chapters.txt, copied as is]
+
+[The one limit worth knowing, if any.]
+
+[The credits.txt lines, when it exists.]
 ```
 
 Keep the post to 3-8 short lines.
+The description uses no emojis and no `[link]`; it sits next to the video.
 Emojis only in a channel or client announcement: at most one by the opening line and one per list item; none in colleague chat or email.
 Leave out dates, links and names you don't have; write `[link]` for the user to fill in.
 
