@@ -98,6 +98,7 @@ The full sound effect library is fair game in both; never mask a narrated word.
 ## 3. Build, check, render
 
 Build it with whatever works on this machine.
+Before building any chrome (title, cards, counters, caption plate, outro), read `references/design-floor.md` and follow it; it covers the chrome only, rebuilt screens keep the product's look, and a `--theme` preset overrides its Refuse list.
 If you draw the video in a browser, make every frame a pure function of time and wait for fonts and images to load before capturing each one.
 
 - **Place rings and the cursor by element, never by hand-computed pixels.** Give each target an `id` and measure its box once inside `document.fonts.ready`, before building the timeline (`offsetLeft`/`offsetTop` walked up to the root). No function-valued tweens: `check` flags them, and render workers disagree once layout animates. Add a known offset for targets below something that grows later. Use the showhow kit (`assets/kit/`, copied into `composition/assets/kit/`): `showhowKit(tl)` gives `ring`, `move`, `ripple`, `counter` and `R`, measures by element and writes `fromTo` tweens on elements you write in the HTML; setup in `references/step-3-compose.md`, a working example in `scripts/fixtures/kit-demo/`.
@@ -111,6 +112,7 @@ If you draw the video in a browser, make every frame a pure function of time and
 Before the full render, look at stills from every step at the highlight and at the result, and from mid-transition.
 A plain crossfade between two busy layouts makes a muddy double exposure; stagger it (old content out, then new content in) or dip through the background.
 Check: the ring sits exactly on the control the voice names (zoom in on a crop when unsure), its label is legible, captions, the cursor or a dragged item don't cover it, the counter is right and uncovered, no text is clipped inside a fixed-width pill or callout (`check` misses these), no bullet or icon shows before its text, a typing caret follows the typed text, contrast is fine.
+On the title, one step and the outro, also check the design floor: none of its Refuse items in the chrome (no eyebrow label over the title, no blurred blob or full-frame gradient background), concentric radii, and one shared motion for every card.
 SFX clips get `data-duration` equal to the file's real length, or `check` warns about the slot.
 Then render `<video-name>.mp4` with the wrapper, never `npx hyperframes render` directly: a quiet render can exit non-zero with no message and no file.
 `uv run --project <skill-dir>/scripts <skill-dir>/scripts/render.py composition <video-name>.mp4 --work work [-- --docker]` logs to `work/render.log`, succeeds only when this run wrote a non-empty mp4, retries once, and prints the log tail; if it still fails, check free disk space and report the tail.

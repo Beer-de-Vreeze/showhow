@@ -82,6 +82,9 @@ Write `<output-dir>/composition-brief.md` before creating the composition.
 - Colors: [exact values]
 - Fonts: [display / body]
 - Theme: [theme id] - background [value], accent [value]
+- LOOK: [ground value] ground, [ink value] text, [accent value] accent; [display face + weight] / [body face + weight]; [where the ground comes from: product surface, preset, subject's world]
+- BANNED: [the design-floor.md Refuse items this video must avoid, minus any the theme preset uses on purpose, plus anything the product's look rules out]
+- Design floor: `references/design-floor.md` applies to the chrome only; rebuilt screens keep the product's look
 
 ## Storyboard
 Use the storyboard in `<output-dir>/showhow-plan.md` as the contract.
@@ -260,6 +263,7 @@ Before moving to delivery, verify:
 - [ ] Every claim about what the product does, its names and numbers, appears in the project; fictional demo data is listed in the plan.
 - [ ] The step or change counter is present and consistent.
 - [ ] Captions are timed and never cover the highlighted target.
+- [ ] Design floor, judged on snapshots of the title, one step and the outro: no BANNED item in the chrome, contrast passes on every card and caption plate, nested radii are concentric, and every card enters and leaves with the same motion.
 - [ ] When `credits.txt` has lines, the outro shows the credit line for at least 2.5s with no caption over it.
 - [ ] No real personal data, hostnames, IDs or secrets appear anywhere.
 - [ ] Total duration is within the mode limits.

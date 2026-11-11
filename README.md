@@ -139,6 +139,7 @@ Eleven styles, in every mode:
 Presets are a starting point: add freeform direction such as `--style "calm, like Apple support videos"`.
 
 - **Themes:** `--theme <preset>` applies a Hyperframes frame preset to title cards, captions and step cards. Rebuilt product screens keep their own look.
+- **Design floor:** every video's own chrome (title, cards, counters, captions, outro) follows a short design floor adapted from impeccable: contrast and type checks, and a list of generated-design defaults it refuses, such as eyebrow labels and blurred gradient backgrounds. A `--theme` preset keeps its deliberate choices.
 - **Voices:** `--voice <id>` picks any [Kokoro](https://github.com/thewh1teagle/kokoro-onnx) voice. The default is `af_heart`. Narration is English.
 
 ## Options
@@ -181,6 +182,7 @@ It never signs in to a site or types a password for you.
 
 - Built on [Hyperframes](https://github.com/heygen-com/hyperframes) by HeyGen.
 - Started as a fork of [brag](https://github.com/latent-spaces/brag) by Shunit Haviv Hakimi (MIT); the energy styles and parts of the audio pipeline still come from it.
+- The design floor for the video's chrome (`references/design-floor.md`) is adapted from [impeccable](https://github.com/pbakaus/impeccable), [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0), rewritten for video.
 - Music: "Happy Beats / Business Moves" by Sascha Ende ([ende.app](https://ende.app/en)), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Videos that use a bundled track get the credit line in `credits.txt`.
 - Extra music: Kevin MacLeod ([incompetech.com](https://incompetech.com)), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), downloaded per video when no bundled track fits.
 - Every CC BY track, sound effect or photo a video uses gets a line in `credits.txt` and on the outro.
