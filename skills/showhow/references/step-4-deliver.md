@@ -76,6 +76,10 @@ uv run --project <skill-dir>/scripts <skill-dir>/scripts/render.py <output-dir>/
 Flags after `--` go to `hyperframes render` unchanged.
 When `docker info` succeeds, prefer `-- --docker` for the final render: the same pinned Chrome and ffmpeg every time, so a re-render matches the one that was checked.
 The first Docker render builds the image (a few minutes); if it fails, render locally and say so.
+After a successful render the wrapper normalises the soundtrack in place to -16 LUFS integrated and -1 dBTP true peak (two-pass ffmpeg `loudnorm`, AES TD1004), copying the video stream, and prints the measured input loudness; put that line in the delivery report.
+If normalisation fails it exits non-zero and leaves the rendered mp4 as it was: report the log tail rather than shipping it un-normalised. `--no-loudnorm` skips it, only when the user asks.
+A video without an audio stream (`--no-voice --no-music --no-sfx`) is skipped with a note.
+Bake the poster after the wrapper: the bake copies the audio, so the loudness survives.
 If the wrapper fails twice, check free disk space (`df -h .`; a render needs a few GB of scratch) and report its log tail to the user instead of retrying further.
 
 Add `-- --quality draft` for faster iteration, `-- --quality high` for final delivery.
@@ -97,6 +101,7 @@ A ring that shows in snapshots but not in the mp4 is a renderer problem: bake it
 ### Listen to the mp4 (optional, earshot)
 
 Skip this section without comment when `earshot` is not on `PATH` or `--no-sfx` and `--no-music` are both set.
+Loudness is already normalised by the wrapper; earshot is for timing and masking.
 [earshot](https://github.com/Leonxlnx/earshot) measures the rendered soundtrack; it does not judge taste.
 Pass every SFX `data-start` from `index.html` as cues, so it reports where each one actually sounds:
 
@@ -143,7 +148,8 @@ ffmpeg -y -i work/poster-snap/frame-00-at-5.5s.png -q:v 2 <video-name>.jpg
 
 ### Bake the poster as frame 0
 
-Most players and platforms (Teams, SharePoint, Slack, YouTube previews) grab frame 0 as the idle thumbnail.
+Players that show the first frame before playback (Teams, SharePoint, Slack, a plain `<video>` tag) use frame 0 as the idle thumbnail.
+YouTube doesn't: it offers its own auto-picked frames or a custom upload, so upload `<video-name>.jpg` there as the thumbnail.
 Replace only the first frame's pixels with the poster; duration, frame count and audio stay the same.
 From `<output-dir>`:
 
@@ -183,7 +189,7 @@ One line per scene group, starting at `00:00`, in the YouTube chapter format (al
 00:06 Step 1 - Open the project
 00:18 Step 2 - Add a file
 00:34 Step 3 - Check the knowledge list
-00:47 Recap
+00:47 Now try it
 ```
 
 Use the measured scene start times from the render.
@@ -257,6 +263,7 @@ Two versions, in this order:
 ```
 
 Keep the post to 3-8 short lines.
+When the post is going to LinkedIn, add a note under it for the user (not part of the post): the captions are burned in, so turn off LinkedIn's auto-captions when uploading, or the video shows two caption tracks.
 Emojis only in a channel or client announcement: at most one by the opening line and one per list item; none in colleague chat or email.
 Leave out dates, links and names you don't have; write `[link]` for the user to fill in.
 
@@ -282,6 +289,8 @@ After this step, `<output-dir>/` should contain:
 ## Tell the user
 
 - Where the video and files are, and the share post itself, ready to paste.
+- The loudness line from the render wrapper (measured input -> -16 LUFS, -1 dBTP).
+- For YouTube: upload `<video-name>.jpg` as the thumbnail. For LinkedIn: turn off auto-captions, since the captions are burned in.
 - The goal line and the step (or change) list, so they can spot a wrong step without watching.
 - Any fictional data substitutions, any label you could not verify, and the sources used for outside steps.
 - Offer to re-record one scene, change the voice, or make the `vertical` or `quick-tip` cut.

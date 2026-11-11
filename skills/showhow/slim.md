@@ -20,7 +20,8 @@ Usage: `/showhow-slim [task or release] [options]`. Options (flags or plain lang
 | `--audience <who>` | inferred |
 | `--theme <frame preset>` (`../hyperframes/assets/frame-presets/`) | product theme; general: picked per topic |
 | `--voice <Kokoro id>` (`npx hyperframes tts --list`) | `af_heart` |
-| `--no-voice`, `--no-captions`, `--no-music`, `--no-sfx` | all on |
+| `--no-voice`, `--no-captions`, `--no-sfx` | all on |
+| `--music` / `--no-music` | music bed off for `clean`, `friendly`, `quick-tip`, on for `release` and energy styles; `--no-music` wins |
 
 Write the deliverables to `~/Downloads/showhow-<video-name>/` (Windows: `%USERPROFILE%\Downloads`), where `<video-name>` is a 2-5 word kebab-case slug of the video's title, e.g. `showhow-connect-confluence/`.
 Name the video `<video-name>.mp4` and the poster `<video-name>.jpg`; the other files keep their fixed names.
@@ -32,7 +33,7 @@ Keep every intermediate file (screens, voice clips, frames, scripts) in a `work/
 **howto:** trace the task through the code the way a user does it: the entry point (route, sidebar item, menu), every control they touch in order with its **exact on-screen label**, what visibly happens after each action, prerequisites (roles, settings, data), one mistake or limit worth mentioning, and where the result lives afterwards.
 More than about 8 actions means two tasks: propose a split and make part 1.
 
-**Outside steps (any mode) and general:** a step this code can't show (an API token made in Atlassian before connecting Confluence, a process, a physical task) is tagged `outside`; `general` is a video of only outside steps. Read `references/general.md` and follow it: facts from the user's material, then the vendor's official docs (search for them), then screenshots of the real pages in your browser (never sign in or commit a real change yourself; ask the user to sign in), then only well-established knowledge; never invent a label (describe it and list it as unverified); rebuild screens from those screenshots with fictional data instead of showing them as-is; topic images (the subject itself: trains, a device) from the user, then `media-use resolve --type image`, then freely licensed photos with license logged in `work/sources.md` and attribution lines in `credits.txt` and on the outro credit line (no separate credit scene); invented step cards or diagrams only where nothing real exists; a topic without steps uses the points shape (outcome -> 3-6 points with a "2 of 5" counter -> recap); in `general`, a frame preset instead of a product theme. Everything else here (shape, laws, sound, deliverables) works as for howto.
+**Outside steps (any mode) and general:** a step this code can't show (an API token made in Atlassian before connecting Confluence, a process, a physical task) is tagged `outside`; `general` is a video of only outside steps. Read `references/general.md` and follow it: facts from the user's material, then the vendor's official docs (search for them), then screenshots of the real pages in your browser (never sign in or commit a real change yourself; ask the user to sign in), then only well-established knowledge; never invent a label (describe it and list it as unverified); rebuild screens from those screenshots with fictional data instead of showing them as-is; topic images (the subject itself: trains, a device) from the user, then `media-use resolve --type image`, then freely licensed photos with license logged in `work/sources.md` and attribution lines in `credits.txt` and on the outro credit line (no separate credit scene); invented step cards or diagrams only where nothing real exists; a topic without steps uses the points shape (outcome -> name the parts (2-4 parts labelled on one picture) -> 3-6 points with a "2 of 5" counter -> recap); a mechanism gets a schematic diagram (a photo may anchor it first); bar charts start at zero and animate axes before values; physical tasks: ask for first-person, hands-visible photos; a rebuilt third-party screen shows "Shown as of <Mon YYYY>", the outro credit line adds "<Product> is a trademark of <owner>. Not affiliated.", and beta or preview screens are never rebuilt; in `general`, a frame preset instead of a product theme. Everything else here (shape, laws, sound, deliverables) works as for howto.
 
 **update:** pin the release range (tags, version-bump commits, CHANGELOG; state the range you chose).
 Read the team's own release notes first (CHANGELOG, release commit subjects, PR titles, features/status docs), then the commits in the range.
@@ -53,9 +54,11 @@ Name controls by their exact label.
 No "in this video", "simply", "just", "seamless", "powerful".
 Plan about 2.5 words per second.
 
-**Shape (howto):** Outcome (3-5s) -> Before you start (only if needed) -> Steps, one action each (6-15s) -> Result (3-6s) -> Recap (3-5s). Target 45-120s; `quick-tip` 20-40s.
+**Say the result:** every result that matters is spoken ("the file now appears under **Knowledge**"), not only shown.
 
-**Shape (update):** "What's new in [version]" (3-5s) -> each change: what / where / show / why (10-20s) -> how to get it (3-5s). Target 30-90s.
+**Shape (howto):** Outcome (3-5s) -> Before you start (only if needed) -> Steps, one action each (6-15s) -> Result (3-6s) -> Now try it, with a concrete example (3-5s). About 2s of silent hold at each subtask boundary (the end of a group of steps that finishes one part of the task). Target 45-120s; `quick-tip` 20-40s, ending on the result.
+
+**Shape (update):** hook: the most visual change already moving with "What's new in [version]" as on-screen text within 3s (3-5s) -> each change: what / where / show / why (10-20s) -> how to get it (3-5s). Target 30-90s.
 
 ## Teaching laws
 
@@ -68,6 +71,8 @@ Plan about 2.5 words per second.
 - **Always oriented.** "Step 2 of 4" (howto) or "2 of 3" (update), same place every time.
 - **Readable.** Anything the voice names is legible at the chosen zoom; on-screen labels hold 1.5s settled; camera moves take 0.6-1.0s.
 - **Captions match the voice** verbatim, max 2 lines of ~42 characters, never over the highlight.
+- **Works muted.** The first 3 seconds and every title or change card make sense with the sound off.
+- **No flashing.** Nothing flashes more than three times in any second, in any style: no white or black flash frames, no strobe (WCAG 2.3.1).
 - **Every frame accurate.** A wrong label or wrong order is the worst bug a how-to can ship.
 - **Grounded claims.** Anything the video says the product does, its names and its numbers, must appear in the project (for outside steps: in the user's material, the official docs or your screenshots). Fictional demo data (names, files, replies) is fine and listed in the plan; invented capabilities are not.
 
@@ -75,7 +80,7 @@ Plan about 2.5 words per second.
 
 | Style | Feel | Pacing / transitions |
 |---|---|---|
-| `clean` | Neutral, precise, product docs; little or no music | 6-12s per step; cuts between screens |
+| `clean` | Neutral, precise, product docs; no music unless `--music` | 6-12s per step; cuts between screens |
 | `friendly` | Warm, patient, explains why in half a sentence | 8-15s per step, max 5 steps; soft fades |
 | `release` | High energy around clear demos: punchy hook, change cards with "New"/"Fixed" tags, beat-locked reveals; "You can now..." | 10-20s per change; fast slides/zooms between changes, calm demos inside |
 | `quick-tip` | One trick, 1-3 actions | 5-8s per action; cuts, no recap |
@@ -89,7 +94,7 @@ The voice leads.
 Generate it per scene with `npx hyperframes tts "<text>" --voice <voice> --output work/voice/scene-NN.wav` (`<voice>` = `--voice`, default `af_heart`; or any local TTS if that's unavailable), measure each clip, and let the clips set the scene lengths.
 Transcribe the clips to catch mispronounced product names; fix by respelling the TTS input only.
 `npx hyperframes transcribe` overwrites `transcript.json` on every run: copy it to `work/tx/words-NN.json` after each clip.
-Music is a quiet bed ducked under the voice (about 0.1 under narration, 0.3 without), never cut off abruptly.
+Music: none by default in `clean`, `friendly` and `quick-tip` (it hurts retention in teaching videos); with `--music`, and always in `release` and the energy styles, a quiet bed ducked under the voice (about 0.1 under narration, 0.3 without), never cut off abruptly.
 Use a bundled track; when none fits the style's mood, and always for `cinematic`, `deadpan`, `chaotic` and `yc-parody`, an Incompetech track (CC BY); generate one with MusicGen only when the user asks or Incompetech has nothing (`references/audio.md`, Music).
 How-tos: SFX mainly confirm visible actions (a soft click per click, soft ticks on typing, one accent on the result).
 Updates: score it with high energy around the demos (a soft reveal hit, card sounds, tag ticks, a payoff (bells allowed), music up and beat-locked on the hook, cards and outro), clicks and typing inside the demos.
@@ -111,11 +116,12 @@ If you draw the video in a browser, make every frame a pure function of time and
 
 Before the full render, look at stills from every step at the highlight and at the result, and from mid-transition.
 A plain crossfade between two busy layouts makes a muddy double exposure; stagger it (old content out, then new content in) or dip through the background.
-Check: the ring sits exactly on the control the voice names (zoom in on a crop when unsure), its label is legible, captions, the cursor or a dragged item don't cover it, the counter is right and uncovered, no text is clipped inside a fixed-width pill or callout (`check` misses these), no bullet or icon shows before its text, a typing caret follows the typed text, contrast is fine.
+Check: the ring sits exactly on the control the voice names (zoom in on a crop when unsure), its label is legible, captions, the cursor or a dragged item don't cover it, the counter is right and uncovered, no text is clipped inside a fixed-width pill or callout (`check` misses these), no bullet or icon shows before its text, a typing caret follows the typed text, contrast is fine, no flash frames, and the opening and every card read with the sound off.
 On the title, one step and the outro, also check the design floor: none of its Refuse items in the chrome (no eyebrow label over the title, no blurred blob or full-frame gradient background), at most two type families, tracking no tighter than -0.04em, concentric radii, and one shared motion for every card.
 SFX clips get `data-duration` equal to the file's real length, or `check` warns about the slot.
 Then render `<video-name>.mp4` with the wrapper, never `npx hyperframes render` directly: a quiet render can exit non-zero with no message and no file.
 `uv run --project <skill-dir>/scripts <skill-dir>/scripts/render.py composition <video-name>.mp4 --work work [-- --docker]` logs to `work/render.log`, succeeds only when this run wrote a non-empty mp4, retries once, and prints the log tail; if it still fails, check free disk space and report the tail.
+It then normalises the soundtrack to -16 LUFS, -1 dBTP (two-pass `loudnorm`, video copied) and prints the measured input; a failed pass exits non-zero and leaves the mp4 untouched. Bake the poster after it.
 If the composition tweens layout (`height`, `width`, position, padding), add `--no-fast-capture`: fast `drawelement` capture drops those changes while snapshots still show them.
 Then pull frames from the mp4 itself at every ring and result moment and look at them; snapshots alone don't prove the render:
 `uv run --project <skill-dir>/scripts <skill-dir>/scripts/frame_sheet.py <video-name>.mp4 --overlays work/rings.overlays.json -o work/check.jpg` samples every baked ring; add `--at <t1,t2,...>` for other moments and `--crop x,y,w,h` to judge small rings.
@@ -124,10 +130,10 @@ Keep creation and rendering local; publishing or uploading needs a separate expl
 
 ## 4. Deliver
 
-- **Poster:** the settled title card (or the finished result with the title) with no caption on it; when the voice talks over the title, snapshot a caption-hidden copy of the composition (step 4), to `<video-name>.jpg`, baked in as frame 0 of `<video-name>.mp4` by replacing that frame, so duration and audio sync stay the same.
+- **Poster:** the settled title card (or the finished result with the title) with no caption on it; when the voice talks over the title, snapshot a caption-hidden copy of the composition (step 4), to `<video-name>.jpg`, baked in as frame 0 of `<video-name>.mp4` by replacing that frame, so duration and audio sync stay the same. Teams, SharePoint and Slack show frame 0; YouTube doesn't, so the poster is also the upload thumbnail there.
 - **`captions.srt`:** the script phrases with their absolute times, even when captions are burned in.
 - **`chapters.txt`:** `00:00 Title` style, one line per step or change, from the real scene start times.
 - **`showhow.md`:** the written companion. howto: "How to [task]", prerequisites, numbered steps with labels in bold, result, tip. update: "What's new in [version]", one short section per change with where to find it, then how to get it.
 - **`credits.txt`:** only when a bundled or Incompetech music track is used (line format in `references/audio.md`) or an image or sound license asks for attribution (title, author, license, URL, one line each). The same credits also appear in the video as the outro credit line (`references/step-3-compose.md`).
 - **`share-copy.md`:** a business post to send with the video ("Post", 3-8 short lines: what it is, what it helps the reader do in their work, the prerequisites or 2-4 changes, one concrete action) and a "One-liner". If `~/VOICE.md` exists, write as its owner following its business sections; otherwise direct and plain. Audience's language, no hype or invented claims, no em dashes, `[link]` for anything you don't have (`references/step-4-deliver.md`).
-- **Tell the user** where everything is, the share post ready to paste, the goal line and the step or change list (so they can spot a wrong step without watching), the fictional substitutions, any label you couldn't verify in the code, and offer to redo a scene, change the voice, or make a vertical or quick-tip cut.
+- **Tell the user** where everything is, the share post ready to paste (for LinkedIn: turn off its auto-captions, the captions are burned in), the loudness line from the wrapper, the goal line and the step or change list (so they can spot a wrong step without watching), the fictional substitutions, any label you couldn't verify in the code, and offer to redo a scene, change the voice, or make a vertical or quick-tip cut.

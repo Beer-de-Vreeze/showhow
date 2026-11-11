@@ -15,6 +15,8 @@ Rules for every style:
 - **The style owns the frame, the steps stay clear.** Hook, title cards, transitions, typography and outro take the style fully; step narration keeps the /showhow script rules in the style's wording (`deadpan`: flat and short; `cinematic`: weightier verbs).
 - **Humor only from the topic**, never at the viewer's expense, and only in styles that call for it.
 - **Sound:** energy styles are scored like `release` (audio.md), with the music bed up on the hook and the outro.
+- **Accessibility holds in every style:** no more than three flashes in any second, the narration names every result that matters, and the hook reads with the sound off (SKILL.md, Teaching laws).
+- **Humor stays in the frame**, not in tangents: a joke goes into a transition, the hook or the outro, never into an aside next to a step or point (seductive details hurt learning).
 
 ---
 
@@ -31,15 +33,15 @@ Open Projects and select the project you want to add knowledge to.
 
 **Typography:** The product's own fonts. Title in medium weight, sentence case. Step counter small and muted.
 
-**Pacing:** 6-12s per step. Hold every result for 0.5-1.0s after the narration.
+**Pacing:** 6-12s per step. Hold every result for 0.5-1.0s after the narration, and about 2s of silence at a subtask boundary.
 
 **Highlight:** Thin accent ring plus a subtle dim of the rest of the screen. Zoom only for small controls.
 
-**Music:** None, or a very quiet bed.
+**Music:** None by default; a very quiet bed with `--music`.
 
 **Transitions:** Cuts between screens, camera moves within a screen.
 
-**Outro:** A 3-5 word checklist of the steps, then the product name.
+**Outro:** "Now try it" with a concrete example, then the product name.
 
 ---
 
@@ -56,15 +58,15 @@ Click Add knowledge. Anything you add here, the assistant can use in every chat 
 
 **Typography:** Slightly larger captions and title. Rounded highlight shapes if the product uses rounded corners.
 
-**Pacing:** 8-15s per step. Longer holds on results. Never more than 5 steps; split otherwise.
+**Pacing:** 8-15s per step. Longer holds on results, about 2s of silence at a subtask boundary. Never more than 5 steps; split otherwise.
 
 **Highlight:** Soft glow or spotlight, slow zoom toward the target.
 
-**Music:** Quiet warm bed.
+**Music:** None by default; a quiet warm bed with `--music`.
 
 **Transitions:** Soft fades (0.4s) between screens, gentle camera moves within a screen.
 
-**Outro:** "You're all set" plus where to go next.
+**Outro:** "You're all set", then "Now try it" with a concrete example of where to use it next.
 
 ---
 
@@ -81,7 +83,7 @@ You can now restore an earlier version of any prompt. Open the prompt, click Ver
 
 **Typography:** Bold title card with the version number. A change counter ("2 of 3") and a short title per change.
 
-**Hook:** The first 2-3 seconds earn the rest: the version number slams in, or the most visual new thing plays before the title. Then "What's new in [version]" with the change list as a preview.
+**Hook:** The first 2-3 seconds earn the rest: the most visual new thing is already moving, with "What's new in [version]" as on-screen text, so it reads muted. The version number can slam in after that, then the change list as a preview.
 
 **Pacing:** 10-20s per change. Fast, beat-locked transitions and card reveals between changes; normal step pacing inside the demo.
 
@@ -116,7 +118,7 @@ Tip: press Ctrl K to jump to any chat.
 
 **Highlight:** Zoom straight to the control.
 
-**Music:** Optional, short.
+**Music:** None by default; short, with `--music`.
 
 **Transitions:** Cuts.
 
@@ -250,7 +252,7 @@ UBER FOR WILD BOARS
 On-demand chaos, now with routing.
 ```
 
-**Transitions:** Hard cut. Flash cut (brief white/black frame). Zoom cut (scale 1.2→1.0 on entrance).
+**Transitions:** Hard cut. Zoom cut (scale 1.2→1.0 on entrance). No flash frames: with 1-2s beats they break the three-flashes limit (WCAG 2.3.1); get the punch from the cut and the sound instead.
 
 **When to use:** Chaotic concepts, logistics parodies, anything that can be played as a hype reel. "Uber for Wild Boars", anything with urgency or speed.
 
