@@ -21,7 +21,7 @@ Then measure each clip:
 ffprobe -v error -show_entries format=duration -of csv=p=0 <output-dir>/composition/assets/voice/scene-01.wav
 ```
 
-Set each scene's duration to `clip length + 0.5-1.0s` (longer after a step's result, shorter in `quick-tip`).
+Set each scene's duration to `clip length + 0.5-1.0s` (longer after a step's result, shorter in `quick-tip`), and `clip length + about 2s` for a scene that ends a subtask (marked in the plan).
 Start each clip about 0.3s after its scene starts, so the voice doesn't collide with the transition.
 Update the scene durations in `showhow-plan.md` to the measured values.
 
@@ -119,6 +119,8 @@ Requirements:
 - Captions match the script verbatim and are timed to the voice.
 - Keep all text readable in the final render; UI text that the narration names must be legible at the chosen zoom.
 - Music never competes with the voice.
+- No more than three flashes in any one second: no white or black flash frames, no strobing (WCAG 2.3.1).
+- The first 3 seconds and every title or change card read with the sound off.
 - Update videos: hook, change cards, tags and outro get high-energy motion, SFX accents and beat locks; the UI demos inside each change stay calm and follow the teaching sequence.
 - Run `hyperframes check` before render.
 - Keep creation and rendering local. Remote or publishing workflows require a separate explicit user request.
@@ -214,7 +216,7 @@ Dim only the content area under a sheet, not the header.
 
 ## Credit line
 
-When `credits.txt` has lines (bundled or Incompetech music, CC BY images or sounds), show them in the video too, so the credit travels with the file wherever it is shared.
+When `credits.txt` has lines (bundled or Incompetech music, CC BY images or sounds, the trademark line for a rebuilt third-party app from general.md), show them in the video too, so the credit travels with the file wherever it is shared.
 - Short form, one line per source: `Music: Sascha Ende (ende.app), CC BY 4.0`, `Photo: <author>, <license>`. Two lines at most; join more with ` · `.
 - On the outro, from the moment it settles to the last frame, at least 2.5s.
 - Bottom edge inside the safe area, centered or aligned with the outro text, in the theme's secondary text color at about 2% of the frame height (20-22px at 1080p), no plate.
@@ -266,5 +268,8 @@ Before moving to delivery, verify:
 - [ ] Design floor, judged on snapshots of the title, one step and the outro: no BANNED item in the chrome, contrast passes on every card and caption plate, at most two type families with tracking no tighter than -0.04em, nested radii are concentric, and every card enters and leaves with the same motion.
 - [ ] When `credits.txt` has lines, the outro shows the credit line for at least 2.5s with no caption over it.
 - [ ] No real personal data, hostnames, IDs or secrets appear anywhere.
+- [ ] The narration names every result that matters; nothing important is only visible.
+- [ ] Mute test: with the sound off, the first 3 seconds and every title or change card still say what the video is about.
+- [ ] No flash frames or strobing; nothing flashes more than three times in any second.
 - [ ] Total duration is within the mode limits.
 - [ ] `hyperframes check` passes, or any blocker is documented for the user.

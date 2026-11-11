@@ -51,7 +51,7 @@ If it is still unclear, ask one question.
 /showhow how to add knowledge to a project
 /showhow --mode update 2.4.0
 /showhow what's new since v2.3.0 --style release
-/showhow how to restore a prompt version --format vertical --no-music
+/showhow how to restore a prompt version --format vertical --music
 /showhow --mode general how to book a meeting room (steps pasted below)
 /showhow --mode general how a train gets its power --style cinematic --theme bold-poster --voice am_michael
 /showhow install
@@ -67,7 +67,8 @@ If it is still unclear, ask one question.
 | `--audience` | freeform, e.g. "new users", "admins" | inferred from the feature |
 | `--no-voice` | flag | narration on |
 | `--no-captions` | flag | burned-in captions on |
-| `--no-music` | flag | quiet music bed on |
+| `--music` | flag | music bed off for `clean`, `friendly`, `quick-tip`; on for `release` and energy styles |
+| `--no-music` | flag | forces the music bed off in any style; wins over `--music` |
 | `--no-sfx` | flag | click and typing sounds on |
 | `--title` | string | inferred |
 | `--theme` | a frame preset name | product theme; general: picked per topic |
@@ -197,6 +198,7 @@ These apply to every video regardless of mode or style.
 **One job per video.** A how-to teaches one task. An update covers one release. If the input covers more, split it and say so.
 
 **Say the outcome first.** Within the first 5 seconds the viewer knows what they will be able to do (howto) or what is new (update).
+In `update`, the most visual change is already moving, with the "what's new" text on screen, within 3 seconds, before any version slam or logo.
 
 **Show the real product.** Every step is shown on the actual UI, rebuilt from the project's own components, styles and copy. No abstract diagrams where a real screen exists.
 Outside steps (and `general` mode) show screens rebuilt from real screenshots, the user's photos, and invented step visuals only where nothing real exists (references/general.md).
@@ -206,6 +208,14 @@ Outside steps (and `general` mode) show screens rebuilt from real screenshots, t
 **One action per step.** A step is one click, one typed value, or one choice. The screen label in the narration matches the UI text exactly, including capitalization.
 
 **Hold the result.** After each step, the result stays on screen until the narration for it has finished plus about 0.5s. Never cut away mid-explanation.
+At a subtask boundary (the end of a group of steps that finishes one part of the task, such as "the token is created" before "now paste it"), hold about 2s of silence on the result before the next part starts (van der Meij & van der Meij 2013).
+
+**Say what changed.** The narration names every result that matters ("the file now appears under **Knowledge**"), not only shows it, so the video needs no separate audio description (WCAG 1.2.5).
+A hook or card with music and no voice carries its point as on-screen text, and the first voiced line says what the video is about.
+
+**Works muted.** The first 3 seconds and every title or change card make sense with the sound off: on-screen text carries the point, the captions carry the rest.
+
+**No flashing.** Nothing flashes more than three times in any one second, in any style (WCAG 2.3.1): no strobe, no white or black flash frames, no rapid full-frame brightness or red swaps.
 
 **Always oriented.** Show a step counter ("Step 2 of 4") in howto mode, or a change counter ("2 of 3") in update mode, and keep it in the same place.
 
@@ -217,12 +227,14 @@ Outside steps (and `general` mode) show screens rebuilt from real screenshots, t
 
 **Pattern (howto):**
 ```
-Outcome (3-5s) -> Before you start (0-5s) -> Steps 1..N (6-15s each) -> Result (3-6s) -> Recap (3-5s)
+Outcome (3-5s) -> Before you start (0-5s) -> Steps 1..N (6-15s each) -> Result (3-6s) -> Now try it (3-5s)
 ```
+
+"Now try it" replaces a plain recap: one line inviting the viewer to do the task now, with a concrete example ("Now try it: add your team's style guide to a project").
 
 **Pattern (update):**
 ```
-Title: what's new in <version> (3-5s) -> Change 1..N: what / where / show / why (10-20s each) -> How to get it (3-5s)
+Hook: the most visual change moving + what's new in <version> (3-5s) -> Change 1..N: what / where / show / why (10-20s each) -> How to get it (3-5s)
 ```
 
 **Length limits:**

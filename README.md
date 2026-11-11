@@ -105,7 +105,7 @@ Open your project in your agent and describe the video:
 /showhow how to add knowledge to a project
 /showhow --mode update 2.4.0
 /showhow what's new since v2.3.0 --style release
-/showhow how to restore a prompt version --format vertical --no-music
+/showhow how to restore a prompt version --format vertical --music
 /showhow --mode general how a train gets its power --style cinematic --voice am_michael
 /showhow options
 ```
@@ -156,7 +156,8 @@ Presets are a starting point: add freeform direction such as `--style "calm, lik
 | `--title` | Text | Inferred |
 | `--no-voice` | Flag | Narration on |
 | `--no-captions` | Flag | Captions on |
-| `--no-music` | Flag | Music on |
+| `--music` | Flag | Music off for `clean`, `friendly` and `quick-tip`; on for `release` and the energy styles |
+| `--no-music` | Flag | Forces music off in any style |
 | `--no-sfx` | Flag | Sound effects on |
 
 Length limits keep videos watchable: how-tos run 45 to 120 seconds (3 minutes at most, longer topics are split), and updates cover 2 to 5 changes in 30 to 90 seconds.
@@ -166,7 +167,7 @@ Length limits keep videos watchable: how-tos run 45 to 120 seconds (3 minutes at
 1. **Inspect.** Reads the code, docs and styles for the real flow, or git history and release notes for an update.
 2. **Plan.** Writes `showhow-plan.md` with the goal, audience, narration script and a scene-by-scene storyboard.
 3. **Compose.** Generates the voice-over and builds a Hyperframes composition that rebuilds your UI from its own components, styles and copy.
-4. **Deliver.** Checks, renders and writes the captions, chapters, companion doc and share post.
+4. **Deliver.** Checks, renders, normalises the loudness to -16 LUFS and writes the captions, chapters, companion doc and share post.
 
 Every video follows the same teaching rules: say the outcome first, highlight a target before acting on it, one action per step, hold each result until the narration finishes, and keep a step counter on screen.
 

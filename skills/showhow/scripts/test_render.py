@@ -3,10 +3,41 @@
 """
 
 import os
+import sys
 import tempfile
 from pathlib import Path
 
-from render import parse, render
+from render import normalize_loudness, parse, render
+
+MEASUREMENT = """[Parsed_loudnorm_0 @ 0x1]
+{
+	"input_i" : "-23.40",
+	"input_tp" : "-4.10",
+	"input_lra" : "6.20",
+	"input_thresh" : "-33.90",
+	"output_i" : "-16.00",
+	"target_offset" : "0.30"
+}
+"""
+
+
+class FakeFfmpeg:
+    """Stands in for ffprobe and ffmpeg: answers each by its role and writes the normalised file."""
+
+    def __init__(self, probe: str = "1\n", measure: tuple[int, str] = (0, MEASUREMENT), write: tuple[int, bytes] = (0, b"norm")):
+        self.probe, self.measure, self.write = probe, measure, write
+        self.calls: list[list[str]] = []
+
+    def __call__(self, cmd: list[str]) -> tuple[int, str]:
+        self.calls.append(cmd)
+        if "-select_streams" in cmd:
+            return 0, self.probe
+        if "null" in cmd:
+            return self.measure
+        code, data = self.write
+        if data:
+            Path(cmd[-1]).write_bytes(data)
+        return code, "done\n"
 
 
 class FakeRunner:
@@ -83,11 +114,68 @@ def main() -> None:
         render(comp, out, work, extra=["--docker", "--quality", "high"], run=extra)
         assert extra.calls[0][-3:] == ["--docker", "--quality", "high"], extra.calls[0]
 
+        # loudnorm_two_pass: measure, then normalise with the measured values; the mp4 is replaced.
+        out.write_bytes(b"rendered")
+        ff = FakeFfmpeg()
+        normalize_loudness(out, work, run=ff)
+        assert len(ff.calls) == 3, ff.calls
+        af = ff.calls[2][ff.calls[2].index("-af") + 1]
+        assert "I=-16:TP=-1" in af and "measured_I=-23.4" in af and "offset=0.3" in af, af
+        assert ff.calls[2][ff.calls[2].index("-c:v") + 1] == "copy", ff.calls[2]
+        assert out.read_bytes() == b"norm"
+        assert not list(root.glob("*.loudnorm.mp4")), "temp file left behind"
+
+        # loudnorm_bad_measurement_keeps_mp4: unparsable output exits non-zero, file untouched.
+        out.write_bytes(b"rendered")
+        bad = FakeFfmpeg(measure=(0, "no json here\n"))
+        expect_exit(lambda: normalize_loudness(out, work, run=bad), "unchanged")
+        assert out.read_bytes() == b"rendered" and len(bad.calls) == 2
+
+        # loudnorm_measure_exit_keeps_mp4: a failed measuring pass is a failure even with JSON.
+        failed = FakeFfmpeg(measure=(1, MEASUREMENT))
+        expect_exit(lambda: normalize_loudness(out, work, run=failed), "measurement")
+        assert out.read_bytes() == b"rendered" and len(failed.calls) == 2, failed.calls
+
+        # loudnorm_silent_track_skips: an audio stream that is all silence measures -inf; skip, don't fail.
+        hush = FakeFfmpeg(measure=(0, MEASUREMENT.replace('"-23.40"', '"-inf"')))
+        normalize_loudness(out, work, run=hush)
+        assert out.read_bytes() == b"rendered" and len(hush.calls) == 2, hush.calls
+
+        # loudnorm_write_fails_keeps_mp4: a failed second pass leaves the render and no temp file.
+        broken = FakeFfmpeg(write=(1, b"half"))
+        expect_exit(lambda: normalize_loudness(out, work, run=broken), "normalisation")
+        assert out.read_bytes() == b"rendered"
+        assert not list(root.glob("*.loudnorm.mp4")), "temp file left behind"
+
+        # loudnorm_silent_video_skips: no audio stream, no ffmpeg pass.
+        silent = FakeFfmpeg(probe="")
+        normalize_loudness(out, work, run=silent)
+        assert len(silent.calls) == 1 and out.read_bytes() == b"rendered"
+
     # cli_args: --work after the positionals and flags after -- both parse.
     a, extra = parse(["comp", "out.mp4", "--work", "w", "--no-fast-capture", "--", "--docker"])
     assert (a.work, a.no_fast_capture, extra) == (Path("w"), True, ["--docker"]), (a, extra)
     a, extra = parse(["comp", "out.mp4", "--work", "w"])
-    assert extra == [] and not a.no_fast_capture, (a, extra)
+    assert extra == [] and not a.no_fast_capture and not a.no_loudnorm, (a, extra)
+    a, _ = parse(["comp", "out.mp4", "--work", "w", "--no-loudnorm"])
+    assert a.no_loudnorm, a
+
+    # main_no_loudnorm: the CLI renders and skips normalisation; without the flag it normalises.
+    import render as mod
+
+    seen: list[str] = []
+    real = (mod.render, mod.normalize_loudness, sys.argv)
+    mod.render = lambda *a, **k: seen.append("render")
+    mod.normalize_loudness = lambda *a, **k: seen.append("loudnorm")
+    try:
+        sys.argv = ["render.py", "comp", "out.mp4", "--work", "w", "--no-loudnorm"]
+        mod.main()
+        assert seen == ["render"], seen
+        sys.argv = ["render.py", "comp", "out.mp4", "--work", "w"]
+        mod.main()
+        assert seen == ["render", "render", "loudnorm"], seen
+    finally:
+        mod.render, mod.normalize_loudness, sys.argv = real
 
     print("render self-check passed")
 
