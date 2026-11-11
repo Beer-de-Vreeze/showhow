@@ -117,6 +117,9 @@ def normalize_loudness(
         values = [float(m[k]) for k in MEASURED] if m else None
     except (ValueError, KeyError, TypeError):
         values = None
+    if values and values[0] == float("-inf"):
+        print(f"loudnorm skipped: {output} has a silent audio track")
+        return
     if not values or any(v != v or v in (float("inf"), float("-inf")) for v in values):
         raise fail("measurement", text)
     i, tp, lra, thresh, offset = values
@@ -130,8 +133,12 @@ def normalize_loudness(
     if code != 0 or not tmp.is_file() or tmp.stat().st_size == 0:
         tmp.unlink(missing_ok=True)
         raise fail("normalisation", text)
-    tmp.replace(output)
-    print(f"loudnorm: {i} LUFS, {tp} dBTP -> -16 LUFS, -1 dBTP ({output})")
+    try:
+        tmp.replace(output)
+    except PermissionError:
+        tmp.unlink(missing_ok=True)
+        raise SystemExit(f"loudness normalisation could not replace {output} (open in a player?); it is unchanged. Close it and rerun.")
+    print(f"loudnorm: {i} LUFS, {tp} dBTP -> {TARGET} ({output})")
 
 
 def parse(argv: list[str]) -> tuple[argparse.Namespace, list[str]]:

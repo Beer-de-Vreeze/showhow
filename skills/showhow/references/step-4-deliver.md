@@ -77,8 +77,9 @@ Flags after `--` go to `hyperframes render` unchanged.
 When `docker info` succeeds, prefer `-- --docker` for the final render: the same pinned Chrome and ffmpeg every time, so a re-render matches the one that was checked.
 The first Docker render builds the image (a few minutes); if it fails, render locally and say so.
 After a successful render the wrapper normalises the soundtrack in place to -16 LUFS integrated and -1 dBTP true peak (two-pass ffmpeg `loudnorm`, AES TD1004), copying the video stream, and prints the measured input loudness; put that line in the delivery report.
-If normalisation fails it exits non-zero and leaves the rendered mp4 as it was: report the log tail rather than shipping it un-normalised. `--no-loudnorm` skips it, only when the user asks.
-A video without an audio stream (`--no-voice --no-music --no-sfx`) is skipped with a note.
+If normalisation fails it exits non-zero and leaves the rendered mp4 as it was: report the log tail rather than shipping it un-normalised.
+`--no-loudnorm` skips it, only when the user asks.
+A video without an audio stream, or with a silent one (`--no-voice --no-music --no-sfx`), is skipped with a note.
 Bake the poster after the wrapper: the bake copies the audio, so the loudness survives.
 If the wrapper fails twice, check free disk space (`df -h .`; a render needs a few GB of scratch) and report its log tail to the user instead of retrying further.
 
@@ -100,7 +101,7 @@ A ring that shows in snapshots but not in the mp4 is a renderer problem: bake it
 
 ### Listen to the mp4 (optional, earshot)
 
-Skip this section without comment when `earshot` is not on `PATH` or `--no-sfx` and `--no-music` are both set.
+Skip this section without comment when `earshot` is not on `PATH` or the video has neither music nor SFX.
 Loudness is already normalised by the wrapper; earshot is for timing and masking.
 [earshot](https://github.com/Leonxlnx/earshot) measures the rendered soundtrack; it does not judge taste.
 Pass every SFX `data-start` from `index.html` as cues, so it reports where each one actually sounds:
@@ -113,14 +114,14 @@ earshot timeline ../<video-name>.mp4 --cues "2.6,2.8,9.4" --out ../work/timeline
 For a 45 s video, `measure` takes about 20 s and `timeline` about 50 s (most of it model loading), so run both once per render, not per fix.
 Trust its measurements (loudness, true peak, onsets, offsets, gaps); treat its event tags (`VOICE?`, `WHOOSH?`) as hints.
 Read the summary line `Sync to N cues: X% have an onset within 40 ms` and every row marked `<- CHECK`, then fix and re-render when:
-- **True peak is above -1 dBTP**: lower the loudest SFX accent or the outro music.
+- **The voice sits under the music or an accent** after normalisation (the wrapper pins the total at -16 LUFS, so a loud accent pulls the voice down): lower that accent or the outro music.
 - **A click or accent cue reads `near` at +40 ms or later**: the file has leading silence; trim it (`ffmpeg -af silenceremove=start_periods=1`) or move the clip earlier.
   Typing ticks overlap each other and the voice, so ignore `near` inside a typing run.
 - **A click or accent cue reads `no onset ... <- CHECK`**: the clip is missing, muted or masked; check its `src` and volume.
 - **A `GAP` mid-video that the plan didn't ask for**, or the loudest section sitting under narration (ducking didn't apply).
 
 Skip `earshot critique`: it scores against launch films, which a voice-led how-to is not meant to match.
-Add one line to the delivery report: integrated LUFS, true peak, and the share of cues within 40 ms.
+Add the share of cues within 40 ms to the delivery report, next to the wrapper's loudness line.
 
 ## Pick the poster frame
 
@@ -283,7 +284,7 @@ After this step, `<output-dir>/` should contain:
   chapters.txt
   showhow.md
   share-copy.md
-  credits.txt          (only when a bundled or Incompetech music track is used or an image or sound license asks for attribution)
+  credits.txt          (only when a bundled or Incompetech music track is used, an image or sound license asks for attribution, or a third-party app's screens are rebuilt)
 ```
 
 ## Tell the user

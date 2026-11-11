@@ -16,8 +16,6 @@ Rules for every style:
 - **Humor only from the topic**, never at the viewer's expense, and only in styles that call for it.
 - **Sound:** energy styles are scored like `release` (audio.md), with the music bed up on the hook and the outro.
 - **Accessibility holds in every style:** no more than three flashes in any second, the narration names every result that matters, and the hook reads with the sound off (SKILL.md, Teaching laws).
-- **Humor stays in the frame**, not in tangents: a joke goes into a transition, the hook or the outro, never into an aside next to a step or point (seductive details hurt learning).
-
 ---
 
 ## `clean`

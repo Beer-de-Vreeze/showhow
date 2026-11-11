@@ -71,7 +71,7 @@ Plan about 2.5 words per second.
 - **Always oriented.** "Step 2 of 4" (howto) or "2 of 3" (update), same place every time.
 - **Readable.** Anything the voice names is legible at the chosen zoom; on-screen labels hold 1.5s settled; camera moves take 0.6-1.0s.
 - **Captions match the voice** verbatim, max 2 lines of ~42 characters, never over the highlight.
-- **Works muted.** The first 3 seconds and every title or change card make sense with the sound off.
+- **Works muted.** The first 3 seconds and every title or change card make sense with the sound off. A hook with music and no voice carries its point as on-screen text, and the first voiced line says what the video is about.
 - **No flashing.** Nothing flashes more than three times in any second, in any style: no white or black flash frames, no strobe (WCAG 2.3.1).
 - **Every frame accurate.** A wrong label or wrong order is the worst bug a how-to can ship.
 - **Grounded claims.** Anything the video says the product does, its names and its numbers, must appear in the project (for outside steps: in the user's material, the official docs or your screenshots). Fictional demo data (names, files, replies) is fine and listed in the plan; invented capabilities are not.
@@ -121,7 +121,8 @@ On the title, one step and the outro, also check the design floor: none of its R
 SFX clips get `data-duration` equal to the file's real length, or `check` warns about the slot.
 Then render `<video-name>.mp4` with the wrapper, never `npx hyperframes render` directly: a quiet render can exit non-zero with no message and no file.
 `uv run --project <skill-dir>/scripts <skill-dir>/scripts/render.py composition <video-name>.mp4 --work work [-- --docker]` logs to `work/render.log`, succeeds only when this run wrote a non-empty mp4, retries once, and prints the log tail; if it still fails, check free disk space and report the tail.
-It then normalises the soundtrack to -16 LUFS, -1 dBTP (two-pass `loudnorm`, video copied) and prints the measured input; a failed pass exits non-zero and leaves the mp4 untouched. Bake the poster after it.
+It then normalises the soundtrack to -16 LUFS, -1 dBTP (two-pass `loudnorm`, video copied) and prints the measured input; a failed pass exits non-zero and leaves the mp4 untouched.
+Bake the poster after it.
 If the composition tweens layout (`height`, `width`, position, padding), add `--no-fast-capture`: fast `drawelement` capture drops those changes while snapshots still show them.
 Then pull frames from the mp4 itself at every ring and result moment and look at them; snapshots alone don't prove the render:
 `uv run --project <skill-dir>/scripts <skill-dir>/scripts/frame_sheet.py <video-name>.mp4 --overlays work/rings.overlays.json -o work/check.jpg` samples every baked ring; add `--at <t1,t2,...>` for other moments and `--crop x,y,w,h` to judge small rings.
@@ -134,6 +135,6 @@ Keep creation and rendering local; publishing or uploading needs a separate expl
 - **`captions.srt`:** the script phrases with their absolute times, even when captions are burned in.
 - **`chapters.txt`:** `00:00 Title` style, one line per step or change, from the real scene start times.
 - **`showhow.md`:** the written companion. howto: "How to [task]", prerequisites, numbered steps with labels in bold, result, tip. update: "What's new in [version]", one short section per change with where to find it, then how to get it.
-- **`credits.txt`:** only when a bundled or Incompetech music track is used (line format in `references/audio.md`) or an image or sound license asks for attribution (title, author, license, URL, one line each). The same credits also appear in the video as the outro credit line (`references/step-3-compose.md`).
+- **`credits.txt`:** only when a bundled or Incompetech music track is used (line format in `references/audio.md`) or an image or sound license asks for attribution (title, author, license, URL, one line each), or a third-party app's screens are rebuilt (its trademark line). The same credits also appear in the video as the outro credit line (`references/step-3-compose.md`).
 - **`share-copy.md`:** a business post to send with the video ("Post", 3-8 short lines: what it is, what it helps the reader do in their work, the prerequisites or 2-4 changes, one concrete action) and a "One-liner". If `~/VOICE.md` exists, write as its owner following its business sections; otherwise direct and plain. Audience's language, no hype or invented claims, no em dashes, `[link]` for anything you don't have (`references/step-4-deliver.md`).
 - **Tell the user** where everything is, the share post ready to paste (for LinkedIn: turn off its auto-captions, the captions are burned in), the loudness line from the wrapper, the goal line and the step or change list (so they can spot a wrong step without watching), the fictional substitutions, any label you couldn't verify in the code, and offer to redo a scene, change the voice, or make a vertical or quick-tip cut.

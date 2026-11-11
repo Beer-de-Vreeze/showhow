@@ -47,8 +47,6 @@ Use the howto shape from SKILL.md; it follows the `hyperframes` explainer shape 
 For a concept the viewer needs before the steps make sense, add one short "why" scene after the outcome, no more.
 A topic without steps ("how a train gets its power") uses the points shape: Outcome (what you'll understand) -> Name the parts -> 3-6 points, one idea and one visual each, with a "2 of 5" counter -> Recap. Same length limits as howto.
 **Name the parts** is one short scene before the causal story: the 2-4 parts the explanation uses, each labelled on one picture with what it does in a few words ("pantograph: picks up power from the wire"). Knowing the parts first makes the how much easier to follow (pre-training, Mayer, Mathias & Wetzell 2002).
-When you use an analogy, keep the familiar thing and the real thing on screen together and link the matching parts with motion.
-
 For a **physical task**, ask the user for photos or clips taken from the doer's view: first-person or over the shoulder, hands visible, close enough to see the part being handled. First-person footage teaches assembly tasks better than a front view (Fiorella et al. 2017).
 Read `../hyperframes/references/types/explainer.md` (sibling skill) for hook and clarity techniques; keep /showhow's script rules where they differ.
 
