@@ -146,6 +146,7 @@ The duration fits the mode limits.
 /showhow is its own workflow: skip the `hyperframes` storylines, `SPEC.md` and type files; the /showhow plan replaces them.
 **Read:** [references/step-3-compose.md](references/step-3-compose.md)
 **Read:** [references/audio.md](references/audio.md)
+**Read:** [references/design-floor.md](references/design-floor.md) before building any chrome (title, cards, counters, captions, outro).
 
 Generate the narration, write the composition brief, and use Hyperframes to build the video in `<output-dir>/composition/`.
 
