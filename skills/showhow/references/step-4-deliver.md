@@ -66,24 +66,28 @@ If the user approves or asks to render:
 
 ## Render
 
-Render without `--quiet` and keep the log: with `--quiet` a failed render can exit non-zero (seen: exit 4) with no error message and no file.
+Render with the wrapper, never `npx hyperframes render` directly: with `--quiet` a failed render can exit non-zero (seen: exit 4) with no error message and no file.
+The wrapper never passes `--quiet`, logs everything to `work/render.log`, succeeds only when this run wrote a non-empty mp4, retries once, and prints the log tail when it fails twice.
 
 ```bash
-npx hyperframes render --output ../<video-name>.mp4 > ../work/render.log 2>&1; echo "exit $?"
-ls -la ../<video-name>.mp4 && tail -5 ../work/render.log
+uv run --project <skill-dir>/scripts <skill-dir>/scripts/render.py <output-dir>/composition <output-dir>/<video-name>.mp4 --work <output-dir>/work
 ```
 
-The render is done only when the mp4 exists and the log ends with "Render complete".
-When `docker info` succeeds, prefer `--docker` for the final render: the same pinned Chrome and ffmpeg every time, so a re-render matches the one that was checked.
+Flags after `--` go to `hyperframes render` unchanged.
+When `docker info` succeeds, prefer `-- --docker` for the final render: the same pinned Chrome and ffmpeg every time, so a re-render matches the one that was checked.
 The first Docker render builds the image (a few minutes); if it fails, render locally and say so.
-If not: read `work/render.log` for the cause, check free disk space (`df -h .`; a render needs a few GB of scratch), and retry once.
-If it fails twice, report the log lines to the user instead of retrying further.
+After a successful render the wrapper normalises the soundtrack in place to -16 LUFS integrated and -1 dBTP true peak (two-pass ffmpeg `loudnorm`, AES TD1004), copying the video stream, and prints the measured input loudness; put that line in the delivery report.
+If normalisation fails it exits non-zero and leaves the rendered mp4 as it was: report the log tail rather than shipping it un-normalised.
+`--no-loudnorm` skips it, only when the user asks.
+A video without an audio stream, or with a silent one (`--no-voice --no-music --no-sfx`), is skipped with a note.
+Bake the poster after the wrapper: the bake copies the audio, so the loudness survives.
+If the wrapper fails twice, check free disk space (`df -h .`; a render needs a few GB of scratch) and report its log tail to the user instead of retrying further.
 
-Add `--quality draft` for faster iteration, `--quality high` for final delivery.
+Add `-- --quality draft` for faster iteration, `-- --quality high` for final delivery.
 
 **Layout changes need screenshot capture.** Fast `drawelement` capture (the render log's summary says which capture ran) drops tweens of layout properties such as `height` and `width`: a row that grows to show an attached file stays closed, a slider fill stays put.
 Snapshots use screenshot capture, so they look right while the mp4 is wrong.
-When the composition tweens `height`, `width`, `top`/`left` or padding, render with `--experimental-fast-capture=false`.
+When the composition tweens `height`, `width`, `top`/`left` or padding, add `--no-fast-capture` to the wrapper (it passes `--experimental-fast-capture=false`).
 
 **Check the mp4, not only the snapshots.** Pull frames from the rendered file at every ring and result moment into one sheet and look at it:
 
@@ -97,7 +101,8 @@ A ring that shows in snapshots but not in the mp4 is a renderer problem: bake it
 
 ### Listen to the mp4 (optional, earshot)
 
-Skip this section without comment when `earshot` is not on `PATH` or `--no-sfx` and `--no-music` are both set.
+Skip this section without comment when `earshot` is not on `PATH` or the video has neither music nor SFX.
+Loudness is already normalised by the wrapper; earshot is for timing and masking.
 [earshot](https://github.com/Leonxlnx/earshot) measures the rendered soundtrack; it does not judge taste.
 Pass every SFX `data-start` from `index.html` as cues, so it reports where each one actually sounds:
 
@@ -109,14 +114,14 @@ earshot timeline ../<video-name>.mp4 --cues "2.6,2.8,9.4" --out ../work/timeline
 For a 45 s video, `measure` takes about 20 s and `timeline` about 50 s (most of it model loading), so run both once per render, not per fix.
 Trust its measurements (loudness, true peak, onsets, offsets, gaps); treat its event tags (`VOICE?`, `WHOOSH?`) as hints.
 Read the summary line `Sync to N cues: X% have an onset within 40 ms` and every row marked `<- CHECK`, then fix and re-render when:
-- **True peak is above -1 dBTP**: lower the loudest SFX accent or the outro music.
+- **The voice sits under the music or an accent** after normalisation (the wrapper pins the total at -16 LUFS, so a loud accent pulls the voice down): lower that accent or the outro music.
 - **A click or accent cue reads `near` at +40 ms or later**: the file has leading silence; trim it (`ffmpeg -af silenceremove=start_periods=1`) or move the clip earlier.
   Typing ticks overlap each other and the voice, so ignore `near` inside a typing run.
 - **A click or accent cue reads `no onset ... <- CHECK`**: the clip is missing, muted or masked; check its `src` and volume.
 - **A `GAP` mid-video that the plan didn't ask for**, or the loudest section sitting under narration (ducking didn't apply).
 
 Skip `earshot critique`: it scores against launch films, which a voice-led how-to is not meant to match.
-Add one line to the delivery report: integrated LUFS, true peak, and the share of cues within 40 ms.
+Add the share of cues within 40 ms to the delivery report, next to the wrapper's loudness line.
 
 ## Pick the poster frame
 
@@ -144,7 +149,8 @@ ffmpeg -y -i work/poster-snap/frame-00-at-5.5s.png -q:v 2 <video-name>.jpg
 
 ### Bake the poster as frame 0
 
-Most players and platforms (Teams, SharePoint, Slack, YouTube previews) grab frame 0 as the idle thumbnail.
+Players that show the first frame before playback (Teams, SharePoint, Slack, a plain `<video>` tag) use frame 0 as the idle thumbnail.
+YouTube doesn't: it offers its own auto-picked frames or a custom upload, so upload `<video-name>.jpg` there as the thumbnail.
 Replace only the first frame's pixels with the poster; duration, frame count and audio stay the same.
 From `<output-dir>`:
 
@@ -184,7 +190,7 @@ One line per scene group, starting at `00:00`, in the YouTube chapter format (al
 00:06 Step 1 - Open the project
 00:18 Step 2 - Add a file
 00:34 Step 3 - Check the knowledge list
-00:47 Recap
+00:47 Now try it
 ```
 
 Use the measured scene start times from the render.
@@ -276,6 +282,7 @@ Chapters
 
 Keep the post to 3-8 short lines.
 The description uses no emojis and no `[link]`; it sits next to the video.
+When the post is going to LinkedIn, add a note under it for the user (not part of the post): the captions are burned in, so turn off LinkedIn's auto-captions when uploading, or the video shows two caption tracks.
 Emojis only in a channel or client announcement: at most one by the opening line and one per list item; none in colleague chat or email.
 Leave out dates, links and names you don't have; write `[link]` for the user to fill in.
 
@@ -295,12 +302,14 @@ After this step, `<output-dir>/` should contain:
   chapters.txt
   showhow.md
   share-copy.md
-  credits.txt          (only when a bundled or Incompetech music track is used or an image or sound license asks for attribution)
+  credits.txt          (only when a bundled or Incompetech music track is used, an image or sound license asks for attribution, or a third-party app's screens are rebuilt)
 ```
 
 ## Tell the user
 
 - Where the video and files are, and the share post itself, ready to paste.
+- The loudness line from the render wrapper (measured input -> -16 LUFS, -1 dBTP).
+- For YouTube: upload `<video-name>.jpg` as the thumbnail. For LinkedIn: turn off auto-captions, since the captions are burned in.
 - The goal line and the step (or change) list, so they can spot a wrong step without watching.
 - Any fictional data substitutions, any label you could not verify, and the sources used for outside steps.
 - Offer to re-record one scene, change the voice, or make the `vertical` or `quick-tip` cut.

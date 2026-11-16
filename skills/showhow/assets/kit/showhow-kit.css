@@ -1,0 +1,42 @@
+/* showhow kit starting states. Set --sh-accent (and optionally the others) in the composition's
+   theme :root block; pass the same accent to bake_highlights.py as `color`. */
+.sh-ring {
+  position: absolute;
+  box-sizing: border-box;
+  border: var(--sh-ring-width, 4px) solid var(--sh-accent, #2f80ed);
+  border-radius: var(--sh-ring-radius, 10px);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 50;
+}
+.sh-ripple {
+  position: absolute;
+  width: var(--sh-ripple-size, 56px);
+  height: var(--sh-ripple-size, 56px);
+  box-sizing: border-box;
+  border-radius: 50%;
+  /* Light fill plus accent stroke reads on both dark buttons and light backgrounds. */
+  background: var(--sh-ripple-fill, rgba(255, 255, 255, 0.75));
+  border: 3px solid var(--sh-accent, #2f80ed);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 51;
+}
+.sh-cursor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 60;
+  pointer-events: none;
+}
+/* Counter: one span per step stacked in one cell; step 1 shows at frame 0. */
+.sh-counter {
+  display: grid;
+}
+.sh-counter > span {
+  grid-area: 1 / 1;
+  opacity: 0;
+}
+.sh-counter > span:first-child {
+  opacity: 1;
+}

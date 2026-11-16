@@ -4,7 +4,12 @@ All SFX are CC0 (Kenney.nl, public domain).
 
 In an instructional video the **voice leads**.
 Music and SFX support it and must never compete with it.
-Use a quiet music bed and action-matched SFX by default, unless the user passes `--no-music` / `--no-sfx`, the assets are missing, or the style says none (`clean` may go without music).
+Action-matched SFX are on by default unless the user passes `--no-sfx` or the assets are missing.
+**Music depends on the style:** off by default for `clean`, `friendly` and `quick-tip` (background music hurt retention and transfer in Moreno & Mayer 2000), on for `release` and the energy styles.
+`--music` turns the bed on for any style; `--no-music` turns it off for any style and wins over `--music`.
+Clicks and typing stay in every style: they mark actions, and sound tied to an action doesn't hurt learning the way a bed does.
+
+The render wrapper normalises every mp4 to -16 LUFS integrated and -1 dBTP true peak (`scripts/render.py`, step-4-deliver.md), so set levels relative to each other below; don't chase an absolute loudness.
 
 Levels with narration:
 

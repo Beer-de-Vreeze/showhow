@@ -19,6 +19,7 @@ The narration sets the pace of an instructional video, so write it before the st
 - **Second person, present tense.** "Open **Projects** and click **Add knowledge**."
 - **Name controls by their exact label**, in bold in the plan so they are easy to check against the UI.
 - **One sentence per action**, plus at most one sentence of why or what happens.
+- **Say the result.** Every result that matters gets spoken, not only shown: "The file now appears under **Knowledge**." A viewer who can't see the screen must still follow the video (WCAG 1.2.5).
 - **Short sentences.** 8-16 words. No nested clauses. TTS reads lists and parentheses badly.
 - **Write for the ear.** Spell out symbols and abbreviations the way they should be said ("two point four", not "2.4.0" if the TTS stumbles on it).
 - **No filler.** No "In this video we're going to...", no "simply", no "just", no "easily".
@@ -107,13 +108,15 @@ Transition: [cut / soft fade / slide / zoom-out] -> Scene 2
 | Before you start | Prerequisites, only if any. | 3-5s |
 | Step 1..N | One action each: point, act, show the result. | 6-15s each |
 | Result | The end state, clearly visible, with where to find it later. | 3-6s |
-| Recap | 3-5 word summary of the steps as a checklist, or the next thing to try. | 3-5s |
+| Now try it | One line inviting the viewer to do the task now, with a concrete example or practice data. | 3-5s |
+
+Mark each subtask boundary in the storyboard (the end of a group of steps that finishes one part of the task) and give it about 2s of silent hold on the result.
 
 ### update
 
 | Scene | Purpose | Typical duration |
 |---|---|---|
-| Title | "What's new in [product] [version]" and the change list as a preview. | 3-5s |
+| Hook + title | The most visual change already moving with "What's new in [product] [version]" as on-screen text within 3s, then the change list as a preview. Must read with the sound off. | 3-5s |
 | Change 1..N | What is new (one line) -> where it lives (navigate there) -> show it in 1-2 actions -> why it matters. | 10-20s each |
 | How to get it | Update prompt, restart, or "it's already there". Plus where to learn more. | 3-5s |
 
@@ -157,7 +160,7 @@ If a step's narration needs more than ~15s, the step is too big; split it.
 ## Audio planning
 
 - **Voice** leads. Everything else sits under it.
-- **Music**: a quiet bed (see `audio.md` for levels) or none for `clean` how-tos where it would distract. `release` and the energy styles plan music louder on the hook, bridges and outro, ducked under the voice, with strong cues picked for the hook, change cards and outro.
+- **Music**: none by default for `clean`, `friendly` and `quick-tip`; a quiet bed with `--music` (see `audio.md` for levels). `release` and the energy styles plan music louder on the hook, bridges and outro, ducked under the voice, with strong cues picked for the hook, change cards and outro.
 - **SFX (howto)**: mainly for visible actions - a soft click on each click, soft key ticks on typing, one gentle accent on the final result.
 - **SFX (update)**: plan them around the demos - a soft hit on the hook reveal, card sounds as each change card arrives, a tick for each "New"/"Fixed" tag, a payoff on the outro (a bell is fine). Inside the UI demo, clicks and typing only.
 - The full library is available (see `audio.md`); note the moment and intent in the plan, not the filename.

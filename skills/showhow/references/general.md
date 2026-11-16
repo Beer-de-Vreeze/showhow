@@ -45,7 +45,9 @@ Also screenshot the doc images you relied on, for reference.
 
 Use the howto shape from SKILL.md; it follows the `hyperframes` explainer shape (one concrete example worked through): 3-6 steps on one consistent stage, one move each, the object being acted on carried from step to step.
 For a concept the viewer needs before the steps make sense, add one short "why" scene after the outcome, no more.
-A topic without steps ("how a train gets its power") uses the points shape: Outcome (what you'll understand) -> 3-6 points, one idea and one visual each, with a "2 of 5" counter -> Recap. Same length limits as howto.
+A topic without steps ("how a train gets its power") uses the points shape: Outcome (what you'll understand) -> Name the parts -> 3-6 points, one idea and one visual each, with a "2 of 5" counter -> Recap. Same length limits as howto.
+**Name the parts** is one short scene before the causal story: the 2-4 parts the explanation uses, each labelled on one picture with what it does in a few words ("pantograph: picks up power from the wire"). Knowing the parts first makes the how much easier to follow (pre-training, Mayer, Mathias & Wetzell 2002).
+For a **physical task**, ask the user for photos or clips taken from the doer's view: first-person or over the shoulder, hands visible, close enough to see the part being handled. First-person footage teaches assembly tasks better than a front view (Fiorella et al. 2017).
 Read `../hyperframes/references/types/explainer.md` (sibling skill) for hook and clarity techniques; keep /showhow's script rules where they differ.
 
 In `showhow-plan.md`, tag each step `code` or `outside`, and add "Sources" (what each outside step is based on, with URLs) and "Unverified" sections.
@@ -58,6 +60,10 @@ Pick per outside step, in this order:
 1. **A rebuilt screen** from your captures, the user's screenshots or the doc images: rebuild it in HTML, matching layout, colors, spacing and exact labels, with fictional data.
    It's then a normal rebuilt screen: ring targets by element (step-3-compose.md), zoom, type into fields.
    Don't put captured or vendor screenshots in the video as-is; they carry personal data and someone else's artwork. Use a vendor logo only when the user supplies it.
+   A rebuild is still a derivative of someone else's UI, not automatically safer than a screenshot, so:
+   - show a small "Shown as of <Mon YYYY>" note (the date you captured or read the source) on the first rebuilt screen of that app; third-party UIs change;
+   - add "<Product> is a trademark of <owner>. Not affiliated." to the outro credit line, once per vendor;
+   - never rebuild beta, preview or insider screens; use the released UI or describe the step instead.
 2. **The user's own screenshots or photos as stills**, when rebuilding isn't worth it (a photo of a device, a one-off screen): crop and zoom, ring the target, bake rings into the stills with `scripts/bake_highlights.py` (step-3-compose.md), after blurring or covering any personal data.
 3. **Topic images** - photos of the subject itself (trains, a building, a device), in any mode. In this order:
    1. the user's own images;
@@ -67,6 +73,10 @@ Pick per outside step, in this order:
    Check every image shows what the narration says: the right train type, era and country.
 4. **An invented visual** where nothing real exists to show: a step card (big number, verb, the one thing to look for), a simple diagram, an icon with a label, a checklist that ticks off.
    Before hand-building any named look, run `npx hyperframes catalog --query "<the look in plain English>" --json` and use a block that fits.
+
+**Mechanisms get a schematic.** When a point explains how something works (power flowing from the wire to the motor), show it as a simplified diagram, not only as a photo: schematic visuals teach mechanisms better than realistic ones (Scheiter et al. 2009). A real photo may come first, for a moment, to anchor what the diagram stands for; then the diagram carries the explanation.
+
+**Charts stay honest in motion.** Bar charts start at zero. Animate in stages, about 1s each: axes and scale first, then the values; never rescale an axis and change values in the same move. No 3D, no rotation.
 
 The teaching laws still hold: point before acting means the thing being talked about gets the ring, spotlight or zoom while the voice names it.
 Keep one stage across consecutive steps (same diagram growing, same card position) so the steps read as one flow.

@@ -21,7 +21,7 @@ Then measure each clip:
 ffprobe -v error -show_entries format=duration -of csv=p=0 <output-dir>/composition/assets/voice/scene-01.wav
 ```
 
-Set each scene's duration to `clip length + 0.5-1.0s` (longer after a step's result, shorter in `quick-tip`).
+Set each scene's duration to `clip length + 0.5-1.0s` (longer after a step's result, shorter in `quick-tip`), and `clip length + about 2s` for a scene that ends a subtask (marked in the plan).
 Start each clip about 0.3s after its scene starts, so the voice doesn't collide with the transition.
 Update the scene durations in `showhow-plan.md` to the measured values.
 
@@ -82,6 +82,9 @@ Write `<output-dir>/composition-brief.md` before creating the composition.
 - Colors: [exact values]
 - Fonts: [display / body]
 - Theme: [theme id] - background [value], accent [value]
+- LOOK: [ground value] ground, [ink value] text, [accent value] accent; [display face + weight] / [body face + weight]; [where the ground comes from: product surface, preset, subject's world]
+- BANNED: [the design-floor.md Refuse items this video must avoid, minus any the theme preset uses on purpose, plus anything the product's look rules out]
+- Design floor: `references/design-floor.md` applies to the chrome only; rebuilt screens keep the product's look
 
 ## Storyboard
 Use the storyboard in `<output-dir>/showhow-plan.md` as the contract.
@@ -116,6 +119,8 @@ Requirements:
 - Captions match the script verbatim and are timed to the voice.
 - Keep all text readable in the final render; UI text that the narration names must be legible at the chosen zoom.
 - Music never competes with the voice.
+- No more than three flashes in any one second: no white or black flash frames, no strobing (WCAG 2.3.1).
+- The first 3 seconds and every title or change card read with the sound off.
 - Update videos: hook, change cards, tags and outro get high-energy motion, SFX accents and beat locks; the UI demos inside each change stay calm and follow the teaching sequence.
 - Run `hyperframes check` before render.
 - Keep creation and rendering local. Remote or publishing workflows require a separate explicit user request.
@@ -143,33 +148,42 @@ If the app needs a backend you cannot run, rebuild the screens from its componen
 ## Place highlights and the cursor by element, not by pixels
 
 Hand-computed ring and cursor coordinates drift once fonts load and layouts settle, and put rings in the wrong place.
-Give every highlight or click target an `id`, and measure it once inside `document.fonts.ready`, while building the timeline:
+Use the showhow kit for rings, the cursor, click ripples and the step counter: it measures each target by element and writes every tween as a `fromTo`.
 
-```js
-// Layout box of an element in root pixels, ignoring transforms. Call after fonts load.
-function R(sel, p = 6) {
-  let el = document.querySelector(sel);
-  const w = el.offsetWidth, h = el.offsetHeight;
-  let x = 0, y = 0;
-  while (el && el.id !== "root") { x += el.offsetLeft; y += el.offsetTop; el = el.offsetParent; }
-  return [x - p, y - p, w + 2 * p, h + 2 * p];
-}
-// dy: known growth of content above the target by time t (it isn't laid out yet when you measure).
-const ring = (t, sel, d, p = 6, dy = 0) => {
-  const [x, y, width, height] = R(sel, p);
-  tl.set("#ring", { x, y: y + dy, width, height, opacity: 0 }, t);
-  tl.to("#ring", { opacity: 1, duration: 0.25 }, t);
-  tl.to("#ring", { opacity: 0, duration: 0.15 }, t + d);
-};
-// Cursor tip onto the centre of the target (adjust the offset to your arrow's tip).
-const move = (t, sel, d = 0.6, dy = 0) => {
-  const r = R(sel, 0);
-  tl.to("#cur", { x: r[0] + r[2] / 2 - 8, y: r[1] + r[3] / 2 - 5 + dy, duration: d, ease: "power2.inOut" }, t);
-};
+1. Copy `<skill-dir>/assets/kit/showhow-kit.js` and `showhow-kit.css` into `composition/assets/kit/`.
+2. In each scene that uses it, inside `<template>`: `<link rel="stylesheet" href="assets/kit/showhow-kit.css" />` and `<script src="assets/kit/showhow-kit.js"></script>` before the scene's own script.
+3. Set `--sh-accent` in the theme `:root` block to the same accent you pass to `bake_highlights.py` as `color` (optional: `--sh-ring-width`, `--sh-ring-radius`, `--sh-ripple-size`, `--sh-ripple-fill`).
+4. Write every kit element in the HTML with a stable id, as direct children of the scene root (or of a `#world` camera layer at 0,0): one `.sh-ring` per ring, one `.sh-ripple` per click, one `.sh-cursor`, and a `.sh-counter` with one span per step.
+   Give rings, ripples and the cursor `data-layout-ignore`.
+   Ids must be unique across the whole video, so with more than one scene prefix them per scene (`#s2-cursor`, `#s2-count-1`) and pass `cursor: "#s2-cursor"` and `countPrefix: "#s2-count-"` to `showhowKit`.
+   Keep the counter inside the 80% title-safe box.
+5. Call the kit after fonts load, then register the timeline:
+
+```html
+<div class="sh-counter"><span id="sh-count-1">Step 1 of 2</span><span id="sh-count-2">Step 2 of 2</span></div>
+<div id="ring-01" class="sh-ring" data-layout-ignore></div>
+<div id="ripple-01" class="sh-ripple" data-layout-ignore></div>
+<svg id="sh-cursor" class="sh-cursor" data-layout-ignore>…</svg>
+<script>
+  const tl = gsap.timeline({ paused: true });
+  document.fonts.ready.then(() => {
+    // defaults: cursor "#sh-cursor", countPrefix "#sh-count-", cursorStart [0, 0]
+    const kit = showhowKit(tl, { root: "#root", cursorStart: [960, 900] });
+    kit.move(0.8, "#btn-new");                    // cursor tip to the target centre; call moves in time order
+    kit.ring(1.4, "#btn-new", "#ring-01", 1.4);   // { pad, dy, fadeIn, fadeOut }
+    kit.ripple(1.5, "#btn-new", "#ripple-01");    // { dy, duration }
+    kit.counter(3.0, 2);                          // span 1 out, span 2 in
+    window.__timelines["<scene-id>"] = tl;
+  });
+</script>
 ```
 
+`kit.R(sel, pad)` returns a target's `[x, y, w, h]` in root pixels for anything else you place by element; `move` takes `{ tip: [x, y] }` for the arrow tip's offset.
+`scripts/fixtures/kit-demo/` is a working example; render it after changing the kit or upgrading HyperFrames.
+
 - Measure eagerly, once, inside `document.fonts.ready` before building the timeline - never with function values (`x: () => ...`). `check` flags those as `gsap_function_value_hazard`: each render worker initializes tweens on its own and gets a different answer once layout animates.
-- Measurement sees the layout at build time. When something above a target grows later (a file chip row opening above the text box), add the known growth as a `y` offset for targets below it.
+  The kit measures when you call it, so call it there.
+- Measurement sees the layout at build time. When something above a target grows later (a file chip row opening above the text box), pass the known growth as `dy` for targets below it.
 - Put every element's starting state (hidden, offset, unselected) in CSS. A `tl.set` at time 0 does not show on frame 0.
 - `offsetLeft`/`offsetTop` ignore GSAP transforms, so an element's entrance slide doesn't shift its ring. If the element's container is still moving at ring time, ring after it settles.
 - Give targets explicit sizes where their box would otherwise stretch (a full-width row when you mean the button in it).
@@ -188,7 +202,7 @@ Image swaps always rendered, so draw the ring into a copy of the still and fade 
    Fade it in at `in` over `in_dur` and out at `out` over `out_dur`.
 4. Copy the ringed stills (`src` in each entry, relative to the spec) into the composition's assets.
 
-Cursor and click ripples can stay DOM elements; give each ripple its own element.
+Cursor and click ripples can stay DOM elements from the kit; give each ripple its own element.
 
 ## Every tween is a `fromTo`
 
@@ -202,7 +216,7 @@ Dim only the content area under a sheet, not the header.
 
 ## Credit line
 
-When `credits.txt` has lines (bundled or Incompetech music, CC BY images or sounds), show them in the video too, so the credit travels with the file wherever it is shared.
+When `credits.txt` has lines (bundled or Incompetech music, CC BY images or sounds, the trademark line for a rebuilt third-party app from general.md), show them in the video too, so the credit travels with the file wherever it is shared.
 - Short form, one line per source: `Music: Sascha Ende (ende.app), CC BY 4.0`, `Photo: <author>, <license>`. Two lines at most; join more with ` · `.
 - On the outro, from the moment it settles to the last frame, at least 2.5s.
 - Bottom edge inside the safe area, centered or aligned with the outro text, in the theme's secondary text color at about 2% of the frame height (20-22px at 1080p), no plate.
@@ -251,7 +265,11 @@ Before moving to delivery, verify:
 - [ ] Every claim about what the product does, its names and numbers, appears in the project; fictional demo data is listed in the plan.
 - [ ] The step or change counter is present and consistent.
 - [ ] Captions are timed and never cover the highlighted target.
+- [ ] Design floor, judged on snapshots of the title, one step and the outro: no BANNED item in the chrome, contrast passes on every card and caption plate, at most two type families with tracking no tighter than -0.04em, nested radii are concentric, and every card enters and leaves with the same motion.
 - [ ] When `credits.txt` has lines, the outro shows the credit line for at least 2.5s with no caption over it.
 - [ ] No real personal data, hostnames, IDs or secrets appear anywhere.
+- [ ] The narration names every result that matters; nothing important is only visible.
+- [ ] Mute test: with the sound off, the first 3 seconds and every title or change card still say what the video is about.
+- [ ] No flash frames or strobing; nothing flashes more than three times in any second.
 - [ ] Total duration is within the mode limits.
 - [ ] `hyperframes check` passes, or any blocker is documented for the user.

@@ -105,7 +105,7 @@ Open your project in your agent and describe the video:
 /showhow how to add knowledge to a project
 /showhow --mode update 2.4.0
 /showhow what's new since v2.3.0 --style release
-/showhow how to restore a prompt version --format vertical --no-music
+/showhow how to restore a prompt version --format vertical --music
 /showhow --mode general how a train gets its power --style cinematic --voice am_michael
 /showhow options
 ```
@@ -139,6 +139,7 @@ Eleven styles, in every mode:
 Presets are a starting point: add freeform direction such as `--style "calm, like Apple support videos"`.
 
 - **Themes:** `--theme <preset>` applies a Hyperframes frame preset to title cards, captions and step cards. Rebuilt product screens keep their own look.
+- **Design floor:** every video's own chrome (title, cards, counters, captions, outro) follows a short design floor adapted from impeccable: contrast and type checks, and a list of generated-design defaults it refuses, such as eyebrow labels and blurred gradient backgrounds. A `--theme` preset keeps its deliberate choices.
 - **Voices:** `--voice <id>` picks any [Kokoro](https://github.com/thewh1teagle/kokoro-onnx) voice. The default is `af_heart`. Narration is English.
 
 ## Options
@@ -155,7 +156,8 @@ Presets are a starting point: add freeform direction such as `--style "calm, lik
 | `--title` | Text | Inferred |
 | `--no-voice` | Flag | Narration on |
 | `--no-captions` | Flag | Captions on |
-| `--no-music` | Flag | Music on |
+| `--music` | Flag | Music off for `clean`, `friendly` and `quick-tip`; on for `release` and the energy styles |
+| `--no-music` | Flag | Forces music off in any style |
 | `--no-sfx` | Flag | Sound effects on |
 
 Length limits keep videos watchable: how-tos run 45 to 120 seconds (3 minutes at most, longer topics are split), and updates cover 2 to 5 changes in 30 to 90 seconds.
@@ -165,7 +167,7 @@ Length limits keep videos watchable: how-tos run 45 to 120 seconds (3 minutes at
 1. **Inspect.** Reads the code, docs and styles for the real flow, or git history and release notes for an update.
 2. **Plan.** Writes `showhow-plan.md` with the goal, audience, narration script and a scene-by-scene storyboard.
 3. **Compose.** Generates the voice-over and builds a Hyperframes composition that rebuilds your UI from its own components, styles and copy.
-4. **Deliver.** Checks, renders and writes the captions, chapters, companion doc and share post.
+4. **Deliver.** Checks, renders, normalises the loudness to -16 LUFS and writes the captions, chapters, companion doc and share post.
 
 Every video follows the same teaching rules: say the outcome first, highlight a target before acting on it, one action per step, hold each result until the narration finishes, and keep a step counter on screen.
 
@@ -181,6 +183,7 @@ It never signs in to a site or types a password for you.
 
 - Built on [Hyperframes](https://github.com/heygen-com/hyperframes) by HeyGen.
 - Started as a fork of [brag](https://github.com/latent-spaces/brag) by Shunit Haviv Hakimi (MIT); the energy styles and parts of the audio pipeline still come from it.
+- The design floor for the video's chrome (`references/design-floor.md`) is adapted from [impeccable](https://github.com/pbakaus/impeccable), [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0), rewritten for video.
 - Music: "Happy Beats / Business Moves" by Sascha Ende ([ende.app](https://ende.app/en)), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Videos that use a bundled track get the credit line in `credits.txt`.
 - Extra music: Kevin MacLeod ([incompetech.com](https://incompetech.com)), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), downloaded per video when no bundled track fits.
 - Every CC BY track, sound effect or photo a video uses gets a line in `credits.txt` and on the outro.
