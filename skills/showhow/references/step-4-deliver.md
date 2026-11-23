@@ -40,7 +40,9 @@ Snapshot every ring moment and every result, in one call, into `work/snap/`:
 npx hyperframes snapshot --no-end --describe false -o ../work/snap --at 4.5,16.5,21.5,24
 ```
 
-Read the contact sheets it writes, then check every frame:
+Read the contact sheets it writes and **describe every frame in one sentence** (what is on screen, what the viewer should look at) before you judge any of them; a frame you can't describe, or that reads as an empty slide, is a finding.
+This stops you from approving a render you didn't look at (from [motionmaxxing](https://github.com/Tejashmakwana/motionmaxxing)'s review step).
+Then check every frame:
 - **The ring sits on the control the narration names**, fully around it, not offset or half off. Crop and zoom any ring you can't judge at contact-sheet size (`ffmpeg -i frame.png -vf crop=w:h:x:y,scale=iw*2:-1 tile.png`).
 - The cursor tip is on the target at each click.
 - Its label is legible at this zoom.
@@ -181,6 +183,23 @@ to any project in AI Workbench.
 
 With `--no-captions`, still write `captions.srt` (it only skips the burned-in version).
 
+## Run the video gates
+
+Once `captions.srt` exists, measure the final mp4 (from `<output-dir>`):
+
+```bash
+uv run --project <skill-dir>/scripts <skill-dir>/scripts/video_gates.py <video-name>.mp4 --srt captions.srt
+```
+
+- **G-blank:** no run of more than 3 blank frames (one flat colour: an empty ground between scenes, a black or white flash).
+  A dip through the background lasts 3 frames at most; a longer empty gap reads as a broken video.
+  A designed cut to black at the very end (`chaotic`'s outro) may run 15 frames.
+- **G-end:** the video ends at most 1.4s after the last caption, or 3.5s when `credits.txt` exists (the outro credit line needs 2.5s).
+  Under 0.5s is a note: the result may be cut off.
+
+A FAIL is fixed and re-rendered, never argued; quote both lines in the delivery report.
+Adapted from motionmaxxing's G2 and G3 (Apache-2.0); mid-video holds aren't gated, because showhow holds results on purpose.
+
 ## Write chapters.txt
 
 One line per scene group, starting at `00:00`, in the YouTube chapter format (also works as a table of contents in a description):
@@ -308,8 +327,10 @@ After this step, `<output-dir>/` should contain:
 ## Tell the user
 
 - Where the video and files are, and the share post itself, ready to paste.
-- The loudness line from the render wrapper (measured input -> -16 LUFS, -1 dBTP).
+- The loudness line from the render wrapper (measured input -> -16 LUFS, -1 dBTP), and the two `video_gates.py` lines.
 - For YouTube: upload `<video-name>.jpg` as the thumbnail. For LinkedIn: turn off auto-captions, since the captions are burned in.
 - The goal line and the step (or change) list, so they can spot a wrong step without watching.
 - Any fictional data substitutions, any label you could not verify, and the sources used for outside steps.
 - Offer to re-record one scene, change the voice, or make the `vertical` or `quick-tip` cut.
+
+When they ask for changes, sort and record them per [house-style.md](house-style.md), "Learn after every round of feedback".

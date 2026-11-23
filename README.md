@@ -140,6 +140,9 @@ Presets are a starting point: add freeform direction such as `--style "calm, lik
 
 - **Themes:** `--theme <preset>` applies a Hyperframes frame preset to title cards, captions and step cards. Rebuilt product screens keep their own look.
 - **Design floor:** every video's own chrome (title, cards, counters, captions, outro) follows a short design floor adapted from impeccable: contrast and type checks, and a list of generated-design defaults it refuses, such as eyebrow labels and blurred gradient backgrounds. A `--theme` preset keeps its deliberate choices.
+- **House style:** showhow remembers how you like your videos.
+It reads `~/.showhow/verdicts.md` (your defaults and always/never rules) and `~/.showhow/edits.md` (before/after lessons) at the start of every run.
+When you ask for changes, it keeps the lasting ones there and shows you the diff; `/showhow learn <output-dir>` does the same for a past video.
 - **Voices:** `--voice <id>` picks any [Kokoro](https://github.com/thewh1teagle/kokoro-onnx) voice. The default is `af_heart`. Narration is English.
 
 ## Options
@@ -167,7 +170,7 @@ Length limits keep videos watchable: how-tos run 45 to 120 seconds (3 minutes at
 1. **Inspect.** Reads the code, docs and styles for the real flow, or git history and release notes for an update.
 2. **Plan.** Writes `showhow-plan.md` with the goal, audience, narration script and a scene-by-scene storyboard.
 3. **Compose.** Generates the voice-over and builds a Hyperframes composition that rebuilds your UI from its own components, styles and copy.
-4. **Deliver.** Checks, renders, normalises the loudness to -16 LUFS and writes the captions, chapters, companion doc and share post.
+4. **Deliver.** Checks, renders, normalises the loudness to -16 LUFS, measures the mp4 for blank frames and a dragging ending, and writes the captions, chapters, companion doc and share post.
 
 Every video follows the same teaching rules: say the outcome first, highlight a target before acting on it, one action per step, hold each result until the narration finishes, and keep a step counter on screen.
 
@@ -184,6 +187,9 @@ It never signs in to a site or types a password for you.
 - Built on [Hyperframes](https://github.com/heygen-com/hyperframes) by HeyGen.
 - Started as a fork of [brag](https://github.com/latent-spaces/brag) by Shunit Haviv Hakimi (MIT); the energy styles and parts of the audio pipeline still come from it.
 - The design floor for the video's chrome (`references/design-floor.md`) is adapted from [impeccable](https://github.com/pbakaus/impeccable), [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0), rewritten for video.
+- The house-style files, the video gates (`scripts/video_gates.py`), the review step and the motion values come from [motionmaxxing](https://github.com/Tejashmakwana/motionmaxxing), [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0), rewritten in our own words.
+- Design-floor rules and the optional before/after change come from [unslop](https://github.com/heydamir/unslop) by Damir Sokolovsky ([@heydamir](https://x.com/heydamir)), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); a video that uses the before/after credits it on the outro.
+- The pictured-promise, one-view-per-point and seeded-preset rules come from [taste-skill](https://github.com/Leonxlnx/taste-skill), [MIT](https://opensource.org/licenses/MIT).
 - Music: "Happy Beats / Business Moves" by Sascha Ende ([ende.app](https://ende.app/en)), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Videos that use a bundled track get the credit line in `credits.txt`.
 - Extra music: Kevin MacLeod ([incompetech.com](https://incompetech.com)), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), downloaded per video when no bundled track fits.
 - Every CC BY track, sound effect or photo a video uses gets a line in `credits.txt` and on the outro.

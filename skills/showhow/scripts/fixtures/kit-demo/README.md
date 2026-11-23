@@ -15,7 +15,7 @@ uv run --project . frame_sheet.py out/kit-demo.mp4 --at 0,1.2,1.6,2.0,3.5,4.0,4.
 Expect in the sheet:
 
 - 0s: "Step 1 of 2" top right, no ring, cursor at the bottom centre.
-- 1.6s and 2.0s: a ring on "New report", cursor on it; a ripple at 1.5-2.0s.
+- 1.6s and 2.0s: a ring on "New report", cursor on it; the cursor rests from 1.4s, then presses (smaller for 2 frames at about 1.6s) and a ripple runs 1.65-2.15s.
 - 3.5s: "Step 2 of 2", cursor between the buttons.
-- 4.0s and 4.5s: a ring on "Export", cursor on it; a ripple at 3.9-4.4s.
+- 4.0s and 4.5s: a ring on "Export", cursor on it; a press at about 4.0s and a ripple 4.05-4.55s.
 - 5.8s: no ring.
