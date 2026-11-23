@@ -191,8 +191,11 @@ Once `captions.srt` exists, measure the final mp4 (from `<output-dir>`):
 uv run --project <skill-dir>/scripts <skill-dir>/scripts/video_gates.py <video-name>.mp4 --srt captions.srt
 ```
 
-- **G-blank:** no run of more than 3 blank frames (one flat colour: an empty ground between scenes, a black or white flash). A dip through the background lasts 3 frames at most; a longer empty gap reads as a broken video.
-- **G-end:** the video ends at most 1.4s after the last caption, or 3.0s when `credits.txt` exists (the outro credit line needs 2.5s). Under 0.5s is a note: the result may be cut off.
+- **G-blank:** no run of more than 3 blank frames (one flat colour: an empty ground between scenes, a black or white flash).
+  A dip through the background lasts 3 frames at most; a longer empty gap reads as a broken video.
+  A designed cut to black at the very end (`chaotic`'s outro) may run 15 frames.
+- **G-end:** the video ends at most 1.4s after the last caption, or 3.5s when `credits.txt` exists (the outro credit line needs 2.5s).
+  Under 0.5s is a note: the result may be cut off.
 
 A FAIL is fixed and re-rendered, never argued; quote both lines in the delivery report.
 Adapted from motionmaxxing's G2 and G3 (Apache-2.0); mid-video holds aren't gated, because showhow holds results on purpose.

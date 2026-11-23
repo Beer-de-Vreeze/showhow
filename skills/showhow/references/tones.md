@@ -254,7 +254,7 @@ TRANSPORTATION WAS TOO CALM.
 TUSKS-FIRST PICKUP
 ```
 
-**Outro style:** The name slams in. Tagline hits. Cut to black.
+**Outro style:** The name slams in. Tagline hits. Cut to black, held 0.5s at most (`video_gates.py` allows 15 blank frames at the very end).
 ```
 UBER FOR WILD BOARS
 On-demand chaos, now with routing.

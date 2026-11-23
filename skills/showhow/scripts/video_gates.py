@@ -5,7 +5,8 @@
 
 G-blank: no run of more than 3 consecutive blank frames (one flat colour: an empty ground,
          a black or white flash). Catches dead frames and flash frames the eye skims past.
-G-end:   the video ends no more than 1.4s after the last caption (needs --srt); 3.0s when a
+         A designed cut to black at the very end may run 15 frames (0.5s at 30fps).
+G-end:   the video ends no more than 1.4s after the last caption (needs --srt); 3.5s when a
          credits.txt sits next to the srt, because the outro credit line needs 2.5s with no caption
          over it. Under 0.5s is a note: the result may cut off before the viewer has read it.
 
@@ -22,23 +23,31 @@ import subprocess
 import sys
 from pathlib import Path
 
-FLAT_SPREAD = 10  # max-min of Y, U and V below this = one flat colour (H.264 noise stays under it)
+# max-min of Y, U and V below this = one flat colour (H.264 noise stays under it).
+# shortcut: heavy grain or a vignette over an empty ground reads as busy, and a near-black real frame
+# can read as blank; upgrade to an edge or entropy measure if either shows up in a real render.
+FLAT_SPREAD = 10
 MAX_BLANK_RUN = 3
+END_BLACK_MAX = 15  # frames: a designed cut to black at the very end (energy outros) may run 0.5s at 30fps
 END_TAIL_MAX = 1.4
-END_TAIL_MAX_CREDITS = 3.0  # 2.5s credit line + 0.5s result hold
+END_TAIL_MAX_CREDITS = 3.5  # 2.5s credit line + the outro's entrance + a short result hold
 END_TAIL_MIN = 0.5
 
 
 def blank_runs(frames: list[tuple[float, int]]) -> list[tuple[float, int]]:
-    """frames: (time, widest Y/U/V spread). Returns (start time, length) of blank runs over MAX_BLANK_RUN."""
-    runs, start, count = [], 0.0, 0
-    for t, spread in frames + [(0.0, FLAT_SPREAD)]:  # sentinel closes a trailing run
+    """frames: (time, widest Y/U/V spread). Returns (start time, length) of blank runs over MAX_BLANK_RUN.
+    A run that reaches the last frame is allowed up to END_BLACK_MAX frames."""
+    runs, start = [], None
+    for i, (_, spread) in enumerate(frames + [(0.0, FLAT_SPREAD)]):  # sentinel closes a trailing run
         if spread < FLAT_SPREAD:
-            start, count = (t, 1) if count == 0 else (start, count + 1)
+            start = i if start is None else start
             continue
-        if count > MAX_BLANK_RUN:
-            runs.append((start, count))
-        count = 0
+        if start is not None:
+            count = i - start
+            limit = END_BLACK_MAX if i == len(frames) else MAX_BLANK_RUN
+            if count > limit:
+                runs.append((frames[start][0], count))
+            start = None
     return runs
 
 

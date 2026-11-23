@@ -86,7 +86,7 @@ Plan about 2.5 words per second.
 |---|---|---|
 | `clean` | Neutral, precise, product docs; no music unless `--music` | 6-12s per step; cuts between screens |
 | `friendly` | Warm, patient, explains why in half a sentence | 8-15s per step, max 5 steps; soft fades |
-| `release` | High energy around clear demos: punchy hook, change cards with "New"/"Fixed" tags, beat-locked reveals; "You can now..." | 10-20s per change; fast slides/zooms between changes, calm demos inside |
+| `release` | High energy around clear demos: punchy hook, change cards with "New"/"Fixed" tags, beat-locked reveals; the version slam may be the one 3D moment (a WebGL block, `../hyperframes/references/types/3d.md`), the changes stay on the flat real UI; "You can now..." | 10-20s per change; fast slides/zooms between changes, calm demos inside |
 | `quick-tip` | One trick, 1-3 actions | 5-8s per action; cuts, no recap |
 | `playful`, `polished`, `yc-parody`, `chaotic`, `deadpan`, `cinematic`, `app-store` | The energy tones at teaching length: their hook, typography, transitions and outro; steps keep the script rules | Rhythm from `references/tones.md`, length from the narration and the shapes above; `chaotic` (1-2s), `playful` and `app-store` (2-3s) also cut inside narration lines for topic points and steps without a UI; scored like `release` |
 
@@ -122,7 +122,7 @@ Before the full render, look at stills from every step at the highlight and at t
 A plain crossfade between two busy layouts makes a muddy double exposure; stagger it (old content out, then new content in) or dip through the background for 3 frames at most (a longer empty gap fails G-blank below).
 Describe each still in one sentence (what is on screen, what the viewer should look at) before judging it; a frame you can't describe, or that reads as an empty slide, is a finding.
 Check: the ring sits exactly on the control the voice names (zoom in on a crop when unsure), its label is legible, captions, the cursor or a dragged item don't cover it, the counter is right and uncovered, no text is clipped inside a fixed-width pill or callout (`check` misses these), no bullet or icon shows before its text, a typing caret follows the typed text, contrast is fine, no flash frames, and the opening and every card read with the sound off.
-Motion follows `references/design-floor.md` (values measured by motionmaxxing): entrances do most of their travel in the first 4-8 frames (typical move 0.33s), no bounce, nothing scales up from zero, exits shorter than entrances; the cursor rests 0.2-0.3s on the target before a 2-frame press (the kit's `ripple`), and the target answers a frame later.
+Motion follows `references/design-floor.md` (values measured by motionmaxxing): entrances do most of their travel in the first 4-8 frames (typical move 0.33s), no bounce, nothing scales up from zero, exits shorter than entrances (a style's own slams, pops and ALL CAPS in `references/tones.md` win); the cursor rests 0.2-0.3s on the target before it presses (the kit's `ripple`: a 2-frame squash, a 3-frame spring back), and the target answers a frame later.
 On the title, one step and the outro, also check the design floor: none of its Refuse items in the chrome (no eyebrow label over the title, no blurred blob or full-frame gradient background), at most two type families, tracking no tighter than -0.04em, concentric radii, and one shared motion for every card.
 SFX clips get `data-duration` equal to the file's real length, or `check` warns about the slot.
 Then render `<video-name>.mp4` with the wrapper, never `npx hyperframes render` directly: a quiet render can exit non-zero with no message and no file.
@@ -133,7 +133,7 @@ If the composition tweens layout (`height`, `width`, position, padding), add `--
 Then pull frames from the mp4 itself at every ring and result moment and look at them; snapshots alone don't prove the render:
 `uv run --project <skill-dir>/scripts <skill-dir>/scripts/frame_sheet.py <video-name>.mp4 --overlays work/rings.overlays.json -o work/check.jpg` samples every baked ring; add `--at <t1,t2,...>` for other moments and `--crop x,y,w,h` to judge small rings.
 A ring missing from the mp4 but present in snapshots is a render bug, not a timing bug: bake it into the still instead of re-rendering with other flags.
-Once `captions.srt` is written, run the video gates and fix any FAIL, never argue it: `uv run --project <skill-dir>/scripts <skill-dir>/scripts/video_gates.py <video-name>.mp4 --srt captions.srt`. G-blank: no run of more than 3 blank (one-colour) frames. G-end: the video ends at most 1.4s after the last caption, 3.0s when `credits.txt` exists. Quote both lines in the report (`references/step-4-deliver.md`, "Run the video gates").
+Once `captions.srt` is written, run the video gates and fix any FAIL, never argue it: `uv run --project <skill-dir>/scripts <skill-dir>/scripts/video_gates.py <video-name>.mp4 --srt captions.srt`. G-blank: no run of more than 3 blank (one-colour) frames. G-end: the video ends at most 1.4s after the last caption, 3.5s when `credits.txt` exists; a designed cut to black at the very end may run 15 frames. Quote both lines in the report (`references/step-4-deliver.md`, "Run the video gates").
 Keep creation and rendering local; publishing or uploading needs a separate explicit request.
 
 ## 4. Deliver

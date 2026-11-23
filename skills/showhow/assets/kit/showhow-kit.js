@@ -10,7 +10,8 @@
 //   kit.counter(4.0, 2);                             // "#sh-count-1" out, "#sh-count-2" in
 (function () {
   window.showhowKit = function (tl, opts) {
-    const o = Object.assign({ root: "#root", cursor: "#sh-cursor", cursorStart: [0, 0], countPrefix: "#sh-count-" }, opts);
+    // tip: offset from the cursor element's top-left to its arrow tip, shared by move and the press.
+    const o = Object.assign({ root: "#root", cursor: "#sh-cursor", cursorStart: [0, 0], countPrefix: "#sh-count-", tip: [8, 5] }, opts);
     const el = (sel) => {
       const e = typeof sel === "string" ? document.querySelector(sel) : sel;
       if (!e) throw new Error(`showhowKit: no element ${sel}`);
@@ -41,19 +42,18 @@
       tl.fromTo(r, { opacity: 1 }, { opacity: 0, duration: fadeOut, immediateRender: false }, t + d);
     }
 
-    // tip: offset from the cursor element's top-left to its arrow tip.
     let cur = o.cursorStart.slice();
     gsap.set(el(o.cursor), { x: cur[0], y: cur[1] });
-    function move(t, target, d = 0.6, { tip = [8, 5], dy = 0 } = {}) {
+    function move(t, target, d = 0.6, { tip = o.tip, dy = 0 } = {}) {
       const [x, y, w, h] = R(target, 0);
       const to = [x + w / 2 - tip[0], y + h / 2 - tip[1] + dy];
       tl.fromTo(o.cursor, { x: cur[0], y: cur[1] }, { x: to[0], y: to[1], duration: d, ease: "power2.inOut", immediateRender: false }, t);
       cur = to;
     }
 
-    // press: the cursor squashes for about 2 frames at 30fps around its tip, so the click reads as physical
+    // press: the cursor squashes over 2 frames and springs back over 3 (30fps) around its tip, so the click reads as physical
     // (timing from motionmaxxing, Apache-2.0). Pass press: false when no cursor is on screen.
-    function ripple(t, target, rippleSel, { dy = 0, duration = 0.5, press = true, tip = [8, 5] } = {}) {
+    function ripple(t, target, rippleSel, { dy = 0, duration = 0.5, press = true, tip = o.tip } = {}) {
       const [x, y, w, h] = R(target, 0);
       const r = el(rippleSel);
       place(r, x + w / 2, y + h / 2 + dy);

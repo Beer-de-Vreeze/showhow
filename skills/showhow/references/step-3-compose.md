@@ -96,7 +96,7 @@ Scene summary:
 ## Teaching elements
 - Step counter: [position, format "Step 2 of 4" / "2 of 3"], same place in every step scene
 - Highlight: [ring / spotlight / zoom], accent color [value], one target at a time
-- Cursor: [system-like arrow], smooth 0.5-0.8s moves, rests 0.2-0.3s on the target before it clicks, a 2-frame press (the kit's `ripple` does it), and the target answers (pressed state, menu opening) a frame after the press
+- Cursor: [system-like arrow], smooth 0.5-0.8s moves, rests 0.2-0.3s on the target before it clicks, a quick press (the kit's `ripple`: a 2-frame squash, a 3-frame spring back), and the target answers (pressed state, menu opening) a frame after the press
 - Captions: [band position], max 2 lines x ~42 chars, high contrast plate, never over the highlight
 - Title and outro cards: [text]
 - Credit line: [the short credits from `credits.txt`, or none]
@@ -167,11 +167,11 @@ Use the showhow kit for rings, the cursor, click ripples and the step counter: i
 <script>
   const tl = gsap.timeline({ paused: true });
   document.fonts.ready.then(() => {
-    // defaults: cursor "#sh-cursor", countPrefix "#sh-count-", cursorStart [0, 0]
+    // defaults: cursor "#sh-cursor", countPrefix "#sh-count-", cursorStart [0, 0], tip [8, 5] (arrow tip offset)
     const kit = showhowKit(tl, { root: "#root", cursorStart: [960, 900] });
-    kit.move(0.8, "#btn-new");                    // cursor tip to the target centre; call moves in time order
+    kit.move(0.8, "#btn-new");                    // arrives at 1.4s; call moves in time order
     kit.ring(1.4, "#btn-new", "#ring-01", 1.4);   // { pad, dy, fadeIn, fadeOut }
-    kit.ripple(1.5, "#btn-new", "#ripple-01");    // { dy, duration }
+    kit.ripple(1.65, "#btn-new", "#ripple-01");   // rests 0.25s first; { dy, duration, press: true }: press = 2-frame squash, 3-frame spring back
     kit.counter(3.0, 2);                          // span 1 out, span 2 in
     window.__timelines["<scene-id>"] = tl;
   });

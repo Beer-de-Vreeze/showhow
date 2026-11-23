@@ -20,7 +20,21 @@ def units() -> None:
     # 3 blank frames pass, 4 fail, a trailing run is still reported.
     assert blank_runs([(i * f, flat if 5 <= i < 8 else busy) for i in range(20)]) == []
     assert blank_runs([(i * f, flat if 5 <= i < 9 else busy) for i in range(20)]) == [(5 * f, 4)]
-    assert blank_runs([(i * f, flat if i >= 15 else busy) for i in range(20)]) == [(15 * f, 5)]
+    # A cut to black at the very end may run 15 frames; 16 fail.
+    assert blank_runs([(i * f, flat if i >= 15 else busy) for i in range(30)]) == []
+    assert blank_runs([(i * f, flat if i >= 14 else busy) for i in range(30)]) == [(14 * f, 16)]
+    # The same 15 frames mid-video still fail.
+    assert blank_runs([(i * f, flat if 5 <= i < 20 else busy) for i in range(30)]) == [(5 * f, 15)]
+
+    with tempfile.TemporaryDirectory() as d:
+        bad = Path(d) / "c.srt"
+        bad.write_text("no cues here\n", encoding="utf-8")
+        try:
+            last_caption_end(bad)
+        except SystemExit as e:
+            assert "no cue times" in str(e), e
+        else:
+            raise AssertionError("expected SystemExit for an srt without cues")
 
 
 def gates(video: Path, srt: Path) -> subprocess.CompletedProcess:
@@ -54,7 +68,10 @@ def end_to_end() -> None:
         assert cli.returncode == 1 and "G-blank FAIL" in cli.stdout and "G-end FAIL" in cli.stdout, cli.stdout
         (Path(d) / "credits.txt").write_text("Music: test\n", encoding="utf-8")
         cli = gates(video, srt)
-        assert "G-end PASS" in cli.stdout and "credits.txt found" in cli.stdout, cli.stdout
+        assert "G-end PASS:" in cli.stdout and "credits.txt found" in cli.stdout, cli.stdout
+        # Last caption ends 0.1s before the video: passes with a note.
+        srt.write_text("1\n00:00:00,000 --> 00:00:05,200\nHello\n", encoding="utf-8")
+        assert "G-end PASS (note)" in gates(video, srt).stdout
 
 
 if __name__ == "__main__":
