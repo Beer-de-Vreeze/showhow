@@ -62,22 +62,22 @@ def last_caption_end(srt: Path) -> float:
 def measure(video: Path) -> tuple[list[tuple[float, int]], float]:
     probe = subprocess.run(
         ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(video)],
-        capture_output=True, text=True, check=False,
+        capture_output=True, encoding="utf-8", errors="replace", check=False,
     )
     if probe.returncode != 0 or not probe.stdout.strip():
-        raise SystemExit(f"ffprobe could not read {video}: {probe.stderr.strip()}")
+        raise SystemExit(f"ffprobe could not read {video}: {(probe.stderr or '').strip()}")
     duration = float(probe.stdout.strip())
 
     result = subprocess.run(
         ["ffmpeg", "-v", "info", "-nostats", "-i", str(video), "-an",
          "-vf", "signalstats,metadata=mode=print:file=-", "-f", "null", "-"],
-        capture_output=True, text=True, check=False,
+        capture_output=True, encoding="utf-8", errors="replace", check=False,
     )
     if result.returncode != 0:
-        raise SystemExit(f"ffmpeg failed on {video}: {result.stderr.strip()[-500:]}")
+        raise SystemExit(f"ffmpeg failed on {video}: {(result.stderr or '').strip()[-500:]}")
 
     frames, t, stats = [], None, {}
-    for line in result.stdout.splitlines():
+    for line in (result.stdout or "").splitlines():
         if line.startswith("frame:"):
             if t is not None:
                 frames.append((t, spread(stats)))

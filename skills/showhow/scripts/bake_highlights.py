@@ -29,7 +29,7 @@ cuts the spans itself, so no video re-implements the rounding and clamping rules
 }
 It writes one still per span of identical active rings and <spec>.overlays.json next to the spec:
 [{"id", "src", "in", "in_dur", "out", "out_dur"}] in seconds. Fade each "#img-<id>" in at "in" and
-out at "out". A ring still up when its screen is replaced ends with that cut. Times are compared in
+out at "out". A ring still up when its screen is replaced ends with that cut: it fades with the screen, or vanishes on a hard cut. Times are compared in
 whole centiseconds, ids are checked as CSS-safe, and a ring that lands in no span is an error. Run:
   uv run --project <skill-dir>/scripts <skill-dir>/scripts/bake_highlights.py work/rings.json
 """
@@ -72,13 +72,14 @@ def plan(spec: dict) -> tuple[list[dict], list[dict]]:
     rings = []
     for r in spec["rings"]:
         t = cs(r["t"])
-        ring = {**r, "t": t, "end": t + cs(r["d"]), "out": None}
+        ring = {**r, "t": t, "end": t + cs(r["d"]), "cut": None}
         on = [s for s in shows if s["t"] <= t]
         if not on or on[-1]["name"] != r["screen"]:
             raise SystemExit(f"ring at {r['t']}s is on {r['screen']} but {on[-1]['name'] if on else 'nothing'} shows then")
         nxt = next((s for s in shows if s["t"] > t), None)
         if nxt and nxt["t"] < ring["end"] + cs(RING_OUT):
-            ring["end"], ring["out"] = nxt["t"], nxt["fade"]
+            # The ring ends with its screen: fade with the screen, or vanish on a hard cut.
+            ring["end"], ring["cut"] = nxt["t"], nxt["fade"] or 0.01
         if ring["end"] <= t:
             raise SystemExit(f"ring at {r['t']}s on {r['screen']} has no time before its screen is replaced")
         rings.append(ring)
@@ -112,7 +113,7 @@ def plan(spec: dict) -> tuple[list[dict], list[dict]]:
                 "id": oid, "src": src,
                 "in": a / 100, "in_dur": RING_SWAP if joined_before else RING_IN,
                 "out": (b + cs(RING_SWAP)) / 100 if joined_after else b / 100,
-                "out_dur": 0.01 if joined_after else (ender and ender["out"]) or RING_OUT,
+                "out_dur": 0.01 if joined_after else (ender and ender["cut"]) or RING_OUT,
             })
     return stills, overlays
 
@@ -142,12 +143,11 @@ def bake(spec_path: Path) -> list[Path]:
     scale = float(spec.get("scale", 1))
     default_pad = float(spec.get("pad", 6))
     rgb = ImageColor.getrgb(spec.get("color", "#0078d4"))[:3]
-    stills = spec.get("stills")
+    stills, overlays = spec.get("stills"), None
     if "rings" in spec:
         stills, overlays = plan(spec)
-        out_path = spec_path.with_suffix(".overlays.json")
-        out_path.write_text(json.dumps(overlays, indent=1), encoding="utf-8")
-        print(f"wrote {out_path} ({len(overlays)} overlays)")
+    if not stills:
+        raise SystemExit(f"{spec_path}: give \"rings\" (timeline mode) or \"stills\"")
     written = []
     for still in stills:
         src = (base / still["src"]).resolve()
@@ -165,11 +165,14 @@ def bake(spec_path: Path) -> list[Path]:
                 (ring["x"] + ring["w"] + pad) * scale,
                 (ring["y"] + ring["h"] + pad) * scale,
             ]
-            if rect[0] < 0 or rect[1] < 0 or rect[2] > img.width or rect[3] > img.height:
+            box = [ring["x"] * scale, ring["y"] * scale, (ring["x"] + ring["w"]) * scale, (ring["y"] + ring["h"]) * scale]
+            if box[0] < 0 or box[1] < 0 or box[2] > img.width or box[3] > img.height:
                 raise SystemExit(
                     f"{still['out']}: ring {ring} falls outside the {img.width}x{img.height} image "
                     f"at scale {scale}; check the scale and the box units"
                 )
+            # Only the padding sticks out (a target at the image edge): pull the ring inside.
+            rect = [max(rect[0], 0), max(rect[1], 0), min(rect[2], img.width), min(rect[3], img.height)]
             zoom = float(ring.get("zoom", 1))
             if zoom <= 0:
                 raise SystemExit(f"{still['out']}: zoom must be positive")
@@ -177,6 +180,10 @@ def bake(spec_path: Path) -> list[Path]:
         out.parent.mkdir(parents=True, exist_ok=True)
         img.convert("RGB").save(out)
         written.append(out)
+    if overlays is not None:  # only after every still exists, so it never points at a missing file
+        out_path = spec_path.with_suffix(".overlays.json")
+        out_path.write_text(json.dumps(overlays, indent=1), encoding="utf-8")
+        print(f"wrote {out_path} ({len(overlays)} overlays)")
     return written
 
 

@@ -57,6 +57,9 @@ def render(
     extra: list[str] | None = None,
     run: Callable[[list[str]], tuple[int, str]] = run_cli,
 ) -> None:
+    # A missing composition fails the same way every time: say so instead of retrying a long render.
+    if not (composition / "index.html").is_file():
+        raise SystemExit(f"no index.html in {composition}; pass the composition folder")
     # shutil.which finds npx.cmd on Windows, which subprocess can't resolve from a bare "npx".
     cmd = [shutil.which("npx") or "npx", "hyperframes", "render", str(composition), "--output", str(output)]
     if not fast_capture:

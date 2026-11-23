@@ -2,7 +2,13 @@
   uv run --project <skill-dir>/scripts python <skill-dir>/scripts/test_bake_highlights.py
 """
 
-from bake_highlights import plan
+import json
+import tempfile
+from pathlib import Path
+
+from PIL import Image
+
+from bake_highlights import bake, plan
 
 BOX = {"x": 10, "y": 10, "w": 50, "h": 20}
 
@@ -38,6 +44,44 @@ def main() -> None:
 
     expect_exit({"shows": shows, "rings": [{"t": 31, "d": 1, "screen": "board", **BOX}]}, "menu shows then")
     expect_exit({"shows": [{"t": 0, "name": "a~b"}], "rings": [{"t": 1, "d": 1, "screen": "a~b", **BOX}]}, "CSS-safe")
+
+    # A hard cut (fade 0 or none) ends the ring at the cut instead of fading it over the next screen.
+    for fade in (0, None):
+        _, ov = plan({"shows": [{"t": 0, "name": "board"}, {"t": 30, "name": "menu", "fade": fade}],
+                      "rings": [{"t": 29, "d": 5, "screen": "board", **BOX}]})
+        assert ov[0]["out"] == 30 and ov[0]["out_dur"] == 0.01, ov[0]
+
+    with tempfile.TemporaryDirectory() as d:
+        base = Path(d)
+        (base / "screens").mkdir()
+        Image.new("RGB", (200, 100), "white").save(base / "screens" / "board.png")
+        spec = base / "rings.json"
+
+        # A target at the image edge: the padding is clamped instead of failing.
+        spec.write_text(json.dumps({"pad": 6, "shows": [{"t": 0, "name": "board"}],
+                                    "rings": [{"t": 1, "d": 1, "screen": "board", "x": 0, "y": 0, "w": 50, "h": 20}]}), encoding="utf-8")
+        assert [p.name for p in bake(spec)] == ["board-r0.png"]
+        assert (base / "rings.overlays.json").exists()
+
+        # A box really outside the image fails, and leaves no overlays file pointing at missing stills.
+        (base / "rings.overlays.json").unlink()
+        spec.write_text(json.dumps({"shows": [{"t": 0, "name": "board"}],
+                                    "rings": [{"t": 1, "d": 1, "screen": "board", "x": 180, "y": 0, "w": 50, "h": 20}]}), encoding="utf-8")
+        try:
+            bake(spec)
+        except SystemExit as e:
+            assert "falls outside" in str(e), e
+        else:
+            raise AssertionError("expected a box outside the image to fail")
+        assert not (base / "rings.overlays.json").exists()
+
+        spec.write_text(json.dumps({"scale": 2}), encoding="utf-8")
+        try:
+            bake(spec)
+        except SystemExit as e:
+            assert "give" in str(e), e
+        else:
+            raise AssertionError("expected a spec without rings or stills to fail")
     print("ok")
 
 
