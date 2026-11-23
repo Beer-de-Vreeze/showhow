@@ -197,7 +197,7 @@ Image swaps always rendered, so draw the ring into a copy of the still and fade 
 1. Record each ring as `{ t, d, screen, x, y, w, h, pad, zoom }` instead of emitting tweens, and each screen change as `{ t, name, fade }`; `zoom` is the camera's on-screen scale at `t`, so the stroke looks the same at any zoom.
 2. Write them as a timeline spec (`rings` + `shows`, format in the script's docstring) and run `uv run --project <skill-dir>/scripts <skill-dir>/scripts/bake_highlights.py work/rings.json`.
    The script cuts each screen's time at every ring start and end, bakes one still per span (overlapping rings share a still), clamps a ring that outlives its screen to that cut, compares times in whole centiseconds, and fails on a ring that lands in no span, a ring on the wrong screen, or an id that isn't a CSS-safe selector.
-   Don't re-implement this in the build script: float noise in hand-written span code dropped a ring before.
+   Don't re-implement the span cutting in the build script.
 3. Read `work/rings.overlays.json` and put one `<img id="img-<id>">` per entry above the clean screens in `#world`.
    Fade it in at `in` over `in_dur` and out at `out` over `out_dur`.
 4. Copy the ringed stills (`src` in each entry, relative to the spec) into the composition's assets.
@@ -265,11 +265,11 @@ Before moving to delivery, verify:
 - [ ] Every claim about what the product does, its names and numbers, appears in the project; fictional demo data is listed in the plan.
 - [ ] The step or change counter is present and consistent.
 - [ ] Captions are timed and never cover the highlighted target.
-- [ ] Design floor, judged on snapshots of the title, one step and the outro: no BANNED item in the chrome, contrast passes on every card and caption plate, at most two type families with tracking no tighter than -0.04em, nested radii are concentric, and every card enters and leaves with the same motion.
+- [ ] Design floor, judged on `npx hyperframes snapshot` frames of the title, one step and the outro: no BANNED item in the chrome, contrast passes on every card and caption plate, at most two type families with tracking no tighter than -0.04em, nested radii are concentric, and every card enters and leaves with the same motion.
 - [ ] When `credits.txt` has lines, the outro shows the credit line for at least 2.5s with no caption over it.
 - [ ] No real personal data, hostnames, IDs or secrets appear anywhere.
 - [ ] The narration names every result that matters; nothing important is only visible.
 - [ ] Mute test: with the sound off, the first 3 seconds and every title or change card still say what the video is about.
 - [ ] No flash frames or strobing; nothing flashes more than three times in any second.
 - [ ] Total duration is within the mode limits.
-- [ ] `hyperframes check` passes, or any blocker is documented for the user.
+- [ ] `hyperframes check` passes with zero errors.

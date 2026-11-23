@@ -47,5 +47,5 @@ Never write a rule the user did not express, and never record their preferences 
 ## `/showhow learn <output-dir>`
 
 Learns from a past run without making a video.
-Read `<output-dir>/showhow-plan.md` and `composition-brief.md` for what the video did, and ask the user what they changed or disliked in that video.
+Read `<output-dir>/showhow-plan.md` (and `composition-brief.md` if it exists) for what the video did, and ask the user what they changed or disliked in that video.
 Sort their answers with the table above, write the lasting ones, show the diff, and stop.

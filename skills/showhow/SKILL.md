@@ -1,255 +1,169 @@
 ---
 name: showhow
-description: Turn the current project into a narrated instructional video (how to do one task) or a feature update video (what's new in a release) using Hyperframes, or a general video for any process, third-party app, physical task or topic without a codebase (`--mode general`, researching official docs, screenshots and topic images). Steps outside the code (a vendor portal before a connector) work in any mode. 11 styles (teaching and energy), frame-preset themes, Kokoro voices, and a business share post; `/showhow options` lists them. Use when someone says "/showhow", "make a how-to video", "make a tutorial for X", "make a what's new video", "feature update video", "release video for 2.4", "make a video about X", "explain how X works in a video", or wants to show users how something works. Reads the project code, docs and git history directly - no live URL or screen recording needed.
+description: Turn a project into a narrated how-to video (one task), a feature update video (what's new in a release), or a general video for a process, third-party app, physical task or topic outside the code, with captions, chapters, a written companion and a share post, rendered with Hyperframes. Reads the project's code, docs and git history directly; no screen recording needed. Use when someone says "/showhow", "make a how-to video", "make a tutorial for X", "what's new video", "release video for 2.4", "make a video about X", or wants to show users how something works.
 ---
 
 # /showhow
 
 Show people how it works, and what's new.
+It should feel like a good product support video: calm, exact, and easy to follow the first time.
 
-## Invocation dispatch (must happen first)
+Usage: `/showhow [task, release or topic] [options]`. Options (flags or plain language):
 
-**Install.** If the input is exactly `install`, don't make a video.
-On Windows, run `powershell -NoProfile -ExecutionPolicy Bypass -File <skill-dir>/scripts/install.ps1`, report the result, and stop.
-Tell the user to restart their agent app afterwards: a running session keeps the PATH and environment it started with, so `ffmpeg`, `whisper-cli` and `HYPERFRAMES_PYTHON` stay invisible to it.
-Elsewhere, say the installer is Windows-only, list what it installs (Node.js LTS, ffmpeg, Python 3.12, uv, Docker Desktop (for `render --docker`), a Python venv for Kokoro voice and MusicGen music (`kokoro-onnx soundfile transformers torch numpy`, pointed to by `HYPERFRAMES_PYTHON`, with the `facebook/musicgen-small` model pre-downloaded), whisper-cpp (`whisper-cli` on PATH), optionally earshot for audio QA (`uv tool install` from `github.com/Leonxlnx/earshot` v0.2.0 with CPU torch, models pre-downloaded by `earshot doctor --load`), the Hyperframes skills via `npx skills add heygen-com/hyperframes`, then `npx hyperframes browser ensure`), and stop.
+| Option | Default |
+|---|---|
+| `--mode howto\|update\|general` | inferred: a task -> `howto`; a version, tag, PR, range or "what's new" -> `update`; a task this project's code can't show (a process, a third-party app, a physical task) or a topic -> `general` |
+| `--style <name>` (alias `--tone`; see Styles) or freeform | `clean` for howto and general, `release` for update |
+| `--format landscape\|vertical\|square` | landscape (1920x1080; vertical 1080x1920, square 1080x1080), 30fps |
+| `--audience <who>` | inferred |
+| `--theme <frame preset>` (`../hyperframes/assets/frame-presets/`) | product theme; general: the preset that fits the topic |
+| `--voice <Kokoro id>` (`npx hyperframes tts --list`) | `af_heart` |
+| `--title <text>`, `--duration <seconds>` | inferred; the narration sets the length within the limits below |
+| `--no-voice`, `--no-captions`, `--no-sfx` | all on |
+| `--music` / `--no-music` | music bed off for `clean`, `friendly`, `quick-tip`, on for `release`; `--no-music` wins |
 
-**Options.** If the input is exactly `options`, don't make a video: list the 11 styles (one line each, from the Style system tables), the themes (the folder names in `../hyperframes/assets/frame-presets/` next to this skill), and the voices (`npx hyperframes tts --list`), each with the flag that picks it, and stop.
+**Other inputs.** `install`: on Windows run `powershell -NoProfile -ExecutionPolicy Bypass -File <skill-dir>/scripts/install.ps1`, report the result, tell the user to restart their agent app (a running session keeps its old PATH), and stop; elsewhere say the installer is Windows-only, list what README.md "Install" lists, and stop.
+`options`: list the styles, the themes (folder names in `../hyperframes/assets/frame-presets/`) and the voices, each with its flag, and stop.
+`learn <output-dir>`: make no video; record lessons from that run (`references/house-style.md`, "`/showhow learn`") and stop.
 
-**Learn.** If the input is `learn <output-dir>`, don't make a video: follow "`/showhow learn`" in [references/house-style.md](references/house-style.md) and stop.
+`<skill-dir>` is the folder holding this file (Claude Code prints it as "Base directory for this skill"); bundled files are in `assets/` and `scripts/`.
+If `ffmpeg`, `uv` or `whisper-cli` is missing, or `HYPERFRAMES_PYTHON` is empty, the session started before the installer ran: ask the user to restart the app; don't reinstall.
 
-**Model check.** If you are Claude Opus 5.5 and the invocation doesn't ask for the full workflow (`--full`, "use the full showhow"), switch to showhow-slim: read `<skill-dir>/slim.md` (bundled here) and follow it for the rest of this run instead of this file.
-Pass along the user's input and pass any other options (`--mode`, `--no-voice`, ...) as plain-language direction.
-Tell the user in one line first, e.g. "You're on Opus 5.5, so I'm using /showhow-slim: I build the whole video myself. Say 'use the full showhow' to switch back."
-If you are any other model, or can't tell which model you are, skip this check.
+**Output.** First decide `<video-name>`: a 2-5 word kebab-case slug of the video's title (`connect-confluence`, `whats-new-2-4-0`).
+Write everything to `~/Downloads/showhow-<video-name>/` (Windows: `%USERPROFILE%\Downloads`), the `<output-dir>`; if it exists, append `-YYYY-MM-DD-HHmmss`.
+Intermediate files go in `<output-dir>/work/`, the Hyperframes project in `<output-dir>/composition/`; run every command below from `<output-dir>` unless it says otherwise.
+Name the video `<video-name>.mp4` and the poster `<video-name>.jpg`; the other files keep their fixed names.
 
-Before inspecting the project, parse the complete `/showhow` invocation and decide the mode (see below).
-Then read the user's house style, `~/.showhow/verdicts.md` and `~/.showhow/edits.md`, if they exist: [references/house-style.md](references/house-style.md) says how their defaults and rules combine with the flags and the teaching laws.
+**House style.** Before anything else, read `~/.showhow/verdicts.md` and `~/.showhow/edits.md` if they exist (`references/house-style.md`): typed flags beat its `## Defaults`, which beat the defaults above; its `## Always` and `## Never` rules join the laws below but never override a teaching law, accessibility or "Show the real product".
 
-## What this skill does
+## 1. Inspect
 
-1. Decides the mode: a **how-to** for one task, a **feature update** for a release, or a **general** video for a task or topic outside the code.
-2. Reads the project code, docs and (for updates) git history to find the real flow.
-3. Writes a narration script and a step-by-step storyboard.
-4. Hands a focused composition brief to Hyperframes.
-5. Validates, renders, and writes captions, chapters, a written companion and a share post.
+**howto:** trace the task through the code the way a user does it: the entry point (route, sidebar item, menu), every control they touch in order with its **exact on-screen label**, what visibly happens after each action, prerequisites (roles, settings, data), the one mistake or error a user is most likely to hit and how they recover, and where the result lives afterwards.
+More than about 8 actions means two tasks: propose a split and make part 1.
 
-## Modes
+**Outside steps (any mode) and general:** a step this code can't show (an API token made in Atlassian before connecting Confluence, a process, a physical task) is tagged `outside`; `general` is a video of only outside steps. Read `references/general.md` and follow it. In short:
+- Facts come from the user's material, then the vendor's official docs, then screenshots of the real pages in your browser (never sign in or commit a real change yourself; ask the user to sign in), then only well-established knowledge. Never invent a label: describe it and list it as unverified.
+- Rebuild screens from those screenshots with fictional data; never rebuild beta or preview screens. A rebuilt third-party screen shows "Shown as of <Mon YYYY>", and the outro credit line adds "<Product> is a trademark of <owner>. Not affiliated."
+- Topic pictures: the user's, then `media-use resolve --type image`, then freely licensed photos (license in `work/sources.md`, attribution in `credits.txt` and on the outro credit line); invented step cards or diagrams only where nothing real exists, and a different picture for every point.
+- A mechanism gets a schematic diagram; when the shape itself is the point (parts that fit together), one schematic 3D object in three.js via Hyperframes (`../hyperframes/references/types/3d.md`); never 3D for UI, screens or charts.
+- Physical tasks: ask for first-person, hands-visible photos.
 
-| Mode | Use when | The viewer should afterwards |
-|---|---|---|
-| `howto` | The user names a task or feature: "how to add project knowledge", "tutorial for prompt versions" | Be able to do the task themselves, without the video |
-| `update` | The user names a version, release, tag, PR, commit range, or says "what's new" | Know what changed, where to find it, and why it matters to them |
-| `general` | The task isn't in this project's code: a process, a third-party app, a physical task ("how to share a calendar in Outlook"), or a topic without steps ("how a train gets its power") | Be able to do the task themselves, without the video, or explain the topic |
+**update:** pin the release range (tags, version-bump commits, CHANGELOG; state the range you chose).
+Read the team's own release notes first (CHANGELOG, release commit subjects, PR titles, features/status docs), then the commits in the range.
+Keep only user-visible changes, rank them, keep 2-5, and trace each into the UI like a howto: what it is, where it lives, one or two actions that show it, why it matters to the viewer.
 
-Infer the mode from the input.
-`general` follows `howto` everywhere (rubric, pattern, length limits, styles) except where [references/general.md](references/general.md) says otherwise; read it before Step 1.
-Any mode can mix in **outside steps** that this code can't show, like creating an API token in Atlassian before connecting Confluence: tag them `outside` and gather, capture and rebuild them with general.md (official docs, screenshots of the real pages, fictional data).
-If the input names a task and a version ("how to use the new project knowledge in 2.4"), use `howto` for that task and mention the version in the intro.
-If it is still unclear, ask one question.
+**Always:** read the styles: exact colors and fonts of the product's brand or default theme (the one its `:root` defines, or that its theme picker marks as default), never a test fixture's or dev build's; write down the theme id with its background and accent values.
+Read the README and product docs (the product's own names for things) and the UI copy.
 
-## Parsing the invocation
+**Nothing secret or personal leaves this step.** Don't open `.env` files, keys, credentials or anything `.gitignore` excludes for that reason (`references/step-1-inspect.md`, "What to skip").
+No secrets, tokens, tenant or client IDs, internal hostnames, real customer, colleague or user names, emails, or commit authors in anything you produce; use plausible fictional stand-ins on screen and list them in the plan.
 
-```
-/showhow how to add knowledge to a project
-/showhow --mode update 2.4.0
-/showhow what's new since v2.3.0 --style release
-/showhow how to restore a prompt version --format vertical --music
-/showhow --mode general how to book a meeting room (steps pasted below)
-/showhow --mode general how a train gets its power --style cinematic --theme bold-poster --voice am_michael
-/showhow install
-/showhow options
-/showhow learn ~/Downloads/showhow-connect-confluence
-```
+**Gate:** write the answers to the mode's rubric (`references/step-1-inspect.md`) to `work/inspect.md`.
 
-| Option | Values | Default |
-|---|---|---|
-| `--mode` | `howto`, `update`, `general` | inferred |
-| `--style` (alias `--tone`) | preset or freeform description | `clean` for howto and general, `release` for update |
-| `--format` | `landscape`, `vertical`, `square` | `landscape` |
-| `--duration` | seconds | set by the narration (see limits below) |
-| `--audience` | freeform, e.g. "new users", "admins" | inferred from the feature |
-| `--no-voice` | flag | narration on |
-| `--no-captions` | flag | burned-in captions on |
-| `--music` | flag | music bed off for `clean`, `friendly`, `quick-tip`; on for `release` and energy styles |
-| `--no-music` | flag | forces the music bed off in any style; wins over `--music` |
-| `--no-sfx` | flag | click and typing sounds on |
-| `--title` | string | inferred |
-| `--theme` | a frame preset name | product theme; general: picked per topic |
-| `--voice` | a Kokoro voice id | `af_heart` |
+## 2. Script and plan
 
-Narration is **on by default** because an instructional video without a voice or captions does not teach.
-With `--no-voice`, burned-in step captions carry the whole explanation and every step holds longer.
-Voice uses Kokoro via `npx hyperframes tts` (single provider, English).
-If the user asks for another language, check `npx hyperframes tts --list` for a matching voice; if there is none, say so and offer English narration with captions in the requested language.
+Write `showhow-plan.md` using the template in `references/step-2-plan.md`, headings and storyboard fields exactly as given: the scripts below parse it.
 
----
+**Script first; the voice sets the pace.**
+Second person, present tense, 8-16 words per sentence, one sentence per action plus at most one of why.
+Name controls by their exact label.
+No "in this video", "simply", "just", "seamless", "powerful".
+Plan about 2.5 words per second.
 
-## Output directory
+**Say the result:** every result that matters is spoken ("the file now appears under **Knowledge**"), not only shown.
 
-Output goes to the user's Downloads folder (`~/Downloads`; on Windows `%USERPROFILE%\Downloads`), in a folder named after the skill and the video:
+**Name the likely mistake:** at the step where it happens, one line on the error the user is most likely to hit and how to recover ("If **Save** stays grey, fill in the name first"); skip it when Step 1 found none.
 
-```
-~/Downloads/showhow-connect-confluence/
-  connect-confluence.mp4
-  connect-confluence.jpg
-```
+**Shape (howto):** Outcome (3-5s) -> Before you start (only if needed) -> Steps, one action each (6-15s) -> Result (3-6s) -> Now try it, with a concrete example (3-5s). About 2s of silent hold at each subtask boundary (the end of a group of steps that finishes one part of the task). Target 45-120s, hard limit 180s (split into parts beyond that); `quick-tip` 20-40s (limit 60s), 1-3 actions, ending on the result.
 
-- `<video-name>`: a short kebab-case slug of the video's title, 2-5 words (`connect-confluence`, `whats-new-2-4-0`).
-- `<output-dir>` = `~/Downloads/<skill-name>-<video-name>/`, where `<skill-name>` is this skill's name (`showhow`).
-- The video is `<video-name>.mp4` and its poster `<video-name>.jpg`; the other files keep their fixed names.
-- If the folder already exists, append the run's timestamp: `showhow-connect-confluence-2026-05-04-143022/`.
+**Shape (update):** hook: the most visual change already moving with "What's new in [version]" as on-screen text within 3s (3-5s) -> each change: what / where / show / why (10-20s) -> how to get it (3-5s). Target 30-90s, hard limit 120s.
+Every promise on a change card is pictured in its demo, and each change opens on a different screen or crop; a "Fixed" or redesigned screen may morph from the previous release's real screen into the new one (before/after, `references/tones.md`).
 
-Decide the video name after the plan (Step 2) and use it for every output path in that run.
-
-## Windows: tools missing after install
-
-If a command can't find `ffmpeg`, `uv` or `whisper-cli`, or `HYPERFRAMES_PYTHON` is empty, the session started before the installer ran.
-Don't reinstall: prefix Git Bash commands with the user-level values the installer set:
-
-```bash
-export PATH="$(cygpath "$LOCALAPPDATA")/Microsoft/WinGet/Links:$HOME/.local/whisper-cpp/Release:$HOME/.local/bin:$PATH"
-export HYPERFRAMES_PYTHON="$(powershell -NoProfile -Command "[Environment]::GetEnvironmentVariable('HYPERFRAMES_PYTHON','User')" | tr -d '
-')"
-```
-
-## Skill directory
-
-`<skill-dir>` is the directory containing this `SKILL.md`.
-Claude Code prints it as "Base directory for this skill" when the skill loads; for other agents it's wherever the skill was installed.
-Bundled assets are under `<skill-dir>/assets/` and scripts under `<skill-dir>/scripts/`.
-Don't guess an install path.
-
----
-
-## Step 1: Inspect the project
-
-**Read:** [references/step-1-inspect.md](references/step-1-inspect.md)
-
-Find the real flow in the code and docs (howto), or the real changes in git history and release notes (update).
-For outside steps, and every step in `general` mode, gather the facts from the user's material, official docs and screenshots of the real pages instead: [references/general.md](references/general.md).
-
-**Gate:** You can answer every question in the rubric for your mode.
-
----
-
-## Step 2: Script and storyboard
-
-**Read:** [references/step-2-plan.md](references/step-2-plan.md)
-
-Write `<output-dir>/showhow-plan.md`: the goal, the audience, the narration script, and a scene-by-scene storyboard with on-screen actions, highlights, captions and timing.
-
-**Gate:** `<output-dir>/showhow-plan.md` exists with a full script and storyboard.
-Every step names the exact UI element the viewer acts on.
-The duration fits the mode limits.
-
----
-
-## Step 3: Hand off to Hyperframes
-
-**Read:** The Hyperframes skills - `hyperframes` (the contract, `references/motion.md`, `references/format.md`, `references/captions.md`), `hyperframes-cli`, and `media-use` for TTS and captions.
-/showhow is its own workflow: skip the `hyperframes` storylines, `SPEC.md` and type files; the /showhow plan replaces them.
-**Read:** [references/step-3-compose.md](references/step-3-compose.md)
-**Read:** [references/audio.md](references/audio.md)
-**Read:** [references/design-floor.md](references/design-floor.md) before building any chrome (title, cards, counters, captions, outro).
-
-Generate the narration, write the composition brief, and use Hyperframes to build the video in `<output-dir>/composition/`.
-
-`/showhow` owns the teaching content: mode, audience, steps, script, what to highlight, captions, style and audio levels.
-Hyperframes owns the composition structure, animation mechanics, runtime choices, linting and render workflow.
-
-**Gate:** `npx hyperframes check` passes with zero errors inside `<output-dir>/composition/`.
-
----
-
-## Step 4: Validate, render, and deliver
-
-**Read:** [references/step-4-deliver.md](references/step-4-deliver.md)
-
-Render `<output-dir>/<video-name>.mp4`, bake a poster into frame 0 (`<video-name>.jpg`), and write `captions.srt`, `chapters.txt`, `showhow.md` (the written companion) and `share-copy.md` (a business post to share the video, in the user's voice when `~/VOICE.md` exists, plus a title and description for the upload page).
-
-**Gate:** `<video-name>.mp4`, `<video-name>.jpg`, `captions.srt`, `chapters.txt`, `showhow.md` and `share-copy.md` exist, and `scripts/video_gates.py` passes on the mp4 (no blank run over 3 frames, no long tail after the last caption).
-
-When the user asks for changes afterwards, sort each into a one-off fix or a lasting preference and write the lasting ones to their house style ([references/house-style.md](references/house-style.md), "Learn after every round of feedback").
-
----
-
-## Style system
-
-Eleven styles, usable in every mode.
-Each changes narration wording, pacing, typography and transitions; length always follows the mode limits below.
-Presets are defaults, not limits; freeform direction ("calm like Apple support videos") refines them.
-
-Full definitions and the rules every style follows: [references/tones.md](references/tones.md)
-
-| Style | Feel | Best for |
-|---|---|---|
-| `clean` | Neutral, precise, product-docs | Most how-tos; admins and power users |
-| `friendly` | Warm, encouraging, first-time-user | Onboarding, non-technical audiences |
-| `release` | High energy around clear demos: punchy hook, beat-locked change cards, full SFX palette | Feature updates and release videos |
-| `quick-tip` | One task, as fast as it can still be followed | Single small tricks, shortcuts, 20-40s |
-| `playful`, `polished`, `yc-parody`, `chaotic`, `deadpan`, `cinematic`, `app-store` | The energy tones, at teaching length | When a video should have more personality |
-
-**Themes.** `--theme <preset>` dresses any video in one of the frame presets from `../hyperframes/assets/frame-presets/` (title cards, captions, step cards, counter); rebuilt product screens keep their own look.
-Default: the product's theme (howto, update), or a preset picked for the topic (general, see general.md).
-
-**Voices.** `--voice <id>` picks any Kokoro voice from `npx hyperframes tts --list` (default `af_heart`); use it for every scene.
-
----
+**Gate:** `uv run --project <skill-dir>/scripts <skill-dir>/scripts/plan_gates.py showhow-plan.md` passes; fix the plan, never argue a FAIL.
 
 ## Teaching laws
 
-These apply to every video regardless of mode or style.
+- **One job per video.** One task, or one release.
+- **Outcome first.** Within 5 seconds the viewer knows what they'll be able to do, or what's new.
+- **Show the real product.** Render the project's own components with fictional data, or screenshot the running app (dev server, fictional data, never production), or rebuild the screen from its styles and exact copy - in that order of preference. No abstract filler where a real screen exists. Reuse the product's own icons and logos (often inline SVG in shared components), never letter badges.
+- **State carries forward.** What a step creates stays visible on later screens: the attached file in the sent message, the chosen model in the reply header.
+- **Orient, point, act, result.** For every step: show enough of the screen to know where you are; highlight the one target (ring, spotlight or zoom) while the voice names its label; move the cursor and click or type; hold the result until the narration ends plus 0.5-1.0s.
+- **Same screen, same camera.** Between steps on one screen, zoom and pan; fade or cut only when the screen changes.
+- **Always oriented.** "Step 2 of 4" (howto) or "2 of 3" (update), same place every time; not in a `quick-tip`, and not on a hook or title before the first step.
+- **Readable.** Anything the voice names is legible at the chosen zoom (zoom 1.5-2.5x on small controls); on-screen labels hold 1.5s settled; camera moves take 0.6-1.0s.
+- **Captions match the voice** verbatim, one phrase at a time, max 2 lines of ~42 characters, never over the highlight.
+- **Works muted.** The first 3 seconds and every title or change card make sense with the sound off. A hook with music and no voice carries its point as on-screen text, and the first voiced line says what the video is about.
+- **No flashing.** Nothing flashes more than three times in any second, in any style: no white or black flash frames, no strobe (WCAG 2.3.1).
+- **Every frame accurate.** A wrong label or wrong order is the worst bug a how-to can ship.
+- **Grounded claims.** Anything the video says the product does, its names and its numbers, must appear in the project (for outside steps: in the user's material, the official docs or your screenshots). Fictional demo data (names, files, replies) is fine and listed in the plan; invented capabilities are not.
 
-**One job per video.** A how-to teaches one task. An update covers one release. If the input covers more, split it and say so.
+## Styles
 
-**Say the outcome first.** Within the first 5 seconds the viewer knows what they will be able to do (howto) or what is new (update).
-In `update`, the most visual change is already moving, with the "what's new" text on screen, within 3 seconds, before any version slam or logo.
-
-**Show the real product.** Every step is shown on the actual UI, rebuilt from the project's own components, styles and copy. No abstract diagrams where a real screen exists.
-Outside steps (and `general` mode) show screens rebuilt from real screenshots, the user's photos, and invented step visuals only where nothing real exists (references/general.md).
-
-**Point before acting.** Before every click or keystroke, the target is visible and highlighted (ring, spotlight or zoom), and the narration names it by its on-screen label. Then the action happens, then the result is visible.
-
-**One action per step.** A step is one click, one typed value, or one choice. The screen label in the narration matches the UI text exactly, including capitalization.
-
-**Hold the result.** After each step, the result stays on screen until the narration for it has finished plus about 0.5s. Never cut away mid-explanation.
-At a subtask boundary (the end of a group of steps that finishes one part of the task, such as "the token is created" before "now paste it"), hold about 2s of silence on the result before the next part starts (van der Meij & van der Meij 2013).
-
-**Say what changed.** The narration names every result that matters ("the file now appears under **Knowledge**"), not only shows it, so the video needs no separate audio description (WCAG 1.2.5).
-A hook or card with music and no voice carries its point as on-screen text, and the first voiced line says what the video is about.
-
-**Works muted.** The first 3 seconds and every title or change card make sense with the sound off: on-screen text carries the point, the captions carry the rest.
-
-**No flashing.** Nothing flashes more than three times in any one second, in any style (WCAG 2.3.1): no strobe, no white or black flash frames, no rapid full-frame brightness or red swaps.
-
-**Always oriented.** Show a step counter ("Step 2 of 4") in howto mode, or a change counter ("2 of 3") in update mode, and keep it in the same place.
-
-**Captions match the voice.** Burned-in captions show the narration verbatim, one short phrase at a time, never covering the highlighted target.
-
-**Plain words.** No marketing language ("seamless", "streamline", "powerful") and no invented claims. Use the product's own labels and the release's real changes.
-
-**Readable.** Every on-screen label holds at least 1.5s settled; a sentence about 0.35s per word. Zooms and pans are slow enough to follow (0.6-1.0s).
-
-**Pattern (howto):**
-```
-Outcome (3-5s) -> Before you start (0-5s) -> Steps 1..N (6-15s each) -> Result (3-6s) -> Now try it (3-5s)
-```
-
-"Now try it" replaces a plain recap: one line inviting the viewer to do the task now, with a concrete example ("Now try it: add your team's style guide to a project").
-
-**Pattern (update):**
-```
-Hook: the most visual change moving + what's new in <version> (3-5s) -> Change 1..N: what / where / show / why (10-20s each) -> How to get it (3-5s)
-```
-
-**Length limits:**
-
-| Mode / style | Target | Hard limit |
+| Style | Feel | Pacing / transitions |
 |---|---|---|
-| `howto` | 45-120s | 180s; split into parts beyond that |
-| `howto` + `quick-tip` | 20-40s | 60s |
-| `update` | 30-90s, 2-5 changes | 120s; pick the top 5 user-visible changes |
+| `clean` | Neutral, precise, product docs; no music unless `--music` | 6-12s per step; cuts between screens |
+| `friendly` | Warm, patient, explains why in half a sentence | 8-15s per step, max 5 steps; soft fades |
+| `release` | High energy around clear demos: punchy hook, change cards with "New"/"Fixed" tags, beat-locked reveals; the version slam may be the one 3D moment (a WebGL block, `../hyperframes/references/types/3d.md`), the changes stay on the flat real UI; "You can now..." | 10-20s per change; fast slides/zooms between changes, calm demos inside |
+| `quick-tip` | One trick, 1-3 actions | 5-8s per action; cuts, no recap |
 
-Adapt the patterns.
-Skip "Before you start" when there are no prerequisites.
+All four work in every mode; freeform direction ("calm like Apple support videos") refines them; `references/tones.md` has the full definitions.
+
+## Sound
+
+The voice leads.
+Generate it per scene straight into the composition: `npx hyperframes tts "<text>" --voice <voice> --output composition/assets/voice/scene-NN.wav` (`<voice>` = `--voice`, default `af_heart`; or any local TTS if that's unavailable); measure each clip and let the clips set the scene lengths.
+Transcribe the clips to catch mispronounced product names; fix by respelling the TTS input only.
+`npx hyperframes transcribe` overwrites `transcript.json` on every run: copy it to `work/tx/words-NN.json` after each clip.
+Narration is English; if the user asks for another language, check `npx hyperframes tts --list` for a matching voice, and if there is none, offer English narration with captions in their language.
+Music: none by default in `clean`, `friendly` and `quick-tip` (it hurts retention in teaching videos); with `--music`, and always in `release`, a quiet bed ducked under the voice (about 0.1 under narration, 0.3 without), never cut off abruptly.
+Use a bundled track; when none fits the mood, an Incompetech track (CC BY); generate one with MusicGen only when the user asks or Incompetech has nothing (`references/audio.md`, Music).
+How-tos: SFX mainly confirm visible actions (a soft click per click, soft ticks on typing, one accent on the result).
+Updates: score it with high energy around the demos (a soft reveal hit, card sounds, tag ticks, a payoff (bells allowed), music up and beat-locked on the hook, cards and outro), clicks and typing inside the demos.
+The full sound effect library is fair game in both; never mask a narrated word.
+
+## 3. Build, check, render
+
+Before building any chrome (title, cards, counters, caption plate, outro), read `references/design-floor.md` and follow it; it covers the chrome only, rebuilt screens keep the product's look, and a `--theme` preset overrides its Refuse list.
+Make every frame a pure function of time and wait for fonts and images to load before capturing each one.
+`references/step-3-compose.md` has the composition brief, the kit setup and the outro credit line.
+
+- **Place rings and the cursor by element, never by hand-computed pixels.** Use the showhow kit (`assets/kit/`, copied into `composition/assets/kit/`): `showhowKit(tl)` gives `ring`, `move`, `ripple`, `counter` and `R`, measures by element and writes `fromTo` tweens on elements you write in the HTML; a working example is in `scripts/fixtures/kit-demo/`. No function-valued tweens. Add a known offset for targets below something that grows later.
+- **Screenshot videos: bake rings into the stills.** DOM ring overlays on top of screenshots can vanish from the rendered mp4. Record rings and screen changes, give them to `scripts/bake_highlights.py` in timeline mode, and fade in the ringed copies it lists in `rings.overlays.json`; don't hand-write the span cutting.
+- **Every tween is a `fromTo` with `immediateRender:false`, one element per highlight or ripple.** Starting states live in CSS: a `tl.set` at time 0 does not show on frame 0.
+- **Write big files with a file tool**, not a shell heredoc; long heredocs fail on Windows (`ENAMETOOLONG`).
+- **Overlays open below the app header**, so the step counter stays visible; for `content_overlap` from `hyperframes check`, see `references/step-4-deliver.md`, "Intentional overlaps".
+
+Run `npx hyperframes check` in `composition/` and fix every error, including contrast; it passes with zero errors before you render.
+Look at stills from every step at the highlight and at the result, and from mid-transition (`npx hyperframes snapshot`).
+A plain crossfade between two busy layouts makes a muddy double exposure; stagger it (old content out, then new content in) or dip through the background for 3 frames at most.
+Describe each still in one sentence (what is on screen, what the viewer should look at) before judging it; a frame you can't describe, or that reads as an empty slide, is a finding.
+Check: the ring sits exactly on the control the voice names (zoom in on a crop when unsure), its label is legible, captions, the cursor or a dragged item don't cover it, the counter is right and uncovered, no text is clipped inside a fixed-width pill or callout (`check` misses these), no bullet or icon shows before its text, a typing caret follows the typed text, no flash frames, and the opening and every card read with the sound off.
+Motion follows `references/design-floor.md`: entrances do most of their travel in the first 4-8 frames (typical move 0.33s), no bounce, nothing scales up from zero, exits shorter than entrances; the cursor rests 0.2-0.3s on the target before it presses (the kit's `ripple`), and the target answers a frame later.
+On the title, one step and the outro, also check the design floor's Refuse list and type rules.
+SFX clips get `data-duration` equal to the file's real length, or `check` warns about the slot.
+
+Start `npx hyperframes preview`, give the user the URL and ask them to watch for wrong labels or order; render without waiting for an answer, and redo it if they find one.
+Render with the wrapper, never `npx hyperframes render` directly (a quiet render can exit non-zero with no message and no file):
+`uv run --project <skill-dir>/scripts <skill-dir>/scripts/render.py composition <video-name>.mp4 --work work [-- --docker]`.
+It logs to `work/render.log`, succeeds only when this run wrote a non-empty mp4, retries once, then normalises the soundtrack to -16 LUFS, -1 dBTP and prints the measured input; if it still fails, check free disk space and report the log tail.
+If the composition tweens layout (`height`, `width`, position, padding), add `--no-fast-capture`: fast capture drops those changes while snapshots still show them.
+Then pull frames from the mp4 itself at every ring and result moment; snapshots alone don't prove the render:
+`uv run --project <skill-dir>/scripts <skill-dir>/scripts/frame_sheet.py <video-name>.mp4 --overlays work/rings.overlays.json -o work/check.jpg` (add `--at <t1,t2,...>` for other moments, `--crop x,y,w,h` for small rings).
+A ring missing from the mp4 but present in snapshots is a render bug: bake it into the still instead of trying other flags.
+Keep creation and rendering local; publishing or uploading needs a separate explicit request.
+
+## 4. Deliver
+
+`references/step-4-deliver.md` has the commands and templates for each file.
+
+- **Poster:** the settled title card (or the finished result with the title) with no caption on it, to `<video-name>.jpg`, baked in as frame 0 of the mp4 by replacing that frame, so duration and audio sync stay the same; when the voice talks over the title, snapshot a caption-hidden copy of the composition. Teams, SharePoint and Slack show frame 0; YouTube doesn't, so the poster is also the upload thumbnail there.
+- **`captions.srt`:** the script phrases with their absolute times, even when captions are burned in.
+- **`chapters.txt`:** `00:00 Title` style, one line per step (`Step N: ...`) or change (`Change N: ...`), from the real scene start times.
+- **Gates:** fix any FAIL and re-render, never argue it, and quote every line in the report:
+  `uv run --project <skill-dir>/scripts <skill-dir>/scripts/video_gates.py <video-name>.mp4 --srt captions.srt` (no run of more than 3 blank frames; the video ends at most 1.4s after the last caption, 3.5s with `credits.txt`) and
+  `uv run --project <skill-dir>/scripts <skill-dir>/scripts/plan_gates.py showhow-plan.md --chapters chapters.txt --video <video-name>.mp4` (the rendered steps match the plan and each lasts its minimum).
+- **`showhow.md`:** the written companion. howto: "How to [task]", prerequisites, numbered steps with labels in bold, result, tip. update: "What's new in [version]", one short section per change with where to find it, then how to get it.
+- **`credits.txt`:** only when a bundled or Incompetech music track is used, an image or sound license asks for attribution (title, author, license, URL, one line each), or a third-party app's screens are rebuilt (its trademark line). The same credits appear on the outro credit line.
+- **`share-copy.md`:** a business post to send with the video ("Post", 3-8 short lines: what it is, what it helps the reader do in their work, the prerequisites or 2-4 changes, one concrete action) and a "One-liner", then a "Title" (under 70 characters) and a "Description" for the upload page (what the viewer can do, prerequisites, the chapters from `chapters.txt`, any limit, the credits lines; no emojis). If `~/VOICE.md` exists, write as its owner following its business sections; otherwise direct and plain. Audience's language, no hype or invented claims, no em dashes, `[link]` for anything you don't have.
+- **Tell the user** where everything is, the share post ready to paste (for LinkedIn: turn off its auto-captions, the captions are burned in), the loudness line and the gate lines, the goal line and the step or change list (so they can spot a wrong step without watching), the fictional substitutions, any label you couldn't verify, and offer to redo a scene, change the voice, or make a vertical or quick-tip cut.
+- **Learn from the feedback.** When the user asks for changes, sort each into a one-off fix (this video only) or a lasting preference ("always", "never", the same correction twice); fix both, write the lasting ones to `~/.showhow/verdicts.md` and `edits.md`, and show the added lines as a diff (`references/house-style.md`).

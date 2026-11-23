@@ -5,7 +5,7 @@ All SFX are CC0 (Kenney.nl, public domain).
 In an instructional video the **voice leads**.
 Music and SFX support it and must never compete with it.
 Action-matched SFX are on by default unless the user passes `--no-sfx` or the assets are missing.
-**Music depends on the style:** off by default for `clean`, `friendly` and `quick-tip` (background music hurt retention and transfer in Moreno & Mayer 2000), on for `release` and the energy styles.
+**Music depends on the style:** off by default for `clean`, `friendly` and `quick-tip` (background music hurt retention and transfer in Moreno & Mayer 2000), on for `release`.
 `--music` turns the bed on for any style; `--no-music` turns it off for any style and wins over `--music`.
 Clicks and typing stay in every style: they mark actions, and sound tied to an action doesn't hurt learning the way a bed does.
 
@@ -202,15 +202,6 @@ Specific but great for swipe/deal/stack moments.
 | `friendly` | As `clean`, plus `interface/drop_*` when a new panel or dialog opens. |
 | `release` | High energy around the demos: a soft reveal hit on the hook (`impactSoft_medium_*`), card sounds (`casino/card-slide-*`, `card-place-*`, `card-fan-*`) as change cards arrive, `interface/drop_*` or `chips-stack-*` for "New"/"Fixed" tags and counters, a light payoff (`chips-collide-*` or `interface/drop_*`) on the outro. Inside a change's UI demo, back to `clean`: clicks and typing. |
 | `quick-tip` | Clicks and typing only. |
-| `playful` | 3-5 accents: `interface/drop_*` or `click_*` for pop-ins, `impactBell_heavy_000` for success, `impactSoft_medium_*` for reveals. |
-| `polished` | 2-3 very subtle accents: `interface/drop_001` for a gentle reveal. Nothing aggressive. |
-| `yc-parody` | 2-3 restrained cues: one dry reveal hit (`impactSoft_medium_*`), one card accent, one payoff. |
-| `chaotic` | Dense, on the beat: `impactPunch_heavy_*`, `interface/glitch_*`, `casino/dice-throw-*`, `impactMetal_heavy_*`. Stacked and loud hits go between narration lines; a cut inside a line (tones.md, Beats) gets one short, light cue at 0.5-0.6 so every word stays clear. |
-| `deadpan` | Very sparse: a quiet bed plus 1-2 dry cues. |
-| `cinematic` | 2-3 big ones: `impactBell_heavy_000` or `_004` for the hero moment, `impactSoft_medium_*` for the reveal, `impactBell_heavy_003` for the outro. |
-| `app-store` | A consistent light layer: `interface/drop_*` or `click_*` per card, `impactBell_heavy_000` on the outro, all at 0.65-0.75. |
-
-In every energy style, steps inside a UI demo go back to `clean` (clicks and typing).
 
 The whole library is available in every style; the table is the default posture, not a ban list.
 Use louder or odder sounds (`impactPunch_*`, `glitch_*`, `dice-*`, `error_*`) when a moment calls for it: `glitch_*` for an AI or tech moment in an update, `error_*` softly when a step shows a validation error or a fixed bug's old behavior, `dice-*` for a playful shuffle between changes.
@@ -229,7 +220,7 @@ Use these as examples for Hyperframes, not a fixed recipe. Sound should reinforc
 | Text popping / typed copy | `keyboard/keypress-*.wav` (randomized), `interface/drop_*` | For per-character typing animations, pick a random file from `keyboard/` for each character. For soft label pop-ins, use `drop_001` or `drop_002`. Thin out or skip when copy is dense. |
 | Simulated user action | `interface/click_*`, `interface/select_008`, `interface/switch_*`, `ui/mouseclick1`, `ui/switch*` | Use interaction sounds when the video shows a cursor, tap, button, toggle, swipe, or selection. Match the visible action. |
 | Success / completion | `impact/impactBell_heavy_000`, `_003`, or `_004`, `casino/chips-collide-*`, `interface/drop_*` | Positive accent for approvals, matches, metrics, completed flows, or final CTAs. |
-| Chaotic or comedic beat | `interface/glitch_002`, `interface/glitch_004`, `interface/error_005–006`, `impact/impactPunch_heavy_*`, `casino/dice-throw-*` | Update videos, sparingly: a fixed bug's "before", an AI moment, a playful bridge. Never loud under narration; `chaotic` cuts inside a line use one short, light cue. |
+| Chaotic or comedic beat | `interface/glitch_002`, `interface/glitch_004`, `interface/error_005–006`, `impact/impactPunch_heavy_*`, `casino/dice-throw-*` | Update videos, sparingly: a fixed bug's "before", an AI moment, a playful bridge. Never loud under narration. |
 
 When in doubt, pick fewer cues with better timing. Prefer a coherent sonic palette for the whole video over a grab bag of cute sounds.
 
@@ -277,8 +268,7 @@ The bundled tracks are by Sascha Ende ([ende.app](https://ende.app/en)), license
 When a video uses one, add a line to `credits.txt`: `Music: "Happy Beats / Business Moves Vol. <n>" by Sascha Ende (ende.app), CC BY 4.0, https://creativecommons.org/licenses/by/4.0/`.
 Also credit it in the video itself, so the credit travels with the file: the short line `Music: Sascha Ende (ende.app), CC BY 4.0` on the outro (step-3-compose.md, Credit line).
 
-The bundled tracks are all upbeat business music: they suit the teaching styles, `playful`, `polished` and `app-store`.
-When none fits the style's mood, and always for `cinematic`, `deadpan`, `chaotic` or `yc-parody`, pick an Incompetech track (below).
+The bundled tracks are all upbeat business music; when none fits the video's mood, pick an Incompetech track (below).
 Generate a bed with MusicGen (Generated bed, below) only when the user asks for generated or original music, or when Incompetech is unreachable or has nothing that fits; if that fails too, use the closest bundled track and say so.
 
 ### Incompetech (Kevin MacLeod)
@@ -305,10 +295,13 @@ Then run the beat analysis on it like a custom track.
 Use it when the user asks for generated or original music, or when Incompetech is unreachable or has nothing that fits; otherwise use a bundled or Incompetech track. It runs locally with the media-use audio engine (MusicGen via `HYPERFRAMES_PYTHON`; nothing leaves the machine).
 From `<output-dir>/composition`:
 
-```bash
-cat > ../work/bgm_request.json <<'EOF'
+Write `../work/bgm_request.json` with a file tool (heredocs fail on Windows):
+
+```json
 {"lines": [], "bgm": {"mode": "generate", "prompt": "uplifting corporate tech, bright modern piano with synth pads, 108 bpm"}}
-EOF
+```
+
+```bash
 node <media-use-dir>/audio/scripts/audio.mjs --request ../work/bgm_request.json --hyperframes . --out ../work/bgm_meta.json --only bgm
 node <media-use-dir>/audio/scripts/wait-bgm.mjs --audio-meta ../work/bgm_meta.json --hyperframes . --timeout-ms 600000 --out ../work/bgm_status.json
 ```
@@ -317,7 +310,7 @@ node <media-use-dir>/audio/scripts/wait-bgm.mjs --audio-meta ../work/bgm_meta.js
 Run both commands in one shell call: the generator runs detached, and some agent shells kill leftover processes when a call ends.
 It writes `assets/bgm/track.wav`: a 30s clip, about 5 minutes on a laptop CPU.
 Continue only when `bgm_status.json` says `"status": "ready"`.
-If it failed within seconds with an empty log, run both commands once more (seen once on Windows, cause unknown); if it fails again, fall back to a bundled track and tell the user.
+If it failed within seconds with an empty log, run both commands once more; if it fails again, fall back to a bundled track and tell the user.
 Put the mood in the prompt (MusicGen ignores BPM and scale settings), listen to it before using it, and loop it like any short track (below).
 Then run the beat analysis on it like a custom track.
 
@@ -342,7 +335,7 @@ If the music file doesn't exist, skip it and notify the user after rendering.
 
 ### Beat and cue sources
 
-Beat sync needs a cue source. Three are available - use the richest one the environment supports. Beat sync now works on **any** track, not just bundled ones. The two any-track methods (2 and 3) have orthogonal requirements - option 2 needs Python, option 3 needs a recent Hyperframes - so when one is unavailable the other usually covers it.
+Beat sync needs a cue source; use the first one that works.
 
 1. **Bundled track → precomputed preset (richest, instant, no deps).** The bundled tracks ship with cue metadata. Read the matching markdown summary, and pass the JSON path in `composition-brief.md`:
 
@@ -351,7 +344,7 @@ Beat sync needs a cue source. Three are available - use the richest one the envi
 <skill-dir>/assets/music/cues/<track-stem>.music-cues.json
 ```
 
-2. **Any track → extended analysis (richest for custom tracks; needs Python, any Hyperframes version).** For a custom track - or to refresh a bundled one - run `analyze_music_cues.py` on the audio file. It produces the same rich cue JSON/Markdown for any track. Run it via `uv`, which auto-provisions the deps (`librosa`, `numpy`, `scipy`, `soundfile`) from `<skill-dir>/scripts/pyproject.toml` - no manual `pip install` needed:
+2. **Any track → `analyze_music_cues.py`.** It writes the same cue JSON and Markdown as the presets, for any track:
 
 ```bash
 uv run --project <skill-dir>/scripts \
@@ -360,15 +353,13 @@ uv run --project <skill-dir>/scripts \
   --output-md  <output-dir>/composition/assets/music/cues/<stem>.music-cues.md
 ```
 
-This is the fallback when `hyperframes beats` (option 3) is unavailable - e.g. an older pinned Hyperframes. If neither `uv` nor the Python deps are available, use option 3 instead.
-
-3. **Any track → `hyperframes beats` (simple, no Python; needs Hyperframes ≥ 0.6.99).** After the music is wired into the composition, run:
+3. **Any track → `hyperframes beats`**, when the script can't run. After the music is wired into the composition:
 
 ```bash
 npx hyperframes beats <output-dir>/composition
 ```
 
-It writes a per-track beat file: a beat grid with per-beat timing and a normalized `strength` (0-1), but no separate `strongCues` array - so derive "strong" beats by taking the highest-`strength` ones. (See the current hyperframes-cli `beats` guidance for the exact output path.) `beats` was added in Hyperframes 0.6.99; on an older pinned install it won't exist - fall back to option 2 (the script), or to the `unavailable` note below.
+It writes a beat grid with a normalized `strength` (0-1) per beat and no `strongCues` array: take the highest-`strength` beats as strong cues (output path: hyperframes-cli `beats` guidance).
 
 The preset and `analyze_music_cues.py` share the rich schema:
 
@@ -376,8 +367,6 @@ The preset and `analyze_music_cues.py` share the rich schema:
 - `beats`: beat-grid points with `time` and normalized `intensity`
 - `strongCues`: highest-value landing moments with `time`, `intensity`, and `kind` (`strong_beat` / `onset_peak`)
 - `scoring`: feature and normalization metadata
-
-`hyperframes beats` is the simpler floor: a plain beat grid with a per-beat strength, no strong-cue array.
 
 Planning rules (apply to whichever source you have):
 

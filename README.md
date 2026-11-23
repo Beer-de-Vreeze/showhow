@@ -106,7 +106,7 @@ Open your project in your agent and describe the video:
 /showhow --mode update 2.4.0
 /showhow what's new since v2.3.0 --style release
 /showhow how to restore a prompt version --format vertical --music
-/showhow --mode general how a train gets its power --style cinematic --voice am_michael
+/showhow --mode general how a train gets its power --voice am_michael
 /showhow options
 ```
 
@@ -126,7 +126,7 @@ showhow researches them from official docs and rebuilds the screens with fiction
 
 ## Styles, themes and voices
 
-Eleven styles, in every mode:
+Four styles, in every mode:
 
 | Style | Feel |
 |---|---|
@@ -134,7 +134,6 @@ Eleven styles, in every mode:
 | `friendly` | Warm and encouraging, for first-time users |
 | `release` | Punchy and beat-locked (default for updates) |
 | `quick-tip` | One small trick in 20 to 40 seconds |
-| `playful`, `polished`, `yc-parody`, `chaotic`, `deadpan`, `cinematic`, `app-store` | More personality, at teaching length |
 
 Presets are a starting point: add freeform direction such as `--style "calm, like Apple support videos"`.
 
@@ -159,7 +158,7 @@ When you ask for changes, it keeps the lasting ones there and shows you the diff
 | `--title` | Text | Inferred |
 | `--no-voice` | Flag | Narration on |
 | `--no-captions` | Flag | Captions on |
-| `--music` | Flag | Music off for `clean`, `friendly` and `quick-tip`; on for `release` and the energy styles |
+| `--music` | Flag | Music off for `clean`, `friendly` and `quick-tip`; on for `release` |
 | `--no-music` | Flag | Forces music off in any style |
 | `--no-sfx` | Flag | Sound effects on |
 
@@ -168,9 +167,9 @@ Length limits keep videos watchable: how-tos run 45 to 120 seconds (3 minutes at
 ## How it works
 
 1. **Inspect.** Reads the code, docs and styles for the real flow, or git history and release notes for an update.
-2. **Plan.** Writes `showhow-plan.md` with the goal, audience, narration script and a scene-by-scene storyboard.
+2. **Plan.** Writes `showhow-plan.md` with the goal, audience, narration script and a scene-by-scene storyboard, and checks it against the teaching rules (`plan_gates.py`): one action per step, steps long enough to follow, a "Now try it" ending, within the length limit.
 3. **Compose.** Generates the voice-over and builds a Hyperframes composition that rebuilds your UI from its own components, styles and copy.
-4. **Deliver.** Checks, renders, normalises the loudness to -16 LUFS, measures the mp4 for blank frames and a dragging ending, and writes the captions, chapters, companion doc and share post.
+4. **Deliver.** Checks, renders, normalises the loudness to -16 LUFS, measures the mp4 for blank frames, a dragging ending and steps shorter than planned, and writes the captions, chapters, companion doc and share post.
 
 Every video follows the same teaching rules: say the outcome first, highlight a target before acting on it, one action per step, hold each result until the narration finishes, and keep a step counter on screen.
 
@@ -185,7 +184,7 @@ It never signs in to a site or types a password for you.
 ## Credits
 
 - Built on [Hyperframes](https://github.com/heygen-com/hyperframes) by HeyGen.
-- Started as a fork of [brag](https://github.com/latent-spaces/brag) by Shunit Haviv Hakimi (MIT); the energy styles and parts of the audio pipeline still come from it.
+- Started as a fork of [brag](https://github.com/latent-spaces/brag) by Shunit Haviv Hakimi (MIT); parts of the audio pipeline still come from it, and its launch-reel styles live on there.
 - The design floor for the video's chrome (`references/design-floor.md`) is adapted from [impeccable](https://github.com/pbakaus/impeccable), [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0), rewritten for video.
 - The house-style files, the video gates (`scripts/video_gates.py`), the review step and the motion values come from [motionmaxxing](https://github.com/Tejashmakwana/motionmaxxing), [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0), rewritten in our own words.
 - Design-floor rules and the optional before/after change come from [unslop](https://github.com/heydamir/unslop) by Damir Sokolovsky ([@heydamir](https://x.com/heydamir)), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); a video that uses the before/after credits it on the outro.

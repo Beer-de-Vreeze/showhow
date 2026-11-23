@@ -41,7 +41,7 @@ Answer all of these before Step 2.
 6. What does success look like on screen?
 7. One mistake or limit worth mentioning - or "none".
 8. Where do they find the result later?
-9. Which style fits? (`clean` by default; any of the 11 in tones.md, or the user's direction)
+9. Which style fits? (`clean` by default; `friendly`, `release`, `quick-tip`, or the user's direction)
 ```
 
 If the steps list has more than about 8 actions, the task is probably two tasks.
@@ -68,7 +68,7 @@ Find the real, user-visible changes in the release.
    c. One or two actions that show it, with the visible result
    d. Why it matters to the viewer (their words, not ours)
 4. Anything the viewer must do to get it? (update the app, restart, ask an admin) - or "nothing"
-5. Which style fits? (`release` by default; any of the 11 in tones.md)
+5. Which style fits? (`release` by default)
 ```
 
 ## Color and font extraction
