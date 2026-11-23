@@ -44,7 +44,7 @@ Every run writes a folder to `~/Downloads/showhow-<video-name>/`:
 | `captions.srt` | Captions that match the narration word for word |
 | `chapters.txt` | Chapter timestamps for YouTube, Vimeo or an LMS |
 | `showhow.md` | A written companion with the same steps |
-| `share-copy.md` | A short post to share the video |
+| `share-copy.md` | A short post to share the video, and a title and description for where you upload it |
 | `composition/` | The Hyperframes project, so you can edit and re-render |
 
 ## Install
