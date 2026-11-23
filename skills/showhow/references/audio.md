@@ -347,7 +347,7 @@ Beat sync needs a cue source; use the first one that works.
 2. **Any track → `analyze_music_cues.py`.** It writes the same cue JSON and Markdown as the presets, for any track:
 
 ```bash
-uv run --project <skill-dir>/scripts \
+uv run --project <skill-dir>/scripts --group music \
   python <skill-dir>/scripts/analyze_music_cues.py <track>.mp3 \
   --output-json <output-dir>/composition/assets/music/cues/<stem>.music-cues.json \
   --output-md  <output-dir>/composition/assets/music/cues/<stem>.music-cues.md

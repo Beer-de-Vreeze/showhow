@@ -1,19 +1,32 @@
 # Installs everything /showhow needs on Windows, then runs a short voice and
 # transcription test so first-use downloads happen now instead of mid-video.
-# Run: powershell -NoProfile -ExecutionPolicy Bypass -File install.ps1
+# Run: powershell -NoProfile -ExecutionPolicy Bypass -File install.ps1 [-Docker]
+# -Docker also installs Docker Desktop (asks for admin) for reproducible `render --docker` renders.
+param([switch]$Docker)
 $ErrorActionPreference = 'Stop'
+
+# Pinned versions: update them together, after a test video renders cleanly.
+$Hyperframes = 'hyperframes@0.9.85'   # keep in step with HYPERFRAMES in render.py
+$PythonPackages = 'kokoro-onnx==0.6.1', 'soundfile==0.14.0', 'transformers==5.18.0', 'torch==2.14.1', 'numpy==2.5.3'
+$WhisperTag = 'b5130'
+$WhisperSha256 = 'F9EC6C52A2E949B62AB51FA21D0D497958F9E41C3010C157C4E42932D5316F3C'
+$EarshotCommit = '972132643583fc0b9a60c6c50983ed7dc1aa55bf'  # tag v0.2.0
 
 function Refresh-Path {
   $env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [Environment]::GetEnvironmentVariable('Path', 'User')
 }
 
 # Put a folder on the user PATH for good (new terminals and agent sessions see it).
+# Reads and writes the raw registry value, so entries like %USERPROFILE%\bin stay unexpanded.
 function Add-UserPath($dir) {
   if (-not $dir -or -not (Test-Path $dir)) { return }
-  $user = "$([Environment]::GetEnvironmentVariable('Path', 'User'))"
-  $known = ($user + ';' + [Environment]::GetEnvironmentVariable('Path', 'Machine')) -split ';' | ForEach-Object { $_.TrimEnd('\') }
+  $known = ([Environment]::GetEnvironmentVariable('Path', 'User') + ';' + [Environment]::GetEnvironmentVariable('Path', 'Machine')) -split ';' | ForEach-Object { $_.TrimEnd('\') }
   if ($known -contains $dir.TrimEnd('\')) { return }
-  [Environment]::SetEnvironmentVariable('Path', ($user.TrimEnd(';') + ';' + $dir).TrimStart(';'), 'User')
+  $key = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey('Environment', $true)
+  try {
+    $raw = "$($key.GetValue('Path', '', 'DoNotExpandEnvironmentNames'))"
+    $key.SetValue('Path', ($raw.TrimEnd(';') + ';' + $dir).TrimStart(';'), [Microsoft.Win32.RegistryValueKind]::ExpandString)
+  } finally { $key.Close() }
   Write-Host "path $dir"
 }
 
@@ -62,7 +75,7 @@ Need node   'OpenJS.NodeJS.LTS'   # hyperframes, npx
 Need ffmpeg 'Gyan.FFmpeg'         # audio mixing, posters
 Need python 'Python.Python.3.12'  # Kokoro voice-over
 Need uv     'astral-sh.uv'        # beat analysis, ring baking, frame sheets
-Need docker 'Docker.DockerDesktop' # render --docker (reproducible renders); asks for admin
+if ($Docker) { Need docker 'Docker.DockerDesktop' }  # render --docker (reproducible renders); asks for admin
 
 Step 'Kokoro voice and MusicGen music (Python venv)'
 $venv = "$HOME\.cache\hyperframes\kokoro-venv"
@@ -74,7 +87,7 @@ if ((Test-Path $venvPython) -and ((& $venvPython -c 'import platform; print(plat
   Remove-Item -Recurse -Force $venv
 }
 if (-not (Test-Path $venvPython)) { Run 'uv' @('venv', '--python', $x64Python, $venv) }
-Run 'uv' @('pip', 'install', '--python', $venvPython, 'kokoro-onnx', 'soundfile', 'transformers', 'torch', 'numpy')
+Run 'uv' (@('pip', 'install', '--python', $venvPython) + $PythonPackages)
 [Environment]::SetEnvironmentVariable('HYPERFRAMES_PYTHON', $venvPython, 'User')
 $env:HYPERFRAMES_PYTHON = $venvPython
 Write-Host "ok   HYPERFRAMES_PYTHON=$venvPython"
@@ -84,10 +97,11 @@ if (Has 'whisper-cli') {
   Write-Host 'ok   whisper-cli'
 } else {
   # Official ggml-org Windows build; the latest tagged releases may ship without binaries.
-  $whisperTag = 'b5130'
   $whisperDir = "$HOME\.local\whisper-cpp"
   $zip = Join-Path ([IO.Path]::GetTempPath()) 'whisper-bin-x64.zip'
-  Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/ggml-org/whisper.cpp/releases/download/$whisperTag/whisper-bin-x64.zip" -OutFile $zip
+  Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/ggml-org/whisper.cpp/releases/download/$WhisperTag/whisper-bin-x64.zip" -OutFile $zip
+  $hash = (Get-FileHash $zip -Algorithm SHA256).Hash
+  if ($hash -ne $WhisperSha256) { Remove-Item -Force $zip; throw "whisper-bin-x64.zip has SHA256 $hash, expected $WhisperSha256; not installing it." }
   Expand-Archive -Force -Path $zip -DestinationPath $whisperDir
   Remove-Item -Force $zip
   $bin = Split-Path (Get-ChildItem -Recurse -Path $whisperDir -Filter 'whisper-cli.exe' | Select-Object -First 1).FullName
@@ -99,7 +113,9 @@ if (Has 'whisper-cli') {
 
 Step 'earshot (optional audio QA, CPU torch, ~1.4 GB of models)'
 # Optional: a failure here warns instead of stopping the install; /showhow skips audio QA without it.
-& uv tool install 'earshot[mcp] @ git+https://github.com/Leonxlnx/earshot@v0.2.0' --python 3.12 `
+# unsafe-best-match lets uv take torch from the official PyTorch CPU index and everything else from PyPI;
+# shortcut: both indexes are trusted, so name confusion between them is the accepted risk until earshot pins its own index.
+& uv tool install "earshot[mcp] @ git+https://github.com/Leonxlnx/earshot@$EarshotCommit" --python 3.12 `
   --index https://download.pytorch.org/whl/cpu --index-strategy unsafe-best-match
 if ($LASTEXITCODE -eq 0) { Add-KnownPaths; & earshot doctor --load }
 if ($LASTEXITCODE -eq 0) { Write-Host 'ok   earshot' } else {
@@ -114,16 +130,19 @@ if ((Test-Path "$HOME\.claude\skills\hyperframes\assets\frame-presets") -or (Tes
   Run 'npx.cmd' @('-y', 'skills', 'add', 'heygen-com/hyperframes', '-g', '-a', 'claude-code', '-s', '*', '-y')
 }
 
+Step 'Script dependencies (uv)'
+Run 'uv' @('sync', '--project', $PSScriptRoot, '--all-groups')
+
 Step 'Render browser'
-Run 'npx.cmd' @('-y', 'hyperframes', 'browser', 'ensure')
+Run 'npx.cmd' @('-y', $Hyperframes, 'browser', 'ensure')
 
 Step 'Voice and transcription test (downloads models on first run)'
 $test = Join-Path ([IO.Path]::GetTempPath()) 'showhow-install-test'
 New-Item -ItemType Directory -Force -Path $test | Out-Null
 Push-Location $test
 try {
-  Run 'npx.cmd' @('-y', 'hyperframes', 'tts', 'Show how setup works.', '-o', 'test.wav')
-  Run 'npx.cmd' @('-y', 'hyperframes', 'transcribe', 'test.wav')
+  Run 'npx.cmd' @('-y', $Hyperframes, 'tts', 'Show how setup works.', '-o', 'test.wav')
+  Run 'npx.cmd' @('-y', $Hyperframes, 'transcribe', 'test.wav')
   Run $venvPython @('-c', "from transformers import AutoProcessor, MusicgenForConditionalGeneration as M; AutoProcessor.from_pretrained('facebook/musicgen-small'); M.from_pretrained('facebook/musicgen-small'); print('musicgen ok')")
 } finally {
   Pop-Location
@@ -131,16 +150,22 @@ try {
 }
 
 Step 'Check'
-foreach ($command in 'node', 'npx', 'ffmpeg', 'ffprobe', 'python', 'uv', 'whisper-cli', 'docker') {
+foreach ($command in 'node', 'npx', 'ffmpeg', 'ffprobe', 'python', 'uv', 'whisper-cli') {
   if (-not (Has $command)) { throw "$command is not on PATH after install." }
   Write-Host ("ok   {0,-12} {1}" -f $command, (Get-Command $command).Source)
 }
 Write-Host "ok   HYPERFRAMES_PYTHON=$([Environment]::GetEnvironmentVariable('HYPERFRAMES_PYTHON', 'User'))"
-cmd /c 'docker info >nul 2>&1'  # via cmd: PowerShell 5.1 with Stop turns native stderr into a fatal error
-if ($LASTEXITCODE -ne 0) {
+$dockerRunning = $false
+if (Has 'docker') {
+  cmd /c 'docker info >nul 2>&1'  # via cmd: PowerShell 5.1 with Stop turns native stderr into a fatal error
+  $dockerRunning = $LASTEXITCODE -eq 0
+}
+if (-not (Has 'docker')) {
+  Write-Host 'note Docker is not installed; renders run locally. Rerun with -Docker for reproducible render --docker.' -ForegroundColor Yellow
+} elseif (-not $dockerRunning) {
   $desktop = "$env:ProgramFiles\Docker\Docker\Docker Desktop.exe"
   if (Test-Path $desktop) { Start-Process $desktop }
   Write-Host 'note Docker is installed but not running. Open Docker Desktop once (accept its terms); render --docker works after that.' -ForegroundColor Yellow
 }
-npx.cmd -y hyperframes doctor
+npx.cmd -y $Hyperframes doctor
 Write-Host "`nDone. Restart Claude (or open a new terminal) so it sees the new PATH, then run /showhow <task>." -ForegroundColor Green

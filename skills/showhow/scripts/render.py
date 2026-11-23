@@ -49,6 +49,12 @@ def run_cli(cmd: list[str]) -> tuple[int, str]:
     return result.returncode, result.stdout
 
 
+# The render is what ships, so it runs a pinned Hyperframes; keep in step with $Hyperframes in install.ps1.
+# shortcut: the agent's own `npx hyperframes check/snapshot/tts` calls still take npm's cached or latest
+# version; pin those too (a package.json in the output folder) if a version mismatch ever shows up.
+HYPERFRAMES = "hyperframes@0.9.85"
+
+
 def render(
     composition: Path,
     output: Path,
@@ -61,7 +67,7 @@ def render(
     if not (composition / "index.html").is_file():
         raise SystemExit(f"no index.html in {composition}; pass the composition folder")
     # shutil.which finds npx.cmd on Windows, which subprocess can't resolve from a bare "npx".
-    cmd = [shutil.which("npx") or "npx", "hyperframes", "render", str(composition), "--output", str(output)]
+    cmd = [shutil.which("npx") or "npx", HYPERFRAMES, "render", str(composition), "--output", str(output)]
     if not fast_capture:
         cmd.append("--experimental-fast-capture=false")
     cmd += [a for a in extra or [] if a != "--quiet"]

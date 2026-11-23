@@ -80,7 +80,8 @@ On Windows, let the skill do it:
 /showhow install
 ```
 
-This installs Node.js LTS, ffmpeg, Python 3.12, uv, Docker Desktop, whisper-cpp, a Python venv for Kokoro voices and MusicGen music, and the Hyperframes browser.
+This installs Node.js LTS, ffmpeg, Python 3.12, uv, whisper-cpp (checked against a SHA256), a Python venv for Kokoro voices and MusicGen music, the helper scripts' Python packages, and the Hyperframes browser, all at pinned versions.
+Docker Desktop is optional: run `install.ps1 -Docker` for reproducible `render --docker` renders (it asks for admin).
 It also tries to install [earshot](https://github.com/Leonxlnx/earshot) for an optional audio check of the finished video; if that fails, showhow works without it.
 Restart your agent app afterwards so it picks up the new `PATH` and `HYPERFRAMES_PYTHON`.
 
@@ -91,11 +92,11 @@ On macOS and Linux, install these yourself:
 | Node.js 20+ | `npx hyperframes` |
 | ffmpeg | Rendering and audio |
 | Python 3.12 + [uv](https://docs.astral.sh/uv/) | Helper scripts |
-| A venv with `kokoro-onnx soundfile transformers torch numpy`, exported as `HYPERFRAMES_PYTHON` | Voice-over and generated music |
+| A venv with `kokoro-onnx==0.6.1 soundfile==0.14.0 transformers==5.18.0 torch==2.14.1 numpy==2.5.3`, exported as `HYPERFRAMES_PYTHON` | Voice-over and generated music |
 | [whisper.cpp](https://github.com/ggml-org/whisper.cpp) (`whisper-cli` on `PATH`) | Caption timing |
 | Optional: [earshot](https://github.com/Leonxlnx/earshot) v0.2.0 (`earshot` on `PATH`) | Listening to the finished video |
 
-Then run `npx hyperframes browser ensure`.
+Then run `npx hyperframes@0.9.85 browser ensure` and `uv sync --project skills/showhow/scripts --all-groups`.
 
 ## Usage
 
@@ -177,7 +178,8 @@ Every video follows the same teaching rules: say the outcome first, highlight a 
 
 Rendering, voice-over, captions and generated music run on your machine.
 Two things can be downloaded per video: a music track from [Incompetech](https://incompetech.com) when no bundled track fits, and a sound effect from Openverse (through Hyperframes media-use) when the bundled library has none; only the search terms are sent.
-Only `general` mode and outside steps go online, to read official docs and capture public pages.
+`general` mode and outside steps go online to read official docs and capture public pages.
+Tooling also reaches the network: `npx hyperframes` fetches the Hyperframes package from npm when it isn't cached, and `uv` downloads the helper scripts' Python packages the first time; neither sends anything about your project.
 showhow skips `.env` files, keys and credentials while it reads your project, and replaces names, emails, hostnames, IDs and tokens with fictional values before anything reaches the video.
 It never signs in to a site or types a password for you.
 
