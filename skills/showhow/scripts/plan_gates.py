@@ -9,10 +9,12 @@ so the timing the viewer actually gets is checked, not only the timing that was 
 
 P-steps:  the step (or change) counters run 1..N with one N, and N fits the mode
           (howto 1-8 steps, update 2-5 changes).
-P-action: each step does one thing: no "then", "and then", ";" or arrows in its Action line.
+P-action: each step does one thing; catches the usual joins in its Action line: "then", ";",
+          arrows, and "and click/press/select/type/open/choose/drag".
 P-time:   each step lasts at least 6s (quick-tip 5s, update changes 10s); the whole video stays
           under the hard limit (howto 180s, quick-tip 60s, update 120s).
-P-end:    a howto ends on a "Now try it" scene, not a recap (quick-tip ends on the result).
+P-end:    a howto (and a general task) ends on a "Now try it" scene, not a recap; a credits outro
+          after it is fine; quick-tip ends on the result and a general topic video on its recap.
 P-render: with --chapters, the rendered steps match the plan's count and each lasts the minimum.
 Exit code 1 when a gate fails.
 """
@@ -21,9 +23,10 @@ from __future__ import annotations
 
 import argparse
 import re
-import subprocess
 import sys
 from pathlib import Path
+
+from video_gates import video_duration
 
 MIN_STEP = {"howto": 6.0, "quick-tip": 5.0, "update": 10.0, "general": 6.0}
 HARD_LIMIT = {"howto": 180.0, "quick-tip": 60.0, "update": 120.0, "general": 180.0}
@@ -44,7 +47,7 @@ def parse_plan(text: str) -> dict:
     scenes = []
     for m in re.finditer(r"^### Scene (\d+) - (.+?) - ([\d.]+)\s*s\b(.*?)(?=^### Scene |\Z|^## )", text, re.M | re.S):
         body = m.group(4)
-        counter = re.search(r"^Counter:\s*\"?(?:Step\s+)?(\d+)\s+of\s+(\d+)", body, re.M | re.I)
+        counter = re.search(r"^Counter:\s*\"?(?:(?:Step|Change|Point)\s+)?(\d+)\s+of\s+(\d+)", body, re.M | re.I)
         action = re.search(r"^Action:\s*(.+)$", body, re.M)
         scenes.append({
             "n": int(m.group(1)), "name": m.group(2).strip(), "secs": float(m.group(3)),
@@ -53,7 +56,16 @@ def parse_plan(text: str) -> dict:
         })
     if not scenes:
         raise SystemExit("no '### Scene N - name - Ns' blocks in the plan's storyboard")
+    if mode == "quick-tip":
+        # A quick-tip shows no counter (SKILL.md): its action scenes are the steps.
+        acts = [sc for sc in scenes if has_action(sc)]
+        for k, sc in enumerate(acts, 1):
+            sc["counter"] = (k, len(acts))
     return {"mode": mode, "scenes": scenes}
+
+
+def has_action(scene: dict) -> bool:
+    return bool(scene["action"]) and scene["action"].strip("[]*` ").lower() not in ("none", "-", "n/a")
 
 
 def step_scenes(plan: dict) -> list[dict]:
@@ -88,10 +100,12 @@ def check_plan(plan: dict) -> list[tuple[str, bool, str]]:
         msg += "; too short: " + ", ".join(short)
     results.append(("P-time", not short and not over, msg))
 
-    if mode in ("howto", "general"):
-        last = scenes[-1]["name"].lower()
-        ok = "try" in last
-        results.append(("P-end", ok, f"last scene is {scenes[-1]['name']!r}" + ("" if ok else "; end on 'Now try it' with a concrete example, not a recap")))
+    topic = mode == "general" and not any(has_action(sc) for sc in scenes)
+    if mode in ("howto", "general") and not topic:
+        # A credits or outro card may follow "Now try it"; judge the last scene before it.
+        body = [sc for sc in scenes if not re.search(r"outro|credit|end card", sc["name"], re.I)] or scenes
+        ok = "try" in body[-1]["name"].lower()
+        results.append(("P-end", ok, f"last scene is {body[-1]['name']!r}" + ("" if ok else "; end on 'Now try it' with a concrete example, not a recap")))
     return results
 
 
@@ -110,7 +124,7 @@ def parse_chapters(text: str, duration: float) -> list[tuple[str, float]]:
 
 def check_render(plan: dict, chapters: list[tuple[str, float]]) -> tuple[str, bool, str]:
     mode = plan["mode"]
-    word = r"^(?:step|change)\s*\d+" if mode != "update" else r"^(?:change\s*)?\d+\b|^(?:new|fixed)\b"
+    word = {"update": r"^change\s*\d+", "general": r"^(?:step|point)\s*\d+"}.get(mode, r"^step\s*\d+")
     steps = [(t, d) for t, d in chapters if re.match(word, t, re.I)]
     planned = max((s["counter"][1] for s in step_scenes(plan)), default=0)
     short = [f"{t!r} {d:.0f}s" for t, d in steps if d < MIN_STEP[mode]]
@@ -119,16 +133,6 @@ def check_render(plan: dict, chapters: list[tuple[str, float]]) -> tuple[str, bo
     if short:
         msg += "; too short: " + ", ".join(short)
     return ("P-render", ok, msg)
-
-
-def video_duration(video: Path) -> float:
-    probe = subprocess.run(
-        ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(video)],
-        capture_output=True, encoding="utf-8", errors="replace", check=False,
-    )
-    if probe.returncode != 0 or not (probe.stdout or "").strip():
-        raise SystemExit(f"ffprobe could not read {video}: {(probe.stderr or '').strip()}")
-    return float(probe.stdout.strip())
 
 
 def main() -> int:

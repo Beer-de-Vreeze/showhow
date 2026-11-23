@@ -27,7 +27,8 @@ Levels with narration:
 ## Audio-reactive visuals
 
 Off by default for how-tos: nothing should move except what the viewer needs to look at.
-`release` style uses it as a subtle audio-reactive treatment on the hook, the change cards and the outro, never on the UI while a step is being shown. Hyperframes no longer ships an audio-data extractor, so drive it from the music's beat times: a soft swell on each strong beat, eased back before the next.
+`release` style uses it as a subtle audio-reactive treatment on the hook, the change cards and the outro, never on the UI while a step is being shown.
+Hyperframes no longer ships an audio-data extractor, so drive it from the music's beat times: a soft swell on each strong beat, eased back before the next.
 
 Good uses:
 - Hero glow or sky warmth breathes slightly on the beat
@@ -46,13 +47,15 @@ Suggested plan notation:
 Audio-reactive treatment: subtle; the hero glow and product card presence breathe on strong beats. No waveform/equalizer visuals.
 ```
 
-Hyperframes implementation note: run `npx hyperframes beats --json` in the composition (`hyperframes-cli` `references/beats.md`) and key each swell into the timeline at a beat time minus the scene's `data-start`. On calm music with low `bpmConfidence`, use only the hook, card and outro swells.
+Hyperframes implementation note: run `npx hyperframes beats --json` in the composition (`hyperframes-cli` `references/beats.md`) and key each swell into the timeline at a beat time minus the scene's `data-start`.
+On calm music with low `bpmConfidence`, use only the hook, card and outro swells.
 
 ---
 
 ## Asset paths
 
-All paths below are relative to `<skill-dir>`, this skill's own directory (see "Skill directory" in `SKILL.md`). It differs by install method, so resolve it rather than assuming `~/.claude/skills/showhow/`.
+All paths below are relative to `<skill-dir>`, this skill's own directory (see "Skill directory" in `SKILL.md`).
+It differs by install method, so resolve it rather than assuming `~/.claude/skills/showhow/`.
 
 SFX live under `<skill-dir>/assets/sfx/{casino,impact,interface,ui}/`, and the individual keypress set under `<skill-dir>/assets/sfx/keyboard/`.
 
@@ -72,7 +75,8 @@ SFX analysis lives beside the SFX library:
 <skill-dir>/assets/sfx/sfx-analysis.json
 ```
 
-**Critical: copy audio files into the composition project before rendering.** Hyperframes validates and serves assets from the composition directory. Always copy the files you need into `<output-dir>/composition/assets/` first:
+**Critical: copy audio files into the composition project before rendering.** Hyperframes validates and serves assets from the composition directory.
+Always copy the files you need into `<output-dir>/composition/assets/` first:
 
 ```bash
 # Create local asset dirs
@@ -100,7 +104,8 @@ Never use absolute paths (starting with `/Users/...`) - they will silently fail 
 
 The family SFX (casino, impact, interface, ui) live directly under `sfx/`; the individual keypress set lives in `sfx/keyboard/`.
 
-Read `sfx-analysis.md` before choosing files - it lists safer picks by use case and flags files with high-frequency risk. Prefer low/medium HF risk for polished and repeated moments; reserve high-risk files for tiny isolated accents or chaotic tones.
+Read `sfx-analysis.md` before choosing files - it lists safer picks by use case and flags files with high-frequency risk.
+Prefer low/medium HF risk for polished and repeated moments; reserve high-risk files for tiny isolated accents or chaotic tones.
 
 ### When nothing here fits
 
@@ -117,7 +122,9 @@ If resolve finds nothing, skip the sound; never block the video on it.
 
 ### `keyboard/` - Individual keypress sounds
 
-32 CC0 single keypress WAV files (`keypress-001.wav` through `keypress-032.wav`). Each is a distinct key sound at a slightly different velocity and character. Use these for per-character typing animations - randomize across the set so repeated characters don't sound robotic.
+32 CC0 single keypress WAV files (`keypress-001.wav` through `keypress-032.wav`).
+Each is a distinct key sound at a slightly different velocity and character.
+Use these for per-character typing animations - randomize across the set so repeated characters don't sound robotic.
 
 **Source:** [Keyboard Soundpack #1](https://opengameart.org/content/keyboard-soundpack-1-typing-and-single-keystrokes) by unicae_games - CC0
 
@@ -135,7 +142,8 @@ If resolve finds nothing, skip the sound; never block the video on it.
 
 ### `impact/` - Impact sounds
 
-More physical and cinematic. Excellent for big moments and transitions.
+More physical and cinematic.
+Excellent for big moments and transitions.
 
 | Files | Character | Use for |
 |---|---|---|
@@ -211,7 +219,8 @@ Two rules hold everywhere: never mask a narrated word, and keep one coherent son
 
 ## Moment → sound heuristics
 
-Use these as examples for Hyperframes, not a fixed recipe. Sound should reinforce the edit, not call attention to itself.
+Use these as examples for Hyperframes, not a fixed recipe.
+Sound should reinforce the edit, not call attention to itself.
 
 | Moment type | Good sound families | Notes |
 |---|---|---|
@@ -222,7 +231,8 @@ Use these as examples for Hyperframes, not a fixed recipe. Sound should reinforc
 | Success / completion | `impact/impactBell_heavy_000`, `_003`, or `_004`, `casino/chips-collide-*`, `interface/drop_*` | Positive accent for approvals, matches, metrics, completed flows, or final CTAs. |
 | Chaotic or comedic beat | `interface/glitch_002`, `interface/glitch_004`, `interface/error_005–006`, `impact/impactPunch_heavy_*`, `casino/dice-throw-*` | Update videos, sparingly: a fixed bug's "before", an AI moment, a playful bridge. Never loud under narration. |
 
-When in doubt, pick fewer cues with better timing. Prefer a coherent sonic palette for the whole video over a grab bag of cute sounds.
+When in doubt, pick fewer cues with better timing.
+Prefer a coherent sonic palette for the whole video over a grab bag of cute sounds.
 
 ---
 
@@ -254,7 +264,9 @@ Scene 3 - Step 2: Add a file - 9.4s
 
 ### Available tracks
 
-All tracks are "Happy Beats / Business Moves" by ende.app. Upbeat, clean, corporate-adjacent. Keep them quiet under narration.
+All tracks are "Happy Beats / Business Moves" by ende.app.
+Upbeat, clean, corporate-adjacent.
+Keep them quiet under narration.
 
 | Filename | Duration | Character | Best for |
 |---|---|---|---|
@@ -292,7 +304,8 @@ Then run the beat analysis on it like a custom track.
 
 ### Generated bed (MusicGen)
 
-Use it when the user asks for generated or original music, or when Incompetech is unreachable or has nothing that fits; otherwise use a bundled or Incompetech track. It runs locally with the media-use audio engine (MusicGen via `HYPERFRAMES_PYTHON`; nothing leaves the machine).
+Use it when the user asks for generated or original music, or when Incompetech is unreachable or has nothing that fits; otherwise use a bundled or Incompetech track.
+It runs locally with the media-use audio engine (MusicGen via `HYPERFRAMES_PYTHON`; nothing leaves the machine).
 From `<output-dir>/composition`:
 
 Write `../work/bgm_request.json` with a file tool (heredocs fail on Windows):
@@ -324,7 +337,8 @@ After copying files (see Asset paths above), reference them with relative paths 
 <audio id="bg-music" data-start="0" data-duration="[total]" data-track-index="10" data-volume="0.35" src="assets/music/happy-beats-business-moves-vol-1-by-ende-dot-app.mp3"></audio>
 ```
 
-Volumes: see the levels table at the top of this file. Never above 0.4 for music in an instructional video.
+Volumes: see the levels table at the top of this file.
+Never above 0.4 for music in an instructional video.
 
 ### Ducking under the voice
 
@@ -337,7 +351,8 @@ If the music file doesn't exist, skip it and notify the user after rendering.
 
 Beat sync needs a cue source; use the first one that works.
 
-1. **Bundled track → precomputed preset (richest, instant, no deps).** The bundled tracks ship with cue metadata. Read the matching markdown summary, and pass the JSON path in `composition-brief.md`:
+1. **Bundled track → precomputed preset (richest, instant, no deps).** The bundled tracks ship with cue metadata.
+   Read the matching markdown summary, and pass the JSON path in `composition-brief.md`:
 
 ```text
 <skill-dir>/assets/music/cues/<track-stem>.music-cues.md
@@ -353,7 +368,8 @@ uv run --project <skill-dir>/scripts --group music \
   --output-md  <output-dir>/composition/assets/music/cues/<stem>.music-cues.md
 ```
 
-3. **Any track → `hyperframes beats`**, when the script can't run. After the music is wired into the composition:
+3. **Any track → `hyperframes beats`**, when the script can't run.
+   After the music is wired into the composition:
 
 ```bash
 npx hyperframes beats <output-dir>/composition
@@ -373,7 +389,8 @@ Planning rules (apply to whichever source you have):
 - Use cue metadata to bias timing, not control it.
 - Major reveals may move toward strong cues within about `±0.15s`.
 - Smaller entrances may align to nearby beat points within about `±0.10s`.
-- `release` style uses cues: lock the hook, each change-card reveal and the outro to strong cues (±0.15s), and snap sequential tags/counters to the beat grid (±0.10s). How-tos use cues only for the title and outro, if at all.
+- `release` style uses cues: lock the hook, each change-card reveal and the outro to strong cues (±0.15s), and snap sequential tags/counters to the beat grid (±0.10s).
+  How-tos use cues only for the title and outro, if at all.
 - Narrated demo scenes follow the voice, never the beat.
 - Ignore cues when they harm copy readability, scene pacing, or the product story.
 
@@ -387,7 +404,8 @@ Music cue guidance: unavailable; continue without beat/cue sync.
 
 ### Adding SFX elements
 
-Put narration on low tracks (e.g. 1-9, alternating per scene), the music bed at 10, and give each overlapping SFX its own ascending track-index from 11 up. Never share a track-index between overlapping audio.
+Put narration on low tracks (e.g. 1-9, alternating per scene), the music bed at 10, and give each overlapping SFX its own ascending track-index from 11 up.
+Never share a track-index between overlapping audio.
 
 ```html
 <audio id="sfx-1" data-start="0.2" data-duration="1" data-track-index="11" data-volume="0.80" src="assets/sfx/interface/drop_001.ogg"></audio>
@@ -395,4 +413,5 @@ Put narration on low tracks (e.g. 1-9, alternating per scene), the music bed at 
 
 Set each SFX clip's `data-duration` to the file's real length (`ffprobe -v error -show_entries format=duration -of csv=p=0 <file>`); a longer slot makes `check` warn.
 
-Wire each `<audio>` clip per the current hyperframes Data Attributes + Video/Audio contract (`data-track-index`, `data-volume`, `data-start`, `data-duration`). `/showhow` owns only the volume policy above and the track-allocation convention; Hyperframes owns the clip schema.
+Wire each `<audio>` clip per the current hyperframes Data Attributes + Video/Audio contract (`data-track-index`, `data-volume`, `data-start`, `data-duration`).
+`/showhow` owns only the volume policy above and the track-allocation convention; Hyperframes owns the clip schema.

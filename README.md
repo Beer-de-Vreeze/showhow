@@ -190,7 +190,7 @@ It never signs in to a site or types a password for you.
 - The design floor for the video's chrome (`references/design-floor.md`) is adapted from [impeccable](https://github.com/pbakaus/impeccable), [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0), rewritten for video.
 - The house-style files, the video gates (`scripts/video_gates.py`), the review step and the motion values come from [motionmaxxing](https://github.com/Tejashmakwana/motionmaxxing), [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0), rewritten in our own words.
 - Design-floor rules and the optional before/after change come from [unslop](https://github.com/heydamir/unslop) by Damir Sokolovsky ([@heydamir](https://x.com/heydamir)), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); a video that uses the before/after credits it on the outro.
-- The pictured-promise, one-view-per-point and seeded-preset rules come from [taste-skill](https://github.com/Leonxlnx/taste-skill), [MIT](https://opensource.org/licenses/MIT).
+- The pictured-promise and one-view-per-point rules come from [taste-skill](https://github.com/Leonxlnx/taste-skill), [MIT](https://opensource.org/licenses/MIT).
 - Music: "Happy Beats / Business Moves" by Sascha Ende ([ende.app](https://ende.app/en)), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Videos that use a bundled track get the credit line in `credits.txt`.
 - Extra music: Kevin MacLeod ([incompetech.com](https://incompetech.com)), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), downloaded per video when no bundled track fits.
 - Every CC BY track, sound effect or photo a video uses gets a line in `credits.txt` and on the outro.

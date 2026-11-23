@@ -63,7 +63,7 @@ Seeing one in a frame means rewrite the element, not soften it.
 - **Sparklines, progress rings and decorative charts** that show no real data.
 - **Page chrome nobody asked for** (motionmaxxing's top tell of an undecided video): a brand or film name parked in a corner, timecodes, progress bars, corner brackets, scene labels like "01 - THE WAIT".
   The step or change counter is not chrome: it is a teaching law, so it stays in howto and update.
-  In a `release` or energy-style hook and title, before the first step, leave the counter out too.
+  In a `release` hook and title, before the first change, leave the counter out too.
 
 ## Video facts
 

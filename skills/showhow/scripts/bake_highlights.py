@@ -30,7 +30,8 @@ cuts the spans itself, so no video re-implements the rounding and clamping rules
 It writes one still per span of identical active rings and <spec>.overlays.json next to the spec:
 [{"id", "src", "in", "in_dur", "out", "out_dur"}] in seconds. Fade each "#img-<id>" in at "in" and
 out at "out". A ring still up when its screen is replaced ends with that cut: it fades with the screen, or vanishes on a hard cut. Times are compared in
-whole centiseconds, ids are checked as CSS-safe, and a ring that lands in no span is an error. Run:
+whole centiseconds, ids are checked as CSS-safe, and a ring that lands in no span is an error.
+Run:
   uv run --project <skill-dir>/scripts <skill-dir>/scripts/bake_highlights.py work/rings.json
 """
 
@@ -57,6 +58,7 @@ RADIUS = 9
 RING_IN = 0.25
 RING_OUT = 0.2
 RING_SWAP = 0.12
+RING_CUT = 0.01  # a ring that ends with a hard cut, or hands over to the next span at once
 CSS_ID = re.compile(r"^[A-Za-z0-9_-]+$")  # used as the suffix of "#img-<id>"
 
 
@@ -79,7 +81,7 @@ def plan(spec: dict) -> tuple[list[dict], list[dict]]:
         nxt = next((s for s in shows if s["t"] > t), None)
         if nxt and nxt["t"] < ring["end"] + cs(RING_OUT):
             # The ring ends with its screen: fade with the screen, or vanish on a hard cut.
-            ring["end"], ring["cut"] = nxt["t"], nxt["fade"] or 0.01
+            ring["end"], ring["cut"] = nxt["t"], nxt["fade"] or RING_CUT
         if ring["end"] <= t:
             raise SystemExit(f"ring at {r['t']}s on {r['screen']} has no time before its screen is replaced")
         rings.append(ring)
@@ -113,7 +115,7 @@ def plan(spec: dict) -> tuple[list[dict], list[dict]]:
                 "id": oid, "src": src,
                 "in": a / 100, "in_dur": RING_SWAP if joined_before else RING_IN,
                 "out": (b + cs(RING_SWAP)) / 100 if joined_after else b / 100,
-                "out_dur": 0.01 if joined_after else (ender and ender["cut"]) or RING_OUT,
+                "out_dur": RING_CUT if joined_after else (ender and ender["cut"]) or RING_OUT,
             })
     return stills, overlays
 

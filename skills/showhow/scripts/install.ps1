@@ -23,6 +23,7 @@ function Add-UserPath($dir) {
   $known = ([Environment]::GetEnvironmentVariable('Path', 'User') + ';' + [Environment]::GetEnvironmentVariable('Path', 'Machine')) -split ';' | ForEach-Object { $_.TrimEnd('\') }
   if ($known -contains $dir.TrimEnd('\')) { return }
   $key = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey('Environment', $true)
+  if (-not $key) { throw 'Could not open HKCU\Environment to update PATH.' }
   try {
     $raw = "$($key.GetValue('Path', '', 'DoNotExpandEnvironmentNames'))"
     $key.SetValue('Path', ($raw.TrimEnd(';') + ';' + $dir).TrimStart(';'), [Microsoft.Win32.RegistryValueKind]::ExpandString)
@@ -131,6 +132,8 @@ if ((Test-Path "$HOME\.claude\skills\hyperframes\assets\frame-presets") -or (Tes
 }
 
 Step 'Script dependencies (uv)'
+# --all-groups downloads the music-analysis packages into uv's cache too, so they work offline later;
+# a plain `uv run` keeps only the base (Pillow) in the scripts' environment.
 Run 'uv' @('sync', '--project', $PSScriptRoot, '--all-groups')
 
 Step 'Render browser'
@@ -154,6 +157,9 @@ foreach ($command in 'node', 'npx', 'ffmpeg', 'ffprobe', 'python', 'uv', 'whispe
   if (-not (Has $command)) { throw "$command is not on PATH after install." }
   Write-Host ("ok   {0,-12} {1}" -f $command, (Get-Command $command).Source)
 }
+# Writing PATH through the registry sends no change notice; this call does, so apps started
+# from the Start menu after this see the new PATH without signing out.
+[Environment]::SetEnvironmentVariable('HYPERFRAMES_PYTHON', $venvPython, 'User')
 Write-Host "ok   HYPERFRAMES_PYTHON=$([Environment]::GetEnvironmentVariable('HYPERFRAMES_PYTHON', 'User'))"
 $dockerRunning = $false
 if (Has 'docker') {

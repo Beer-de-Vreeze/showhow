@@ -8,7 +8,8 @@ description: Turn a project into a narrated how-to video (one task), a feature u
 Show people how it works, and what's new.
 It should feel like a good product support video: calm, exact, and easy to follow the first time.
 
-Usage: `/showhow [task, release or topic] [options]`. Options (flags or plain language):
+Usage: `/showhow [task, release or topic] [options]`.
+Options (flags or plain language):
 
 | Option | Default |
 |---|---|
@@ -18,7 +19,8 @@ Usage: `/showhow [task, release or topic] [options]`. Options (flags or plain la
 | `--audience <who>` | inferred |
 | `--theme <frame preset>` (`../hyperframes/assets/frame-presets/`) | product theme; general: the preset that fits the topic |
 | `--voice <Kokoro id>` (`npx hyperframes tts --list`) | `af_heart` |
-| `--title <text>`, `--duration <seconds>` | inferred; the narration sets the length within the limits below |
+| `--title <text>` | inferred |
+| `--duration <seconds>` | none: the narration sets the length; a typed value is the target the script is written to, within the limits below |
 | `--no-voice`, `--no-captions`, `--no-sfx` | all on |
 | `--music` / `--no-music` | music bed off for `clean`, `friendly`, `quick-tip`, on for `release`; `--no-music` wins |
 
@@ -41,12 +43,17 @@ Name the video `<video-name>.mp4` and the poster `<video-name>.jpg`; the other f
 **howto:** trace the task through the code the way a user does it: the entry point (route, sidebar item, menu), every control they touch in order with its **exact on-screen label**, what visibly happens after each action, prerequisites (roles, settings, data), the one mistake or error a user is most likely to hit and how they recover, and where the result lives afterwards.
 More than about 8 actions means two tasks: propose a split and make part 1.
 
-**Outside steps (any mode) and general:** a step this code can't show (an API token made in Atlassian before connecting Confluence, a process, a physical task) is tagged `outside`; `general` is a video of only outside steps. Read `references/general.md` and follow it. In short:
-- Facts come from the user's material, then the vendor's official docs, then screenshots of the real pages in your browser (never sign in or commit a real change yourself; ask the user to sign in), then only well-established knowledge. Never invent a label: describe it and list it as unverified.
-- Rebuild screens from those screenshots with fictional data; never rebuild beta or preview screens. A rebuilt third-party screen shows "Shown as of <Mon YYYY>", and the outro credit line adds "<Product> is a trademark of <owner>. Not affiliated."
+**Outside steps (any mode) and general:** a step this code can't show (an API token made in Atlassian before connecting Confluence, a process, a physical task) is tagged `outside`; `general` is a video of only outside steps.
+Read `references/general.md` and follow it.
+In short:
+- Facts come from the user's material, then the vendor's official docs, then screenshots of the real pages in your browser (never sign in or commit a real change yourself; ask the user to sign in), then only well-established knowledge.
+  Never invent a label: describe it and list it as unverified.
+- Rebuild screens from those screenshots with fictional data; never rebuild beta or preview screens.
+  A rebuilt third-party screen shows "Shown as of <Mon YYYY>", and the outro credit line adds "<Product> is a trademark of <owner>. Not affiliated."
 - Topic pictures: the user's, then `media-use resolve --type image`, then freely licensed photos (license in `work/sources.md`, attribution in `credits.txt` and on the outro credit line); invented step cards or diagrams only where nothing real exists, and a different picture for every point.
 - A mechanism gets a schematic diagram; when the shape itself is the point (parts that fit together), one schematic 3D object in three.js via Hyperframes (`../hyperframes/references/types/3d.md`); never 3D for UI, screens or charts.
 - Physical tasks: ask for first-person, hands-visible photos.
+- Everything else (shape, laws, sound, deliverables) works as for howto; a topic without steps uses the points shape in `references/general.md`.
 
 **update:** pin the release range (tags, version-bump commits, CHANGELOG; state the range you chose).
 Read the team's own release notes first (CHANGELOG, release commit subjects, PR titles, features/status docs), then the commits in the range.
@@ -74,9 +81,12 @@ Plan about 2.5 words per second.
 
 **Name the likely mistake:** at the step where it happens, one line on the error the user is most likely to hit and how to recover ("If **Save** stays grey, fill in the name first"); skip it when Step 1 found none.
 
-**Shape (howto):** Outcome (3-5s) -> Before you start (only if needed) -> Steps, one action each (6-15s) -> Result (3-6s) -> Now try it, with a concrete example (3-5s). About 2s of silent hold at each subtask boundary (the end of a group of steps that finishes one part of the task). Target 45-120s, hard limit 180s (split into parts beyond that); `quick-tip` 20-40s (limit 60s), 1-3 actions, ending on the result.
+**Shape (howto):** Outcome (3-5s) -> Before you start (only if needed) -> Steps, one action each (6-15s) -> Result (3-6s) -> Now try it, with a concrete example (3-5s).
+About 2s of silent hold at each subtask boundary (the end of a group of steps that finishes one part of the task).
+Target 45-120s, hard limit 180s (split into parts beyond that); `quick-tip` 20-40s (limit 60s), 1-3 actions, ending on the result.
 
-**Shape (update):** hook: the most visual change already moving with "What's new in [version]" as on-screen text within 3s (3-5s) -> each change: what / where / show / why (10-20s) -> how to get it (3-5s). Target 30-90s, hard limit 120s.
+**Shape (update):** hook: the most visual change already moving with "What's new in [version]" as on-screen text within 3s (3-5s) -> each change: what / where / show / why (10-20s) -> how to get it (3-5s).
+Target 30-90s, hard limit 120s.
 Every promise on a change card is pictured in its demo, and each change opens on a different screen or crop; a "Fixed" or redesigned screen may morph from the previous release's real screen into the new one (before/after, `references/tones.md`).
 
 **Gate:** `uv run --project <skill-dir>/scripts <skill-dir>/scripts/plan_gates.py showhow-plan.md` passes; fix the plan, never argue a FAIL.
@@ -85,17 +95,22 @@ Every promise on a change card is pictured in its demo, and each change opens on
 
 - **One job per video.** One task, or one release.
 - **Outcome first.** Within 5 seconds the viewer knows what they'll be able to do, or what's new.
-- **Show the real product.** Render the project's own components with fictional data, or screenshot the running app (dev server, fictional data, never production), or rebuild the screen from its styles and exact copy - in that order of preference. No abstract filler where a real screen exists. Reuse the product's own icons and logos (often inline SVG in shared components), never letter badges.
+- **Show the real product.** Render the project's own components with fictional data, or screenshot the running app (dev server, fictional data, never production), or rebuild the screen from its styles and exact copy - in that order of preference.
+  No abstract filler where a real screen exists.
+  Reuse the product's own icons and logos (often inline SVG in shared components), never letter badges.
 - **State carries forward.** What a step creates stays visible on later screens: the attached file in the sent message, the chosen model in the reply header.
 - **Orient, point, act, result.** For every step: show enough of the screen to know where you are; highlight the one target (ring, spotlight or zoom) while the voice names its label; move the cursor and click or type; hold the result until the narration ends plus 0.5-1.0s.
 - **Same screen, same camera.** Between steps on one screen, zoom and pan; fade or cut only when the screen changes.
 - **Always oriented.** "Step 2 of 4" (howto) or "2 of 3" (update), same place every time; not in a `quick-tip`, and not on a hook or title before the first step.
 - **Readable.** Anything the voice names is legible at the chosen zoom (zoom 1.5-2.5x on small controls); on-screen labels hold 1.5s settled; camera moves take 0.6-1.0s.
 - **Captions match the voice** verbatim, one phrase at a time, max 2 lines of ~42 characters, never over the highlight.
-- **Works muted.** The first 3 seconds and every title or change card make sense with the sound off. A hook with music and no voice carries its point as on-screen text, and the first voiced line says what the video is about.
+- **Works muted.** The first 3 seconds and every title or change card make sense with the sound off.
+  A hook with music and no voice carries its point as on-screen text, and the first voiced line says what the video is about.
 - **No flashing.** Nothing flashes more than three times in any second, in any style: no white or black flash frames, no strobe (WCAG 2.3.1).
 - **Every frame accurate.** A wrong label or wrong order is the worst bug a how-to can ship.
-- **Grounded claims.** Anything the video says the product does, its names and its numbers, must appear in the project (for outside steps: in the user's material, the official docs or your screenshots). Fictional demo data (names, files, replies) is fine and listed in the plan; invented capabilities are not.
+- **Name the likely mistake** at the step where it happens, with the way out (Step 2).
+- **Grounded claims.** Anything the video says the product does, its names and its numbers, must appear in the project (for outside steps: in the user's material, the official docs or your screenshots).
+  Fictional demo data (names, files, replies) is fine and listed in the plan; invented capabilities are not.
 
 ## Styles
 
@@ -127,8 +142,11 @@ Before building any chrome (title, cards, counters, caption plate, outro), read 
 Make every frame a pure function of time and wait for fonts and images to load before capturing each one.
 `references/step-3-compose.md` has the composition brief, the kit setup and the outro credit line.
 
-- **Place rings and the cursor by element, never by hand-computed pixels.** Use the showhow kit (`assets/kit/`, copied into `composition/assets/kit/`): `showhowKit(tl)` gives `ring`, `move`, `ripple`, `counter` and `R`, measures by element and writes `fromTo` tweens on elements you write in the HTML; a working example is in `scripts/fixtures/kit-demo/`. No function-valued tweens. Add a known offset for targets below something that grows later.
-- **Screenshot videos: bake rings into the stills.** DOM ring overlays on top of screenshots can vanish from the rendered mp4. Record rings and screen changes, give them to `scripts/bake_highlights.py` in timeline mode, and fade in the ringed copies it lists in `rings.overlays.json`; don't hand-write the span cutting.
+- **Place rings and the cursor by element, never by hand-computed pixels.** Use the showhow kit (`assets/kit/`, copied into `composition/assets/kit/`): `showhowKit(tl)` gives `ring`, `move`, `ripple`, `counter` and `R`, measures by element and writes `fromTo` tweens on elements you write in the HTML; a working example is in `scripts/fixtures/kit-demo/`.
+  No function-valued tweens.
+  Add a known offset for targets below something that grows later.
+- **Screenshot videos: bake rings into the stills.** DOM ring overlays on top of screenshots can vanish from the rendered mp4.
+  Record rings and screen changes, give them to `scripts/bake_highlights.py` in timeline mode, and fade in the ringed copies it lists in `rings.overlays.json`; don't hand-write the span cutting.
 - **Every tween is a `fromTo` with `immediateRender:false`, one element per highlight or ripple.** Starting states live in CSS: a `tl.set` at time 0 does not show on frame 0.
 - **Write big files with a file tool**, not a shell heredoc; long heredocs fail on Windows (`ENAMETOOLONG`).
 - **Overlays open below the app header**, so the step counter stays visible; for `content_overlap` from `hyperframes check`, see `references/step-4-deliver.md`, "Intentional overlaps".
@@ -156,14 +174,18 @@ Keep creation and rendering local; publishing or uploading needs a separate expl
 
 `references/step-4-deliver.md` has the commands and templates for each file.
 
-- **Poster:** the settled title card (or the finished result with the title) with no caption on it, to `<video-name>.jpg`, baked in as frame 0 of the mp4 by replacing that frame, so duration and audio sync stay the same; when the voice talks over the title, snapshot a caption-hidden copy of the composition. Teams, SharePoint and Slack show frame 0; YouTube doesn't, so the poster is also the upload thumbnail there.
+- **Poster:** the settled title card (or the finished result with the title) with no caption on it, to `<video-name>.jpg`, baked in as frame 0 of the mp4 by replacing that frame, so duration and audio sync stay the same; when the voice talks over the title, snapshot a caption-hidden copy of the composition.
+  Teams, SharePoint and Slack show frame 0; YouTube doesn't, so the poster is also the upload thumbnail there.
 - **`captions.srt`:** the script phrases with their absolute times, even when captions are burned in.
 - **`chapters.txt`:** `00:00 Title` style, one line per step (`Step N: ...`) or change (`Change N: ...`), from the real scene start times.
 - **Gates:** fix any FAIL and re-render, never argue it, and quote every line in the report:
   `uv run --project <skill-dir>/scripts <skill-dir>/scripts/video_gates.py <video-name>.mp4 --srt captions.srt` (no run of more than 3 blank frames; the video ends at most 1.4s after the last caption, 3.5s with `credits.txt`) and
   `uv run --project <skill-dir>/scripts <skill-dir>/scripts/plan_gates.py showhow-plan.md --chapters chapters.txt --video <video-name>.mp4` (the rendered steps match the plan and each lasts its minimum).
 - **`showhow.md`:** the written companion. howto: "How to [task]", prerequisites, numbered steps with labels in bold, result, tip. update: "What's new in [version]", one short section per change with where to find it, then how to get it.
-- **`credits.txt`:** only when a bundled or Incompetech music track is used, an image or sound license asks for attribution (title, author, license, URL, one line each), or a third-party app's screens are rebuilt (its trademark line). The same credits appear on the outro credit line.
-- **`share-copy.md`:** a business post to send with the video ("Post", 3-8 short lines: what it is, what it helps the reader do in their work, the prerequisites or 2-4 changes, one concrete action) and a "One-liner", then a "Title" (under 70 characters) and a "Description" for the upload page (what the viewer can do, prerequisites, the chapters from `chapters.txt`, any limit, the credits lines; no emojis). If `~/VOICE.md` exists, write as its owner following its business sections; otherwise direct and plain. Audience's language, no hype or invented claims, no em dashes, `[link]` for anything you don't have.
+- **`credits.txt`:** only when a bundled or Incompetech music track is used, an image or sound license asks for attribution (title, author, license, URL, one line each), or a third-party app's screens are rebuilt (its trademark line).
+  The same credits appear on the outro credit line.
+- **`share-copy.md`:** a business post to send with the video ("Post", 3-8 short lines: what it is, what it helps the reader do in their work, the prerequisites or 2-4 changes, one concrete action) and a "One-liner", then a "Title" (under 70 characters) and a "Description" for the upload page (what the viewer can do, prerequisites, the chapters from `chapters.txt`, any limit, the credits lines; no emojis).
+  If `~/VOICE.md` exists, write as its owner following its business sections; otherwise direct and plain.
+  Audience's language, no hype or invented claims, no em dashes, `[link]` for anything you don't have.
 - **Tell the user** where everything is, the share post ready to paste (for LinkedIn: turn off its auto-captions, the captions are burned in), the loudness line and the gate lines, the goal line and the step or change list (so they can spot a wrong step without watching), the fictional substitutions, any label you couldn't verify, and offer to redo a scene, change the voice, or make a vertical or quick-tip cut.
 - **Learn from the feedback.** When the user asks for changes, sort each into a one-off fix (this video only) or a lasting preference ("always", "never", the same correction twice); fix both, write the lasting ones to `~/.showhow/verdicts.md` and `edits.md`, and show the added lines as a diff (`references/house-style.md`).

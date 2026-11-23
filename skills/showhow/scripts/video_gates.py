@@ -59,15 +59,18 @@ def last_caption_end(srt: Path) -> float:
     return int(h) * 3600 + int(m) * 60 + int(s) + int(ms) / 1000
 
 
-def measure(video: Path) -> tuple[list[tuple[float, int]], float]:
+def video_duration(video: Path) -> float:
     probe = subprocess.run(
         ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(video)],
         capture_output=True, encoding="utf-8", errors="replace", check=False,
     )
     if probe.returncode != 0 or not probe.stdout.strip():
         raise SystemExit(f"ffprobe could not read {video}: {(probe.stderr or '').strip()}")
-    duration = float(probe.stdout.strip())
+    return float(probe.stdout.strip())
 
+
+def measure(video: Path) -> tuple[list[tuple[float, int]], float]:
+    duration = video_duration(video)
     result = subprocess.run(
         ["ffmpeg", "-v", "info", "-nostats", "-i", str(video), "-an",
          "-vf", "signalstats,metadata=mode=print:file=-", "-f", "null", "-"],

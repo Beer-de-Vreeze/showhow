@@ -6,11 +6,8 @@ This is the teaching contract for the whole video: the script, the steps, and wh
 The plan specifies what the video must teach and show.
 It does not prescribe Hyperframes implementation details; Hyperframes decides those from the brief in Step 3.
 
-## Create the output directory
-
-```bash
-mkdir -p <output-dir>
-```
+`<output-dir>` already exists: SKILL.md names it before Step 1.
+Keep the headings and storyboard fields below exactly as given: `scripts/plan_gates.py` parses them.
 
 ## Write the script first
 
@@ -80,7 +77,7 @@ With `--no-voice`, the same script becomes the caption text; plan about 0.35s pe
 ### Scene 1 - [name] - [duration]s
 Source: [code / outside]
 Screen: [which real screen / component is shown, and its state]
-Counter: [e.g. "Step 1 of 4", or none]
+Counter: ["Step 1 of 4" (howto), "Change 1 of 3" (update), "Point 2 of 5" (general topic), or none; none in a quick-tip]
 Highlight: [the exact element that gets the ring / spotlight / zoom, and when]
 Action: [cursor click / typing "value" / select option / drag, or none]
 Result: [what visibly changes after the action]

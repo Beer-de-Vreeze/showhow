@@ -35,12 +35,22 @@ def main() -> None:
                  + scene(3, "Result", 3.5, "Step 1 of 1") + scene(4, "Now try it", 4))
     assert all(verdicts(split).values()), check_plan(parse_plan(split))
 
-    # quick-tip: 5s per step is enough, no "Now try it" needed; update needs 2-5 changes of 10s+.
-    tip = plan("howto", scene(1, "Tip", 5, "Step 1 of 1", "press **Ctrl+K**") + scene(2, "Result", 3), preset="quick-tip")
-    assert parse_plan(tip)["mode"] == "quick-tip" and all(verdicts(tip).values())
-    upd = plan("update", scene(1, "Hook", 4) + scene(2, "Search", 12, "1 of 2", "type \"invoice\"")
+    # quick-tip: no counter (SKILL.md), its actions are the steps, 5s each, ends on the result.
+    tip = plan("howto", scene(1, "Tip", 5, "none", "press **Ctrl+K**") + scene(2, "Result", 3), preset="quick-tip")
+    assert parse_plan(tip)["mode"] == "quick-tip" and all(verdicts(tip).values()), check_plan(parse_plan(tip))
+
+    # update: 2-5 changes of 10s+, counters written "1 of 2" or "Change 1 of 2".
+    upd = plan("update", scene(1, "Hook", 4) + scene(2, "Search", 12, "Change 1 of 2", "type \"invoice\"")
                + scene(3, "Export", 6, "2 of 2", "click **Export**") + scene(4, "Get it", 4), preset="release")
     assert verdicts(upd) == {"P-steps": True, "P-action": True, "P-time": False}, verdicts(upd)
+
+    # A credits outro after "Now try it" is fine; a general topic video (no actions) ends on its recap.
+    outro = plan("howto", scene(1, "Outcome", 4) + scene(2, "Save", 7, "Step 1 of 1", "click **Save**")
+                 + scene(3, "Now try it", 4) + scene(4, "Outro", 3))
+    assert verdicts(outro)["P-end"], check_plan(parse_plan(outro))
+    topic = plan("general", scene(1, "Outcome", 4) + scene(2, "Wire", 9, "Point 1 of 2") + scene(3, "Motor", 9, "2 of 2")
+                 + scene(4, "Recap", 5))
+    assert all(verdicts(topic).values()), check_plan(parse_plan(topic))
 
     # Rendered chapters: the real connect-confluence chapters.txt (84.5s video).
     chapters = parse_chapters(
