@@ -56,8 +56,8 @@ def main() -> None:
     if not times:
         raise SystemExit("give --at times or --overlays")
     crop = [int(v) for v in args.crop.split(",")] if args.crop else None
-    if crop and len(crop) != 4:
-        raise SystemExit("--crop needs x,y,w,h")
+    if crop and (len(crop) != 4 or crop[0] < 0 or crop[1] < 0 or crop[2] <= 0 or crop[3] <= 0):
+        raise SystemExit("--crop needs x,y,w,h with x,y >= 0 and w,h > 0")
     font = ImageFont.load_default(size=20)
 
     tiles = []
@@ -65,6 +65,9 @@ def main() -> None:
         frame = grab(args.video, t)
         if crop:
             x, y, w, h = crop
+            if x + w > frame.width or y + h > frame.height:
+                # PIL would pad the outside with black, which looks exactly like a dropped ring.
+                raise SystemExit(f"--crop {args.crop} reaches outside the {frame.width}x{frame.height} frame")
             frame = frame.crop((x, y, x + w, y + h))
         frame = frame.resize((TILE_WIDTH, round(frame.height * TILE_WIDTH / frame.width)))
         tile = Image.new("RGB", (frame.width, frame.height + LABEL_HEIGHT), "black")

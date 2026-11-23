@@ -80,7 +80,8 @@ On Windows, let the skill do it:
 /showhow install
 ```
 
-This installs Node.js LTS, ffmpeg, Python 3.12, uv, Docker Desktop, whisper-cpp, a Python venv for Kokoro voices and MusicGen music, and the Hyperframes browser.
+This installs Node.js LTS, ffmpeg, Python 3.12, uv, whisper-cpp (checked against a SHA256), a Python venv for Kokoro voices and MusicGen music, the helper scripts' Python packages, and the Hyperframes browser, all at pinned versions.
+Docker Desktop is optional: run `install.ps1 -Docker` for reproducible `render --docker` renders (it asks for admin).
 It also tries to install [earshot](https://github.com/Leonxlnx/earshot) for an optional audio check of the finished video; if that fails, showhow works without it.
 Restart your agent app afterwards so it picks up the new `PATH` and `HYPERFRAMES_PYTHON`.
 
@@ -91,11 +92,11 @@ On macOS and Linux, install these yourself:
 | Node.js 20+ | `npx hyperframes` |
 | ffmpeg | Rendering and audio |
 | Python 3.12 + [uv](https://docs.astral.sh/uv/) | Helper scripts |
-| A venv with `kokoro-onnx soundfile transformers torch numpy`, exported as `HYPERFRAMES_PYTHON` | Voice-over and generated music |
+| A venv with `kokoro-onnx==0.6.1 soundfile==0.14.0 transformers==5.18.0 torch==2.14.1 numpy==2.5.3`, exported as `HYPERFRAMES_PYTHON` | Voice-over and generated music |
 | [whisper.cpp](https://github.com/ggml-org/whisper.cpp) (`whisper-cli` on `PATH`) | Caption timing |
 | Optional: [earshot](https://github.com/Leonxlnx/earshot) v0.2.0 (`earshot` on `PATH`) | Listening to the finished video |
 
-Then run `npx hyperframes browser ensure`.
+Then run `npx hyperframes@0.9.85 browser ensure` and `uv sync --project skills/showhow/scripts --all-groups`.
 
 ## Usage
 
@@ -106,7 +107,7 @@ Open your project in your agent and describe the video:
 /showhow --mode update 2.4.0
 /showhow what's new since v2.3.0 --style release
 /showhow how to restore a prompt version --format vertical --music
-/showhow --mode general how a train gets its power --style cinematic --voice am_michael
+/showhow --mode general how a train gets its power --voice am_michael
 /showhow options
 ```
 
@@ -126,7 +127,7 @@ showhow researches them from official docs and rebuilds the screens with fiction
 
 ## Styles, themes and voices
 
-Eleven styles, in every mode:
+Four styles, in every mode:
 
 | Style | Feel |
 |---|---|
@@ -134,7 +135,6 @@ Eleven styles, in every mode:
 | `friendly` | Warm and encouraging, for first-time users |
 | `release` | Punchy and beat-locked (default for updates) |
 | `quick-tip` | One small trick in 20 to 40 seconds |
-| `playful`, `polished`, `yc-parody`, `chaotic`, `deadpan`, `cinematic`, `app-store` | More personality, at teaching length |
 
 Presets are a starting point: add freeform direction such as `--style "calm, like Apple support videos"`.
 
@@ -159,7 +159,7 @@ When you ask for changes, it keeps the lasting ones there and shows you the diff
 | `--title` | Text | Inferred |
 | `--no-voice` | Flag | Narration on |
 | `--no-captions` | Flag | Captions on |
-| `--music` | Flag | Music off for `clean`, `friendly` and `quick-tip`; on for `release` and the energy styles |
+| `--music` | Flag | Music off for `clean`, `friendly` and `quick-tip`; on for `release` |
 | `--no-music` | Flag | Forces music off in any style |
 | `--no-sfx` | Flag | Sound effects on |
 
@@ -168,9 +168,9 @@ Length limits keep videos watchable: how-tos run 45 to 120 seconds (3 minutes at
 ## How it works
 
 1. **Inspect.** Reads the code, docs and styles for the real flow, or git history and release notes for an update.
-2. **Plan.** Writes `showhow-plan.md` with the goal, audience, narration script and a scene-by-scene storyboard.
+2. **Plan.** Writes `showhow-plan.md` with the goal, audience, narration script and a scene-by-scene storyboard, and checks it against the teaching rules (`plan_gates.py`): one action per step, steps long enough to follow, a "Now try it" ending, within the length limit.
 3. **Compose.** Generates the voice-over and builds a Hyperframes composition that rebuilds your UI from its own components, styles and copy.
-4. **Deliver.** Checks, renders, normalises the loudness to -16 LUFS, measures the mp4 for blank frames and a dragging ending, and writes the captions, chapters, companion doc and share post.
+4. **Deliver.** Checks, renders, normalises the loudness to -16 LUFS, measures the mp4 for blank frames, a dragging ending and steps shorter than planned, and writes the captions, chapters, companion doc and share post.
 
 Every video follows the same teaching rules: say the outcome first, highlight a target before acting on it, one action per step, hold each result until the narration finishes, and keep a step counter on screen.
 
@@ -178,18 +178,19 @@ Every video follows the same teaching rules: say the outcome first, highlight a 
 
 Rendering, voice-over, captions and generated music run on your machine.
 Two things can be downloaded per video: a music track from [Incompetech](https://incompetech.com) when no bundled track fits, and a sound effect from Openverse (through Hyperframes media-use) when the bundled library has none; only the search terms are sent.
-Only `general` mode and outside steps go online, to read official docs and capture public pages.
+`general` mode and outside steps go online to read official docs and capture public pages.
+Tooling also reaches the network: `npx hyperframes` fetches the Hyperframes package from npm when it isn't cached, and `uv` downloads the helper scripts' Python packages the first time; neither sends anything about your project.
 showhow skips `.env` files, keys and credentials while it reads your project, and replaces names, emails, hostnames, IDs and tokens with fictional values before anything reaches the video.
 It never signs in to a site or types a password for you.
 
 ## Credits
 
 - Built on [Hyperframes](https://github.com/heygen-com/hyperframes) by HeyGen.
-- Started as a fork of [brag](https://github.com/latent-spaces/brag) by Shunit Haviv Hakimi (MIT); the energy styles and parts of the audio pipeline still come from it.
+- Started as a fork of [brag](https://github.com/latent-spaces/brag) by Shunit Haviv Hakimi (MIT); parts of the audio pipeline still come from it, and its launch-reel styles live on there.
 - The design floor for the video's chrome (`references/design-floor.md`) is adapted from [impeccable](https://github.com/pbakaus/impeccable), [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0), rewritten for video.
 - The house-style files, the video gates (`scripts/video_gates.py`), the review step and the motion values come from [motionmaxxing](https://github.com/Tejashmakwana/motionmaxxing), [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0), rewritten in our own words.
 - Design-floor rules and the optional before/after change come from [unslop](https://github.com/heydamir/unslop) by Damir Sokolovsky ([@heydamir](https://x.com/heydamir)), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); a video that uses the before/after credits it on the outro.
-- The pictured-promise, one-view-per-point and seeded-preset rules come from [taste-skill](https://github.com/Leonxlnx/taste-skill), [MIT](https://opensource.org/licenses/MIT).
+- The pictured-promise and one-view-per-point rules come from [taste-skill](https://github.com/Leonxlnx/taste-skill), [MIT](https://opensource.org/licenses/MIT).
 - Music: "Happy Beats / Business Moves" by Sascha Ende ([ende.app](https://ende.app/en)), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Videos that use a bundled track get the credit line in `credits.txt`.
 - Extra music: Kevin MacLeod ([incompetech.com](https://incompetech.com)), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), downloaded per video when no bundled track fits.
 - Every CC BY track, sound effect or photo a video uses gets a line in `credits.txt` and on the outro.

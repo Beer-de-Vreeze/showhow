@@ -6,11 +6,8 @@ This is the teaching contract for the whole video: the script, the steps, and wh
 The plan specifies what the video must teach and show.
 It does not prescribe Hyperframes implementation details; Hyperframes decides those from the brief in Step 3.
 
-## Create the output directory
-
-```bash
-mkdir -p <output-dir>
-```
+`<output-dir>` already exists: SKILL.md names it before Step 1.
+Keep the headings and storyboard fields below exactly as given: `scripts/plan_gates.py` parses them.
 
 ## Write the script first
 
@@ -45,7 +42,7 @@ With `--no-voice`, the same script becomes the caption text; plan about 0.35s pe
 [prerequisites, or "none"]
 
 ## Style
-- Preset: [one of the 11 styles in tones.md]
+- Preset: [`clean`, `friendly`, `release` or `quick-tip`]
 - Theme: [frame preset name, or "product theme"]
 - Voice: [Kokoro voice id, default `af_heart`]
 - Direction: [freeform phrase, inferred or user-provided]
@@ -80,12 +77,12 @@ With `--no-voice`, the same script becomes the caption text; plan about 0.35s pe
 ### Scene 1 - [name] - [duration]s
 Source: [code / outside]
 Screen: [which real screen / component is shown, and its state]
-Counter: [e.g. "Step 1 of 4", or none]
+Counter: ["Step 1 of 4" (howto), "Change 1 of 3" (update), "Point 2 of 5" (general topic), or none; none in a quick-tip]
 Highlight: [the exact element that gets the ring / spotlight / zoom, and when]
 Action: [cursor click / typing "value" / select option / drag, or none]
 Result: [what visibly changes after the action]
 Narration: [the lines for this scene]
-Caption: [same as narration, split into phrases of max ~7 words]
+Caption: [same as narration, one phrase at a time, max 2 lines of ~42 characters]
 On-screen text: [title cards or labels, if any]
 Audio: [click / typing / none; music level]
 Transition: [cut / soft fade / slide / zoom-out] -> Scene 2
@@ -94,7 +91,7 @@ Transition: [cut / soft fade / slide / zoom-out] -> Scene 2
 
 ## Chapters
 00:00 [Intro]
-00:05 [Step 1 - ...]
+00:05 Step 1: [...]
 ...
 
 ## Written companion (draft)
@@ -163,7 +160,7 @@ If a step's narration needs more than ~15s, the step is too big; split it.
 ## Audio planning
 
 - **Voice** leads. Everything else sits under it.
-- **Music**: none by default for `clean`, `friendly` and `quick-tip`; a quiet bed with `--music` (see `audio.md` for levels). `release` and the energy styles plan music louder on the hook, bridges and outro, ducked under the voice, with strong cues picked for the hook, change cards and outro.
+- **Music**: none by default for `clean`, `friendly` and `quick-tip`; a quiet bed with `--music` (see `audio.md` for levels). `release` plans music louder on the hook, bridges and outro, ducked under the voice, with strong cues picked for the hook, change cards and outro.
 - **SFX (howto)**: mainly for visible actions - a soft click on each click, soft key ticks on typing, one gentle accent on the final result.
 - **SFX (update)**: plan them around the demos - a soft hit on the hook reveal, card sounds as each change card arrives, a tick for each "New"/"Fixed" tag, a payoff on the outro (a bell is fine). Inside the UI demo, clicks and typing only.
 - The full library is available (see `audio.md`); note the moment and intent in the plan, not the filename.
@@ -178,6 +175,5 @@ Do not pick exact SFX filenames in the plan; Hyperframes picks them after the an
 | `friendly` | Soft fade, gentle slide |
 | `release` | Slide or wipe between changes, cut within a change |
 | `quick-tip` | Cut |
-| Energy styles (`playful`, `polished`, `yc-parody`, `chaotic`, `deadpan`, `cinematic`, `app-store`) | The style's own **Transitions** line in tones.md between scenes; camera moves within a screen as always |
 
 Transitions within one screen (same app view, different step) should be camera moves (zoom/pan), not fades: the viewer must see it is the same screen.

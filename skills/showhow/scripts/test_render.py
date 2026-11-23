@@ -69,6 +69,26 @@ def main() -> None:
         comp, work, out = root / "composition", root / "work", root / "video.mp4"
         comp.mkdir()
 
+        # missing_composition_fails_fast: no index.html means no render call and no retry.
+        never = FakeRunner(out, 0, 1024)
+        expect_exit(lambda: render(comp, out, work, run=never), "no index.html")
+        assert never.calls == [], never.calls
+        (comp / "index.html").write_text("<html></html>", encoding="utf-8")
+
+        # retry_then_success: a first failure is retried once and the second attempt counts.
+        class Flaky(FakeRunner):
+            def __call__(self, cmd):
+                self.calls.append(cmd)
+                if len(self.calls) == 1:
+                    return 1, "Error: browser closed\n"
+                self.out.write_bytes(b"x" * 64)
+                return 0, "encode done\n"
+        flaky = Flaky(out, 0, None)
+        render(comp, out, work, run=flaky)
+        assert len(flaky.calls) == 2 and out.stat().st_size == 64, flaky.calls
+        assert "browser closed" in (work / "render.log").read_text(encoding="utf-8")
+        out.unlink()
+
         # writes_mp4: one call, returns, log keeps the CLI output.
         ok = FakeRunner(out, 0, 1024)
         render(comp, out, work, run=ok)

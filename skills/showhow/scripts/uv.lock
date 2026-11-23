@@ -781,18 +781,24 @@ name = "showhow"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "pillow" },
+]
+
+[package.dev-dependencies]
+music = [
     { name = "librosa" },
     { name = "numpy" },
-    { name = "pillow" },
     { name = "scipy" },
     { name = "soundfile" },
 ]
 
 [package.metadata]
-requires-dist = [
+requires-dist = [{ name = "pillow", specifier = ">=10.1" }]
+
+[package.metadata.requires-dev]
+music = [
     { name = "librosa", specifier = ">=0.10.2" },
     { name = "numpy", specifier = ">=1.26" },
-    { name = "pillow", specifier = ">=10.1" },
     { name = "scipy", specifier = ">=1.11" },
     { name = "soundfile", specifier = ">=0.12" },
 ]

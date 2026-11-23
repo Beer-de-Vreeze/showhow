@@ -7,11 +7,11 @@ It covers the video's own chrome only.
 Rebuilt product screens and third-party screens keep their own look, even where it breaks a rule here: the teaching law "Show the real product" wins.
 
 **Precedence.** A preset picked with `--theme`, or the user's own brand, overrides the Refuse list: `blockframe` keeps its label pills and hard shadows.
-A style's own entry in tones.md overrides the motion values, the copy rules and the Refuse list where it names something on purpose: `release` tags pop and its version slams in, `chaotic` and `cinematic` slam names in, `chaotic` zoom-cuts from 1.2x and may use exclamation marks, and both set ALL CAPS.
+A style's own entry in tones.md overrides the motion values and the Refuse list where it names something on purpose: `release` tags pop and its version slams in.
 The contrast, type, depth and radii checks apply to every video.
 
 **Energy.** In `clean`, `friendly` and `quick-tip`, ambition shows as precision: one accent, quiet cards, nothing that competes with the steps.
-Bold treatments belong to `release` and the energy styles.
+Bold treatments belong to `release`.
 
 ## Verify
 
@@ -63,7 +63,7 @@ Seeing one in a frame means rewrite the element, not soften it.
 - **Sparklines, progress rings and decorative charts** that show no real data.
 - **Page chrome nobody asked for** (motionmaxxing's top tell of an undecided video): a brand or film name parked in a corner, timecodes, progress bars, corner brackets, scene labels like "01 - THE WAIT".
   The step or change counter is not chrome: it is a teaching law, so it stays in howto and update.
-  In a `release` or energy-style hook and title, before the first step, leave the counter out too.
+  In a `release` hook and title, before the first change, leave the counter out too.
 
 ## Video facts
 

@@ -16,7 +16,7 @@ Contrast warnings on a caption at the exact moment it fades in are expected; err
 ### Intentional overlaps (dialogs, sheets, menus, callouts)
 
 `check` reports `content_overlap` when a dialog or sheet sits over text, even though that's the point.
-The `data-layout-allow-overlap` and `data-layout-allow-occlusion` attributes on an overlay or wrapper did **not** clear `content_overlap` (hyperframes 0.8.82).
+The `data-layout-allow-overlap` and `data-layout-allow-occlusion` attributes on an overlay or wrapper do **not** clear `content_overlap`.
 `data-layout-allow-overlap` does work on the exact text element `check` names, e.g. the `<span>` under an open menu.
 What works, in this order:
 
@@ -26,7 +26,6 @@ What works, in this order:
 3. **`data-layout-ignore`** on small floating annotations (callouts, "not this one" marks) that deliberately overlap the dimmed page.
 
 Other escape hatches that exist: `data-layout-allow-overflow` (intentional ellipsis or clipping), `data-layout-allow-caption-zone`, `data-layout-bleed`.
-Don't search the npx cache for them; it takes minutes.
 
 Then capture key frames and look at them:
 
@@ -46,7 +45,7 @@ Then check every frame:
 - **The ring sits on the control the narration names**, fully around it, not offset or half off. Crop and zoom any ring you can't judge at contact-sheet size (`ffmpeg -i frame.png -vf crop=w:h:x:y,scale=iw*2:-1 tile.png`).
 - The cursor tip is on the target at each click.
 - Its label is legible at this zoom.
-- Captions, the cursor and any dragged item don't cover it (a dragged file must not sit on the "Drop files to attach" label the voice reads).
+- Captions, the cursor and any dragged item don't cover it.
 - The step counter is visible and correct; no dialog or sheet covers it.
 - **No clipped text** in fixed-width pills, callouts, badges or inputs: `check` does not catch text clipped inside a box with `overflow: hidden` or a fixed width. Let labels size to their text (`padding` instead of `width`) where you can.
 - **Nothing shows ahead of its content**: `::before` bullets, list dots, icons or borders of a line whose words are still hidden. Hide the whole line, not only its words.
@@ -64,11 +63,11 @@ npx hyperframes preview
 Tell the user the preview is running and give them the localhost URL.
 Ask them to watch it once for accuracy: wrong labels or wrong order are the most expensive mistakes to ship in a how-to.
 
-If the user approves or asks to render:
+Don't wait for an answer: render now, and re-render if they find a wrong label or order.
 
 ## Render
 
-Render with the wrapper, never `npx hyperframes render` directly: with `--quiet` a failed render can exit non-zero (seen: exit 4) with no error message and no file.
+Render with the wrapper, never `npx hyperframes render` directly: with `--quiet` a failed render can exit non-zero with no error message and no file.
 The wrapper never passes `--quiet`, logs everything to `work/render.log`, succeeds only when this run wrote a non-empty mp4, retries once, and prints the log tail when it fails twice.
 
 ```bash
@@ -193,7 +192,7 @@ uv run --project <skill-dir>/scripts <skill-dir>/scripts/video_gates.py <video-n
 
 - **G-blank:** no run of more than 3 blank frames (one flat colour: an empty ground between scenes, a black or white flash).
   A dip through the background lasts 3 frames at most; a longer empty gap reads as a broken video.
-  A designed cut to black at the very end (`chaotic`'s outro) may run 15 frames.
+  A designed cut to black at the very end may run 15 frames.
 - **G-end:** the video ends at most 1.4s after the last caption, or 3.5s when `credits.txt` exists (the outro credit line needs 2.5s).
   Under 0.5s is a note: the result may be cut off.
 

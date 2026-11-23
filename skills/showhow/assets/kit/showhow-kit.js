@@ -22,8 +22,12 @@
     function R(sel, p = 6) {
       let e = el(sel);
       const w = e.offsetWidth, h = e.offsetHeight;
+      // display:none (or not yet laid out) gives a 0x0 box at 0,0: a ring there points at nothing.
+      if (!w || !h) throw new Error(`showhowKit: ${sel} has no size; is it hidden or not rendered yet?`);
       let x = 0, y = 0;
       while (e && !e.matches(o.root)) { x += e.offsetLeft; y += e.offsetTop; e = e.offsetParent; }
+      // Walking past the root gives page coordinates; the root needs position: absolute or relative.
+      if (!e) throw new Error(`showhowKit: ${sel} is not inside a positioned ${o.root}`);
       return [x - p, y - p, w + 2 * p, h + 2 * p];
     }
 
@@ -42,9 +46,13 @@
       tl.fromTo(r, { opacity: 1 }, { opacity: 0, duration: fadeOut, immediateRender: false }, t + d);
     }
 
-    let cur = o.cursorStart.slice();
-    gsap.set(el(o.cursor), { x: cur[0], y: cur[1] });
+    // The cursor is only required once a scene moves or presses it; ring-only scenes need none.
+    let cur = null;
+    function cursor() {
+      if (!cur) { cur = o.cursorStart.slice(); gsap.set(el(o.cursor), { x: cur[0], y: cur[1] }); }
+    }
     function move(t, target, d = 0.6, { tip = o.tip, dy = 0 } = {}) {
+      cursor();
       const [x, y, w, h] = R(target, 0);
       const to = [x + w / 2 - tip[0], y + h / 2 - tip[1] + dy];
       tl.fromTo(o.cursor, { x: cur[0], y: cur[1] }, { x: to[0], y: to[1], duration: d, ease: "power2.inOut", immediateRender: false }, t);
@@ -60,12 +68,16 @@
       tl.fromTo(r, { xPercent: -50, yPercent: -50, scale: 0.3, opacity: 0.9 },
         { xPercent: -50, yPercent: -50, scale: 1.6, opacity: 0, duration, ease: "power2.out", immediateRender: false }, t);
       if (!press) return;
+      cursor();
       const origin = `${tip[0]}px ${tip[1]}px`;
       tl.fromTo(o.cursor, { scale: 1, transformOrigin: origin }, { scale: 0.86, duration: 0.07, ease: "power2.out", immediateRender: false }, t - 0.07);
       tl.fromTo(o.cursor, { scale: 0.86, transformOrigin: origin }, { scale: 1, duration: 0.1, ease: "power2.out", immediateRender: false }, t);
     }
 
     function counter(t, n, { fade = 0.3 } = {}) {
+      // The first counter span is shown by CSS; counter() switches from n-1 to n, so n starts at 2.
+      if (!(n >= 2)) throw new Error(`showhowKit: counter(t, ${n}) switches from step n-1, so n must be 2 or more`);
+      el(o.countPrefix + (n - 1)); el(o.countPrefix + n);
       tl.fromTo(o.countPrefix + (n - 1), { opacity: 1 }, { opacity: 0, duration: fade, immediateRender: false }, t);
       tl.fromTo(o.countPrefix + n, { opacity: 0 }, { opacity: 1, duration: fade, immediateRender: false }, t);
     }
