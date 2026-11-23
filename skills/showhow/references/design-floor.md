@@ -1,6 +1,6 @@
 # Design floor
 
-Adapted from [impeccable](https://github.com/pbakaus/impeccable) (Apache-2.0), rewritten for video.
+Adapted from [impeccable](https://github.com/pbakaus/impeccable) (Apache-2.0), with rules from [unslop](https://github.com/heydamir/unslop) by Damir Sokolovsky (@heydamir, CC BY 4.0), [motionmaxxing](https://github.com/Tejashmakwana/motionmaxxing) (Apache-2.0) and [taste-skill](https://github.com/Leonxlnx/taste-skill) (MIT), rewritten for video.
 
 Read this before building any chrome: title and outro cards, step and change cards, counters, tags, caption plates, credit line.
 It covers the video's own chrome only.
@@ -21,7 +21,15 @@ Check these on snapshot frames of the title, one step and the outro, together in
 - **Depth:** a shadow has an offset and a soft blur, sized for video (a web 6% shadow vanishes). Use either a border or a shadow per card, not both.
 - **Radii:** nested corners are concentric: outer radius = inner radius + the padding between them. Card radii 12-16px at 1080p; pills only for small tags.
 - **Motion:** one motion signature for the whole video (one entrance, one exit, one easing), not a different effect per card. Entrances ease out (`power3.out`, `expo.out`).
-- **Copy:** curly quotes, a real ellipsis (…), a non-breaking space between a number and its unit, sentence case unless the style says otherwise.
+- **Motion values** (measured on professional films by [motionmaxxing](https://github.com/Tejashmakwana/motionmaxxing), Apache-2.0):
+  - An entrance does most of its travel in the first 4-8 frames, then a long settle; a typical card or label move takes about 0.33s (10 frames at 30fps). Camera moves on product screens keep their 0.6-1.0s.
+  - No bounce or overshoot on chrome; at most one visible spring in the whole video.
+  - Nothing scales up from zero. Things arrive by moving a short way (16-40px), by unmasking, or by settling down from slightly oversize (about 1.05-1.1x).
+  - Exits ease in and are shorter than entrances (about 0.2s).
+  - Words arrive as whole words, 4-6 frames apart in a title, never letter by letter; letter-by-letter typing is only for the product's own input fields.
+- **Copy:** curly quotes, a real ellipsis (…), a non-breaking space between a number and its unit, sentence case unless the style says otherwise. No exclamation marks on cards or titles; titles and labels end without a period.
+- **Rhythm:** paddings, gaps and offsets on a 4px grid; the same kind of card has the same padding and size every time it appears; space inside a group is smaller than space between groups.
+- **Numbers:** one format across the video (`1,240` and `$48,210`, not `1.2k` next to `$124,860.40`), with `font-variant-numeric: tabular-nums` on counters and anything that ticks; a change says what it compares to (`12% faster than 3.3`).
 
 ## Refuse
 
@@ -30,6 +38,9 @@ Seeing one in a frame means rewrite the element, not soften it.
 
 - **An eyebrow or kicker label above the title** ("How to", "New feature" in small accent caps). The title carries itself; put the mode in the title or the narration.
 - **Gradient text.** Emphasis comes from weight or size.
+- **Tracked all-caps labels** (`NEW FEATURE`, `STEP ONE` with wide letter spacing). Sentence case; the step counter keeps normal tracking.
+- **Emoji badges and sparkle tags** (`New ✨`, `Beta 🚀`). The release tags "New" and "Fixed" are quiet text on a small tag, no emoji.
+- **Coloured glows, coloured shadows and neon borders** on cards and titles; the one exception is `release`'s subtle beat swell on cards (tones.md).
 - **Blurred colour blobs or a full-frame gradient as the background.** It reads as filler and bands under H.264. Use a solid ground, the product's own surface, or a texture from the subject's world.
 - **Glass and blur as decoration.** Use them only where they show something (a sheet over the app).
 - **Same-size icon-plus-heading cards as the structure** of a title or recap. Use the product's real screen, a list, or one strong statement.
@@ -38,6 +49,7 @@ Seeing one in a frame means rewrite the element, not soften it.
 - **Hard offset shadows** (`4px 4px 0`) outside a neobrutalist preset.
 - **A coloured border on one side only** (thicker than 1px) on cards, callouts or captions.
 - **Sparklines, progress rings and decorative charts** that show no real data.
+- **Page chrome nobody asked for** (motionmaxxing's top tell of an undecided video): a brand or film name parked in a corner, timecodes, progress bars, corner brackets, scene labels like "01 - THE WAIT". The step or change counter is not chrome: it is a teaching law, so it stays in howto and update; in a `release` or energy-style hook and title, before the first step, leave it out.
 
 ## Video facts
 

@@ -83,7 +83,7 @@ Write `<output-dir>/composition-brief.md` before creating the composition.
 - Fonts: [display / body]
 - Theme: [theme id] - background [value], accent [value]
 - LOOK: [ground value] ground, [ink value] text, [accent value] accent; [display face + weight] / [body face + weight]; [where the ground comes from: product surface, preset, subject's world]
-- BANNED: [the design-floor.md Refuse items this video must avoid, minus any the theme preset uses on purpose, plus anything the product's look rules out]
+- BANNED: [the design-floor.md Refuse items this video must avoid, minus any the theme preset uses on purpose, plus anything the product's look rules out, plus the house style's `## Never` rules]
 - Design floor: `references/design-floor.md` applies to the chrome only; rebuilt screens keep the product's look
 
 ## Storyboard
@@ -96,7 +96,7 @@ Scene summary:
 ## Teaching elements
 - Step counter: [position, format "Step 2 of 4" / "2 of 3"], same place in every step scene
 - Highlight: [ring / spotlight / zoom], accent color [value], one target at a time
-- Cursor: [system-like arrow], smooth 0.5-0.8s moves, visible click feedback
+- Cursor: [system-like arrow], smooth 0.5-0.8s moves, rests 0.2-0.3s on the target before it clicks, a 2-frame press (the kit's `ripple` does it), and the target answers (pressed state, menu opening) a frame after the press
 - Captions: [band position], max 2 lines x ~42 chars, high contrast plate, never over the highlight
 - Title and outro cards: [text]
 - Credit line: [the short credits from `credits.txt`, or none]

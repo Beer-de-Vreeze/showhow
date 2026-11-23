@@ -51,6 +51,9 @@ With `--no-voice`, the same script becomes the caption text; plan about 0.35s pe
 - Direction: [freeform phrase, inferred or user-provided]
 - Interpretation: [one sentence on pacing, voice and visual energy]
 
+## House style
+[the `~/.showhow/verdicts.md` rules that apply to this video, and any skipped because a teaching law wins; "none" when the file doesn't exist (house-style.md)]
+
 ## Format: [landscape / vertical / square] - [width]x[height]
 ## Target duration: [seconds, from the script word count]
 
@@ -138,7 +141,7 @@ For every step, plan the teaching sequence explicitly:
 
 1. **Orient** - the screen is shown wide enough that the viewer knows where they are (sidebar, header visible).
 2. **Point** - the target control gets a highlight (ring, spotlight dim, or a slow zoom toward it). The narration names the label at the same moment.
-3. **Act** - the cursor moves to it and clicks, or the text types in. Cursor moves are smooth and take 0.5-0.8s.
+3. **Act** - the cursor moves to it and clicks, or the text types in. Cursor moves are smooth and take 0.5-0.8s, then the cursor rests 0.2-0.3s on the target before it clicks.
 4. **Result** - the change is visible; zoom back out if you zoomed in, so the viewer sees the context of the result.
 
 Small controls (icons, menu items) need a zoom of 1.5-2.5x in landscape and more in vertical.

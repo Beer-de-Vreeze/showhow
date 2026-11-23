@@ -51,12 +51,18 @@
       cur = to;
     }
 
-    function ripple(t, target, rippleSel, { dy = 0, duration = 0.5 } = {}) {
+    // press: the cursor squashes for about 2 frames at 30fps around its tip, so the click reads as physical
+    // (timing from motionmaxxing, Apache-2.0). Pass press: false when no cursor is on screen.
+    function ripple(t, target, rippleSel, { dy = 0, duration = 0.5, press = true, tip = [8, 5] } = {}) {
       const [x, y, w, h] = R(target, 0);
       const r = el(rippleSel);
       place(r, x + w / 2, y + h / 2 + dy);
       tl.fromTo(r, { xPercent: -50, yPercent: -50, scale: 0.3, opacity: 0.9 },
         { xPercent: -50, yPercent: -50, scale: 1.6, opacity: 0, duration, ease: "power2.out", immediateRender: false }, t);
+      if (!press) return;
+      const origin = `${tip[0]}px ${tip[1]}px`;
+      tl.fromTo(o.cursor, { scale: 1, transformOrigin: origin }, { scale: 0.86, duration: 0.07, ease: "power2.out", immediateRender: false }, t - 0.07);
+      tl.fromTo(o.cursor, { scale: 0.86, transformOrigin: origin }, { scale: 1, duration: 0.1, ease: "power2.out", immediateRender: false }, t);
     }
 
     function counter(t, n, { fade = 0.3 } = {}) {

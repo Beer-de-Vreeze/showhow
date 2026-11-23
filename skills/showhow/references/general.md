@@ -76,10 +76,17 @@ Pick per outside step, in this order:
 
 **Mechanisms get a schematic.** When a point explains how something works (power flowing from the wire to the motor), show it as a simplified diagram, not only as a photo: schematic visuals teach mechanisms better than realistic ones (Scheiter et al. 2009). A real photo may come first, for a moment, to anchor what the diagram stands for; then the diagram carries the explanation.
 
+**3D when the shape is the point.** When understanding needs depth (how parts stack or fit together, an exploded view, a physical object turned to show its other side), build that one object in three.js through HyperFrames: `../hyperframes/references/types/3d.md` for camera, light and determinism, `../hyperframes/references/runtimes.md` for loading three.js and the seek protocol, and `npx hyperframes catalog --query "3d <what it shows>" --json` for a ready block first.
+- Keep it schematic: one object, simple materials, parts labelled with their real names, a dive or an exploded view rather than an orbit, camera moves of 0.8s or slower.
+- Draw every frame from timeline time and seed every random choice; a frame must not depend on the one before it.
+- A flat diagram still wins when the point is a flow (power from the wire to the motor); 3D is for structure.
+- Never 3D for product UI, rebuilt screens, charts, or a step done on a real screen.
+
 **Charts stay honest in motion.** Bar charts start at zero. Animate in stages, about 1s each: axes and scale first, then the values; never rescale an axis and change values in the same move. No 3D, no rotation.
 
 The teaching laws still hold: point before acting means the thing being talked about gets the ring, spotlight or zoom while the voice names it.
 Keep one stage across consecutive steps (same diagram growing, same card position) so the steps read as one flow.
+In a topic without steps, each point gets its own picture (a different photo, crop or part of the diagram); never show the same view for two points.
 State carries forward across the switch: the token copied on the outside page is the one pasted into the product (same fictional value).
 
 ## Design system (general mode)
@@ -87,7 +94,8 @@ State carries forward across the switch: the token copied on the outside page is
 Mixed videos keep the product's theme; rebuilt third-party screens keep their own look inside it.
 In `general` mode there is no product theme to read. Unless the user names brand colors or fonts:
 
-1. Browse `../hyperframes/assets/frame-presets/` (the table in `../hyperframes/references/look.md`) and pick the preset that fits the topic and audience (`blue-professional` -> calm and neutral, `capsule` -> warm).
+1. Browse `../hyperframes/assets/frame-presets/` (the table in `../hyperframes/references/look.md`) and list the presets that fit the topic and audience (`blue-professional` -> calm and neutral, `capsule` -> warm).
+   When more than one fits, don't reach for the same favourite every time: number the fitting presets alphabetically, add up the character codes of `<video-name>`, and pick the preset at that sum modulo the count (seeded choice, from taste-skill). Write the candidates, the sum and the pick into the plan. A house-style `--theme` default or a typed `--theme` skips this.
 2. Copy its `FRAME.md` to `<output-dir>/composition/frame.md` and take the video's `:root` colors and fonts from it; add the user's brand colors or fonts if given. Fonts that aren't bundled need `@font-face` files.
 
 If the presets aren't installed, choose a calm palette and an embeddable font pairing per `../hyperframes/references/look.md` and write it into the plan.

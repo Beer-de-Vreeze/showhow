@@ -82,12 +82,22 @@ You can now restore an earlier version of any prompt. Open the prompt, click Ver
 **Typography:** Bold title card with the version number. A change counter ("2 of 3") and a short title per change.
 
 **Hook:** The first 2-3 seconds earn the rest: the most visual new thing is already moving, with "What's new in [version]" as on-screen text, so it reads muted. The version number can slam in after that, then the change list as a preview.
+The version slam may be the video's one 3D moment (a WebGL block from `npx hyperframes catalog --query "3d title" --json`, built per `../hyperframes/references/types/3d.md`); the change itself always stays on the real, flat UI.
 
 **Pacing:** 10-20s per change. Fast, beat-locked transitions and card reveals between changes; normal step pacing inside the demo.
 
 **Highlight:** Accent ring plus zoom. A "New" or "Fixed" tag pops onto each change card.
 
 **Change card:** Each change opens with a short card (tag + title + one-line why), revealed on a strong music cue with a card or impact sound, then moves into the real UI demo.
+Every promise on a card is pictured in its demo: a card that says "faster search" shows a search finishing (from taste-skill's "every headline promise pictured").
+Each change shows a different screen or crop; no two changes open on the same view.
+
+**Before/after (optional, for a "Fixed" or redesigned screen):** the old screen turns into the new one in place, adapted from unslop's story video by @heydamir (CC BY 4.0).
+- Rebuild the old screen from the previous release's code (`git show <old-tag>:<path>`), never from memory; it is the real product at that version.
+- One screen whose CSS values tween from old to new (padding, colour, radius, size); nothing swapped as a whole picture. Changes run as a wave, each element a few dozen milliseconds after the one above or left of it.
+- Optional red marks on what changed for the first beat, at most three, gone before the narration names the result.
+- About 3-6s inside that change, cropped close on the part that changes most.
+- Add `Before/after style: unslop by @heydamir, CC BY 4.0, https://github.com/heydamir/unslop` to `credits.txt` and `unslop by @heydamir` to the outro credit line.
 
 **Music:** Upbeat bed (vol-1 or vol-9), up on the hook, bridges and outro, ducked under the voice. Beat-locked hook, cards and outro. Subtle audio-reactive glow on cards and title allowed.
 

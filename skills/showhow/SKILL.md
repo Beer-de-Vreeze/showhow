@@ -16,12 +16,15 @@ Elsewhere, say the installer is Windows-only, list what it installs (Node.js LTS
 
 **Options.** If the input is exactly `options`, don't make a video: list the 11 styles (one line each, from the Style system tables), the themes (the folder names in `../hyperframes/assets/frame-presets/` next to this skill), and the voices (`npx hyperframes tts --list`), each with the flag that picks it, and stop.
 
+**Learn.** If the input is `learn <output-dir>`, don't make a video: follow "`/showhow learn`" in [references/house-style.md](references/house-style.md) and stop.
+
 **Model check.** If you are Claude Opus 5.5 and the invocation doesn't ask for the full workflow (`--full`, "use the full showhow"), switch to showhow-slim: read `<skill-dir>/slim.md` (bundled here) and follow it for the rest of this run instead of this file.
 Pass along the user's input and pass any other options (`--mode`, `--no-voice`, ...) as plain-language direction.
 Tell the user in one line first, e.g. "You're on Opus 5.5, so I'm using /showhow-slim: I build the whole video myself. Say 'use the full showhow' to switch back."
 If you are any other model, or can't tell which model you are, skip this check.
 
 Before inspecting the project, parse the complete `/showhow` invocation and decide the mode (see below).
+Then read the user's house style, `~/.showhow/verdicts.md` and `~/.showhow/edits.md`, if they exist: [references/house-style.md](references/house-style.md) says how their defaults and rules combine with the flags and the teaching laws.
 
 ## What this skill does
 
@@ -56,6 +59,7 @@ If it is still unclear, ask one question.
 /showhow --mode general how a train gets its power --style cinematic --theme bold-poster --voice am_michael
 /showhow install
 /showhow options
+/showhow learn ~/Downloads/showhow-connect-confluence
 ```
 
 | Option | Values | Default |
@@ -164,7 +168,9 @@ Hyperframes owns the composition structure, animation mechanics, runtime choices
 
 Render `<output-dir>/<video-name>.mp4`, bake a poster into frame 0 (`<video-name>.jpg`), and write `captions.srt`, `chapters.txt`, `showhow.md` (the written companion) and `share-copy.md` (a business post to share the video, in the user's voice when `~/VOICE.md` exists).
 
-**Gate:** `<video-name>.mp4`, `<video-name>.jpg`, `captions.srt`, `chapters.txt`, `showhow.md` and `share-copy.md` exist.
+**Gate:** `<video-name>.mp4`, `<video-name>.jpg`, `captions.srt`, `chapters.txt`, `showhow.md` and `share-copy.md` exist, and `scripts/video_gates.py` passes on the mp4 (no blank run over 3 frames, no long tail after the last caption).
+
+When the user asks for changes afterwards, sort each into a one-off fix or a lasting preference and write the lasting ones to their house style ([references/house-style.md](references/house-style.md), "Learn after every round of feedback").
 
 ---
 
