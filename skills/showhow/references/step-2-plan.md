@@ -8,6 +8,9 @@ It does not prescribe Hyperframes implementation details; Hyperframes decides th
 
 `<output-dir>` already exists: SKILL.md names it before Step 1.
 Keep the headings and storyboard fields below exactly as given: `scripts/plan_gates.py` parses them.
+Each scene heading is `### Scene N - name - Ns`, with the duration in seconds.
+Each field starts a line as `Field:`, with no bold or list marker, once per scene; a field may continue on the following lines up to the next field.
+A heading or field the script can't read fails P-parse with its line number.
 
 ## Write the script first
 
@@ -80,7 +83,7 @@ With `--no-voice`, the same script becomes the caption text; plan about 0.35s pe
 
 ## Storyboard
 
-### Scene 1 - [name] - [duration]s
+### Scene 1 - [name] - 4s
 Source: [code / outside]
 Screen: [which real screen / component is shown, and its state]
 Counter: ["Step 1 of 4" (howto), "Change 1 of 3" (update), "Point 2 of 5" (general topic), or none; none in a quick-tip]
@@ -95,7 +98,8 @@ On screen: [title cards and labels, if any; every number and **bold label** writ
 Audio: [click / typing / none; music level]
 Transition: [cut / soft fade / slide / zoom-out] -> Scene 2
 
-### Scene 2 - ...
+### Scene 2 - [name] - 8s
+[the same fields as Scene 1]
 
 ## Chapters
 00:00 [Intro]
