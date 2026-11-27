@@ -70,16 +70,18 @@
           parts.push({ group, thick, home: group.position.clone() });
           return group;
         };
-        add(part(new THREE.BoxGeometry(right - left + 8, 1, 30), stage, { color: tint(theme.paper, theme.ink, 0.1) }), (right - left) / 2 - 1, -5, 1);
-        const colors = [theme.accent, tint(theme.paper, theme.ink, 0.12), tint(theme.paper, theme.ink, 0.28)];
-        const gears = teeth.map((n, i) => add(part(gearGeometry({ teeth: n, module: m, width: 2, bore: 1.2 }), stage, { color: colors[i] }), xs[i], 0, 2));
-        teeth.forEach((n, i) => add(part(latheGeometry([[0, -3], [1.2, -3], [1.2, 3], [0, 3]], 32), stage, { color: tint(theme.paper, theme.ink, 0.5) }), xs[i], 0, 6));
-        // Every part ends up one gear thickness (2) plus a clear gap (3) from the next, staggered up the axis.
-        const out = explodeOffsets(parts.map((p) => ({ y: p.home.y, t: p.thick })), 5);
+        add(part(new THREE.BoxGeometry(right - left + 8, 1, 30), stage, { color: tint(theme.paper, theme.ink, 0.16) }), (right - left) / 2 - 1, -5, 1);
+        const colors = [theme.accent, tint(theme.paper, theme.ink, 0.2), tint(theme.paper, theme.ink, 0.38)];
+        // Stacked driven first, so the stack climbs against the row's slope on screen and the levels read as levels.
+        const gears = [];
+        [2, 1, 0].forEach((i) => (gears[i] = add(part(gearGeometry({ teeth: teeth[i], module: m, width: 2, bore: 1.2 }), stage, { color: colors[i] }), xs[i], 0, 2)));
+        [2, 1, 0].forEach((i) => add(part(latheGeometry([[0, -3], [1.2, -3], [1.2, 3], [0, 3]], 32), stage, { color: tint(theme.paper, theme.ink, 0.62) }), xs[i], 0, 6));
+        // Every part ends up one gear thickness (2) plus a clear gap (9) from the next, staggered up the axis.
+        const out = explodeOffsets(parts.map((p) => ({ y: p.home.y, t: p.thick })), 9);
         const top = out[out.length - 1];
 
         const setCut = sectionCut(stage, machine);
-        const flow = flowParticles(stage, { count: 320, seed: seedOf("machine-effects"), speed: 0.2, length: 90, spread: 12 });
+        const flow = flowParticles(stage, { count: 220, seed: seedOf("machine-effects"), size: 16, speed: 0.2, length: 90, spread: 12 });
         flow.position.set(machine.position.x + (right - left) / 2 - 1, 4, machine.position.z);
         stage.scene.add(flow); // not in machine, so the label columns ignore the cloud
 
@@ -109,9 +111,9 @@
             pt.group.position.set(pt.home.x, pt.home.y + out[i] * e, pt.home.z);
             ex = Math.max(ex, e);
           });
-          machine.position.y = -0.45 * top * ex; // keep the stack centred while it grows
+          machine.position.y = -0.5 * top * ex; // keep the stack centred while it grows
           flow.update(t, p.flow ? ease((t - 0.3) / 0.5) * (1 - ease((t - 3.6) / 0.4)) : 0);
-          stage.camera.zoom = 1 - 0.4 * ex + (p.slowmo ? 0.15 * ease((t - 12) / 2) : 0);
+          stage.camera.zoom = 1 - 0.3 * ex + (p.slowmo ? 0.15 * ease((t - 12) / 2) : 0);
           stage.camera.updateProjectionMatrix();
           stage.draw();
           layout(t);

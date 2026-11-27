@@ -79,7 +79,11 @@ A new kind is one row here, one entry in `SCENE3D_KINDS` in `scripts/plan_gates.
 ### Look
 
 - Light background, toon fills, dark 2.5 px edges, one accent colour for the part the narration names.
+- Colours come from the composition's CSS variables `--paper`, `--ink` and `--accent` (and `--muted`), read once by `createStage` into `theme`; the `showhow` frame preset's values are the fallback.
+  Fills are `tint(theme.paper, theme.ink, u)` and the highlight is `theme.accent`, so a brand kit or another preset restyles the scene; never hard-code a hex in a recipe.
+  Define the variables on the composition root and use `var(--ink)` for the label plates and leaders (the fixtures show it).
 - Labels at least 40 px, at most 5 to 7 on screen, inside the title-safe band; check that no plate covers the object at the most zoomed frame.
+- Pass `avoid: machine` to `labels` and the plate columns step outward to stay 70 px clear of the object's screen bounds, whatever the zoom or exploded height (`labelEdges`).
 
 ### Params.model
 
@@ -133,6 +137,7 @@ A new kind is one row here, one entry in `SCENE3D_KINDS` in `scripts/plan_gates.
 - The text is `String(value)`, so the screen shows the digits P-params checked are spoken.
 - `TextGeometry` from `three/addons/geometries/TextGeometry.js` with the `helvetiker_bold` typeface JSON that ships with three.js (MIT); `buildHeroNumber(stage, P, { fontUrl })` takes another converted font.
 - The number swings in over 1.6 s with a slight sway after, all from `t`.
+- Each glyph is its own mesh, spaced by `glyphOffsets` from its extruded, projected bounds plus a gap, so no glyph reaches into the next at any turn; the fill is `theme.accent`.
 - Use it for one number per scene, 1 to 8 glyphs; longer strings are heavy geometry and unreadable.
 
 Fixtures: `scripts/fixtures/globe-route/` and `scripts/fixtures/hero-number/`; both follow the gear-train recipe for the determinism check.
@@ -148,10 +153,14 @@ Every one is a pure function of `t`.
   It clips every part under `machine` with one horizontal plane, writes the stencil (back faces +1, front faces -1) and draws a hatched cap where the count is not zero.
   Parts must be closed solids.
   Sweep the plane with `set(level)` from `render(t)`; a level of 50 or more means closed.
-  Shipped: the hatch (diagonal lines in world space, about 2 px wide at any zoom), not the flat-cap fallback.
+  Shipped: the hatch, not the flat-cap fallback: thin ink lines at 45 degrees on screen, 10 px apart and 2 px wide at 1080p (`spacing`, `line`), only on the cap; uncut surfaces keep their flat fill.
   It held up with rotating gears, a shaft in a bore and lifted parts; the cap does not outline parts that touch, so adjacent sections read as one hatched field.
-- Exploded view: give each part a vector and place it at `home + vector * explodeAmount(i, t, { at, stagger, dur })`; spin stays a function of `t`, so parts keep turning.
+- Exploded view: `explodeOffsets(parts, gap)` stacks parts `[{ y, t }]` (home height, thickness along the axis) in array order, each `gap` clear of the next, and returns each part's offset; place it at `home + offset * explodeAmount(i, t, { at, stagger, dur })`.
+  Order the array so the stack climbs against the row's slope on screen (the fixture stacks the driven gear first), or an isometric view hides the levels; zoom out and lower the group as it grows.
+  Spin stays a function of `t`, so parts keep turning.
 - Slow motion: `timeMap`, as in the gear train; add a slow dive with `camera.zoom`.
-- Airflow: `flowParticles(stage, { count, seed, speed, length, spread })` and `points.update(t, amount)`.
+- Airflow: `flowParticles(stage, { count, seed, size, speed, length, spread })` and `points.update(t, amount)`; ink dots with a paper ring, 16 px across, so they read on paper and on any part.
+  Keep the cloud out of the group you pass to `avoid`.
+  Capture a frame sheet while the particles are on screen (the fixture: 3 s) and after the labels have faded in.
   Position is `flowPoint(i, t, seed, ...)`, a hash of the index and seed, so it is stateless and repeats every `1 / speed` seconds; take the seed from `seedOf(text)`.
 - three-bvh-csg is not used: no part needs real wall thickness yet.
