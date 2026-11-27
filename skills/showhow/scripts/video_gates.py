@@ -10,6 +10,9 @@ G-end:   the video ends no more than 1.4s after the last caption (needs --srt); 
          credits.txt sits next to the srt, because the outro credit line needs 2.5s with no caption
          over it. Under 0.5s is a note: the result may cut off before the viewer has read it.
 
+G-captions: every srt cue has lines of at most 37 characters (BBC), at most 2 lines (3 with --vertical),
+         and stays on screen at least 0.3s per word (needs --srt).
+
 Adapted from motionmaxxing's G2 and G3 gates (github.com/Tejashmakwana/motionmaxxing, Apache-2.0).
 Mid-video holds are not gated: showhow holds results on purpose.
 Exit code 1 when a gate fails.
@@ -32,6 +35,8 @@ END_BLACK_MAX = 15  # frames: a designed cut to black at the very end (energy ou
 END_TAIL_MAX = 1.4
 END_TAIL_MAX_CREDITS = 3.5  # 2.5s credit line + the outro's entrance + a short result hold
 END_TAIL_MIN = 0.5
+CAPTION_LINE_MAX = 37  # characters, BBC subtitle guidelines
+CAPTION_SECONDS_PER_WORD = 0.3
 
 
 def blank_runs(frames: list[tuple[float, int]]) -> list[tuple[float, int]]:
@@ -57,6 +62,30 @@ def last_caption_end(srt: Path) -> float:
         raise SystemExit(f"no cue times found in {srt}")
     h, m, s, ms = ends[-1]
     return int(h) * 3600 + int(m) * 60 + int(s) + int(ms) / 1000
+
+
+def caption_problems(srt_text: str, vertical: bool) -> list[str]:
+    """One message per broken rule per cue; empty means G-captions passes."""
+    max_lines = 3 if vertical else 2
+    problems = []
+    for block in re.split(r"\r?\n\s*\r?\n", srt_text.strip()):
+        rows = block.splitlines()
+        timing = next((i for i, r in enumerate(rows) if "-->" in r), None)
+        if timing is None:
+            continue
+        t = [int(x) for x in re.findall(r"\d+", rows[timing])]
+        start, end = t[0] * 3600 + t[1] * 60 + t[2] + t[3] / 1000, t[4] * 3600 + t[5] * 60 + t[6] + t[7] / 1000
+        lines = [r for r in rows[timing + 1:] if r.strip()]
+        where = f"cue at {start:.2f}s"
+        for line in lines:
+            if len(line) > CAPTION_LINE_MAX:
+                problems.append(f"{where}: a line has {len(line)} characters (max {CAPTION_LINE_MAX})")
+        if len(lines) > max_lines:
+            problems.append(f"{where}: {len(lines)} lines (max {max_lines})")
+        need = CAPTION_SECONDS_PER_WORD * len(" ".join(lines).split())
+        if end - start < need - 1e-9:
+            problems.append(f"{where}: on screen {end - start:.1f}s, needs {need:.1f}s at {CAPTION_SECONDS_PER_WORD}s per word")
+    return problems
 
 
 def video_duration(video: Path) -> float:
@@ -103,7 +132,8 @@ def spread(stats: dict[str, float]) -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("video", type=Path)
-    parser.add_argument("--srt", type=Path, help="captions.srt, to time the end hold from the last spoken line")
+    parser.add_argument("--srt", type=Path, help="captions.srt, to time the end hold and check caption limits")
+    parser.add_argument("--vertical", action="store_true", help="allow 3 caption lines instead of 2")
     args = parser.parse_args()
 
     frames, duration = measure(args.video)
@@ -118,6 +148,12 @@ def main() -> int:
         print(f"G-blank PASS: no blank run over {MAX_BLANK_RUN} frames in {len(frames)} frames")
 
     if args.srt:
+        problems = caption_problems(args.srt.read_text(encoding="utf-8"), args.vertical)
+        if problems:
+            failed = True
+            print("G-captions FAIL: " + "; ".join(problems))
+        else:
+            print("G-captions PASS: lines within 37 characters, line count and reading time within limits")
         tail = duration - last_caption_end(args.srt)
         credits = (args.srt.parent / "credits.txt").exists()
         limit = END_TAIL_MAX_CREDITS if credits else END_TAIL_MAX
@@ -130,6 +166,7 @@ def main() -> int:
         else:
             print(f"G-end PASS: {tail:.2f}s past the last caption (max {limit}s{why})")
     else:
+        print("G-captions SKIPPED: no --srt given")
         print("G-end SKIPPED: no --srt given")
 
     return 1 if failed else 0
