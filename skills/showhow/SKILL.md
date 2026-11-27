@@ -18,6 +18,7 @@ Options (flags or plain language):
 | `--format landscape\|vertical\|square` | landscape (1920x1080; vertical 1080x1920, square 1080x1080), 30fps; `--format all` or a comma list (`landscape,vertical`) renders several; explainer defaults to all three |
 | `--audience <who>` | inferred |
 | `--theme <frame preset>` (`assets/frame-presets/` here, then `../hyperframes/assets/frame-presets/`) | product theme; general: the preset that fits the topic; explainer: `showhow` |
+| `--brand <name>` (a local brand kit in `~/.showhow/brands/<name>/`; `references/brand-kits.md`) | none |
 | `--voice <Kokoro id>` (`npx hyperframes tts --list`) | `af_heart` |
 | `--title <text>` | inferred |
 | `--duration <seconds>` | none: the narration sets the length; a typed value is the target the script is written to, within the limits below |
@@ -28,12 +29,14 @@ Options (flags or plain language):
 This is the one place the video's theme is resolved; the other files point here.
 The first line that applies wins.
 
-1. A brand kit (`--brand`, a separate ticket; not built yet).
-2. `--theme <name>`: the folder `<name>` in `assets/frame-presets/` here, else in `../hyperframes/assets/frame-presets/`.
-3. The product's own theme (howto and update).
-4. The mode default: `showhow` for explainer; for general, the preset that fits the topic.
+1. Typed flags: `--theme <name>` (the folder `<name>` in `assets/frame-presets/` here, else in `../hyperframes/assets/frame-presets/`) replaces the whole theme; `--voice` and `--music` typed in this run beat the kit's `voice` and `music`.
+2. `--brand <name>`: the kit `~/.showhow/brands/<name>/` (`references/brand-kits.md`); its check runs first, and a failing kit stops the run naming what is missing.
+3. House-style defaults: `brand: <name>` (or a flag) under `## Defaults` in `~/.showhow/verdicts.md`.
+4. The product's own theme (howto and update).
+5. The mode default: `showhow` for explainer; for general, the preset that fits the topic.
 
-**Other inputs.** `install`: on Windows run `powershell -NoProfile -ExecutionPolicy Bypass -File <skill-dir>/scripts/install.ps1`, report the result, tell the user to restart their agent app (a running session keeps its old PATH), and stop; elsewhere say the installer is Windows-only, list what README.md "Install" lists, and stop.
+**Other inputs.** `brand <name> <repo path or URL>`: make no video; create a brand kit (`references/brand-kits.md`) and stop.
+`install`: on Windows run `powershell -NoProfile -ExecutionPolicy Bypass -File <skill-dir>/scripts/install.ps1`, report the result, tell the user to restart their agent app (a running session keeps its old PATH), and stop; elsewhere say the installer is Windows-only, list what README.md "Install" lists, and stop.
 `options`: list the styles, the themes (folder names in `assets/frame-presets/` here, `showhow` first, then those in `../hyperframes/assets/frame-presets/`) and the voices, each with its flag, and stop.
 `learn <output-dir>`: make no video; record lessons from that run (`references/house-style.md`, "`/showhow learn`") and stop.
 
@@ -207,4 +210,5 @@ Keep creation and rendering local; publishing or uploading needs a separate expl
   If `~/VOICE.md` exists, write as its owner following its business sections; otherwise direct and plain.
   Audience's language, no hype or invented claims, no em dashes, `[link]` for anything you don't have.
 - **Tell the user** where everything is, the share post ready to paste (for LinkedIn: turn off its auto-captions, the captions are burned in), the loudness line and the gate lines, the goal line and the step or change list (so they can spot a wrong step without watching), the fictional substitutions, any label you couldn't verify, and offer to redo a scene, change the voice, or make a vertical or quick-tip cut.
+- **Offer a brand kit.** A howto or update run on a repo, with no `--brand` kit in play and no kit of that name in `~/.showhow/brands/`, ends by offering once to save the theme it read as a kit (`references/brand-kits.md`); one question, and a no is final for that run.
 - **Learn from the feedback.** When the user asks for changes, sort each into a one-off fix (this video only) or a lasting preference ("always", "never", the same correction twice); fix both, write the lasting ones to `~/.showhow/verdicts.md` and `edits.md`, and show the added lines as a diff (`references/house-style.md`).

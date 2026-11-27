@@ -4,9 +4,9 @@
     #root {
       position: absolute;
       inset: 0;
-      background: #f4f6fa;
+      --paper: #f4f6fa; --ink: #1f2937; --accent: #e5484d; --button: #2563eb;
+      background: var(--paper);
       font-family: Inter, sans-serif;
-      --sh-accent: #e5484d;
     }
     #demo-header {
       position: absolute;
@@ -14,8 +14,8 @@
       top: 0;
       width: 1920px;
       height: 96px;
-      background: #1f2937;
-      color: #f9fafb;
+      background: var(--ink);
+      color: var(--paper);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -31,8 +31,8 @@
       top: 130px;
       padding: 8px 18px;
       border-radius: 999px;
-      background: #1f2937;
-      color: #f9fafb;
+      background: var(--ink);
+      color: var(--paper);
       font-size: 30px;
     }
     .demo-btn {
@@ -40,8 +40,8 @@
       width: 360px;
       height: 96px;
       border-radius: 12px;
-      background: #2563eb;
-      color: #fff;
+      background: var(--button);
+      color: var(--paper);
       font-size: 36px;
       font-weight: 700;
       display: flex;
@@ -72,7 +72,7 @@
     <div id="ripple-01" class="sh-ripple" data-layout-ignore></div>
     <div id="ripple-02" class="sh-ripple" data-layout-ignore></div>
     <svg id="sh-cursor" class="sh-cursor" width="36" height="44" viewBox="0 0 36 44" data-layout-ignore>
-      <path d="M2 2 L2 38 L12 28 L19 42 L25 39 L18 26 L32 26 Z" fill="#111827" stroke="#fff" stroke-width="2.5" />
+      <path d="M2 2 L2 38 L12 28 L19 42 L25 39 L18 26 L32 26 Z" fill="var(--ink)" stroke="var(--paper)" stroke-width="2.5" />
     </svg>
   </div>
   <script src="assets/kit/showhow-kit.js"></script>

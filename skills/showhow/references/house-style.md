@@ -8,7 +8,7 @@ Pattern adapted from [motionmaxxing](https://github.com/Tejashmakwana/motionmaxx
 Both live in `~/.showhow/` (Windows: `%USERPROFILE%\.showhow\`), outside the skill, so updates to the skill never overwrite them.
 
 - **`verdicts.md`** - standing preferences, one line each, grouped under `## Defaults`, `## Always` and `## Never`.
-  `## Defaults` holds option defaults written as flags (`--style friendly`, `--voice am_michael`, `--music`).
+  `## Defaults` holds option defaults written as flags (`--style friendly`, `--voice am_michael`, `--music`) and `brand: <name>`, which picks a brand kit (`references/brand-kits.md`).
   The other two hold rules in plain words, each ending with the run it came from: `- Captions at least 40px at 1080p (connect-confluence, 2026-11-23)`.
 - **`edits.md`** - before/after lessons, newest first, one block each:
 
