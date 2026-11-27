@@ -9,7 +9,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from video_gates import blank_runs, last_caption_end, measure
+from video_gates import blank_runs, caption_problems, last_caption_end, measure
 
 HERE = Path(__file__).parent
 
@@ -37,8 +37,27 @@ def units() -> None:
             raise AssertionError("expected SystemExit for an srt without cues")
 
 
-def gates(video: Path, srt: Path) -> subprocess.CompletedProcess:
-    return subprocess.run([sys.executable, str(HERE / "video_gates.py"), str(video), "--srt", str(srt)],
+def cue(text: str, end: str = "00:00:04,000") -> str:
+    return f"1\n00:00:00,000 --> {end}\n{text}\n"
+
+
+def caption_units() -> None:
+    # BBC limit of 37 characters per line: 37 passes, 38 fails.
+    assert caption_problems(cue("x" * 37), False) == []
+    assert any("38 characters" in p for p in caption_problems(cue("x" * 38), False))
+    # 3 lines fail in landscape, pass with --vertical; 4 fail either way.
+    three = cue("one two\nthree four\nfive six")
+    assert any("3 lines" in p for p in caption_problems(three, False))
+    assert caption_problems(three, True) == []
+    assert caption_problems(cue("a\nb\nc\nd"), True) != []
+    # Worked example: 5 words need 5 x 0.3 = 1.5s, so 1.2s fails and 1.5s passes.
+    five = "one two three four five"
+    assert any("1.2s" in p for p in caption_problems(cue(five, "00:00:01,200"), False))
+    assert caption_problems(cue(five, "00:00:01,500"), False) == []
+
+
+def gates(video: Path, srt: Path, *extra: str) -> subprocess.CompletedProcess:
+    return subprocess.run([sys.executable, str(HERE / "video_gates.py"), str(video), "--srt", str(srt), *extra],
                           capture_output=True, text=True)
 
 
@@ -73,8 +92,17 @@ def end_to_end() -> None:
         srt.write_text("1\n00:00:00,000 --> 00:00:05,200\nHello\n", encoding="utf-8")
         assert "G-end PASS (note)" in gates(video, srt).stdout
 
+        # G-captions through the CLI: a 38-character line fails; 3 lines fail unless --vertical.
+        srt.write_text(cue("x" * 38, "00:00:05,200"), encoding="utf-8")
+        cli = gates(video, srt)
+        assert cli.returncode == 1 and "G-captions FAIL" in cli.stdout, cli.stdout
+        srt.write_text(cue("one two\nthree four\nfive six", "00:00:05,200"), encoding="utf-8")
+        assert "G-captions FAIL" in gates(video, srt).stdout
+        assert "G-captions PASS" in gates(video, srt, "--vertical").stdout
+
 
 if __name__ == "__main__":
     units()
+    caption_units()
     end_to_end()
     print("ok")

@@ -35,12 +35,14 @@ for n in 01 02 03; do
 done
 ```
 Fix by respelling in the TTS input only (e.g. "Azure" -> "Azhure"); captions keep the correct spelling.
+Kokoro IPA markup (`[word](/ipa/)`) is not passed through by `npx hyperframes tts`, so respelling is the only fix.
 
 ## Caption timing
 
 Captions show the script text, not the transcription.
 Get word timings by transcribing each narration clip (`npx hyperframes transcribe`, see `media-use`) and align the script's phrases to them.
 If transcription is unavailable, spread each scene's phrases evenly across its clip duration.
+Split phrases so each cue has lines of at most 37 characters, 2 lines (3 on vertical), and stays on screen at least 0.3s per word; Step 4's G-captions gate checks it.
 Keep the phrase list with timings; Step 4 writes it to `captions.srt`.
 
 With `--no-voice`, time the captions by reading speed (about 0.35s per word, min 1.5s per phrase) and let that set scene durations.
@@ -97,7 +99,7 @@ Scene summary:
 - Step counter: [position, format "Step 2 of 4" / "2 of 3"], same place in every step scene
 - Highlight: [ring / spotlight / zoom], accent color [value], one target at a time
 - Cursor: [system-like arrow], smooth 0.5-0.8s moves, rests 0.2-0.3s on the target before it clicks, a quick press (the kit's `ripple`: a 2-frame squash, a 3-frame spring back), and the target answers (pressed state, menu opening) a frame after the press
-- Captions: [band position], max 2 lines x ~42 chars, high contrast plate, never over the highlight
+- Captions: [band position], max 2 lines (3 on vertical) x 37 chars, 0.3s per word, high contrast plate, never over the highlight
 - Title and outro cards: [text]
 - Credit line: [the short credits from `credits.txt`, or none]
 

@@ -5,7 +5,7 @@ All SFX are CC0 (Kenney.nl, public domain).
 In an instructional video the **voice leads**.
 Music and SFX support it and must never compete with it.
 Action-matched SFX are on by default unless the user passes `--no-sfx` or the assets are missing.
-**Music depends on the style:** off by default for `clean`, `friendly` and `quick-tip` (background music hurt retention and transfer in Moreno & Mayer 2000), on for `release`.
+**Music depends on the style:** off by default for `clean`, `friendly` and `quick-tip` (a bed has to stay at least 20 dB below the voice to meet WCAG 1.4.7 and keep the voice clear), on for `release` and `explainer`.
 `--music` turns the bed on for any style; `--no-music` turns it off for any style and wins over `--music`.
 Clicks and typing stay in every style: they mark actions, and sound tied to an action doesn't hurt learning the way a bed does.
 
@@ -281,7 +281,8 @@ When a video uses one, add a line to `credits.txt`: `Music: "Happy Beats / Busin
 Also credit it in the video itself, so the credit travels with the file: the short line `Music: Sascha Ende (ende.app), CC BY 4.0` on the outro (step-3-compose.md, Credit line).
 
 The bundled tracks are all upbeat business music; when none fits the video's mood, pick an Incompetech track (below).
-Generate a bed with MusicGen (Generated bed, below) only when the user asks for generated or original music, or when Incompetech is unreachable or has nothing that fits; if that fails too, use the closest bundled track and say so.
+If Incompetech is unreachable or has nothing that fits, use the closest bundled track and say so.
+The order is always the bundled track, then Incompetech (CC BY); no generated music, because the common open generators ship non-commercial weights.
 
 ### Incompetech (Kevin MacLeod)
 
@@ -300,31 +301,6 @@ f="Angel Share.mp3"; curl -s -f -o "assets/music/$f" "https://incompetech.com/mu
 ```
 
 Add to `credits.txt`: `Music: "<title>" by Kevin MacLeod (incompetech.com), CC BY 4.0, https://creativecommons.org/licenses/by/4.0/`, and put `Music: Kevin MacLeod (incompetech.com), CC BY 4.0` on the outro credit line.
-Then run the beat analysis on it like a custom track.
-
-### Generated bed (MusicGen)
-
-Use it when the user asks for generated or original music, or when Incompetech is unreachable or has nothing that fits; otherwise use a bundled or Incompetech track.
-It runs locally with the media-use audio engine (MusicGen via `HYPERFRAMES_PYTHON`; nothing leaves the machine).
-From `<output-dir>/composition`:
-
-Write `../work/bgm_request.json` with a file tool (heredocs fail on Windows):
-
-```json
-{"lines": [], "bgm": {"mode": "generate", "prompt": "uplifting corporate tech, bright modern piano with synth pads, 108 bpm"}}
-```
-
-```bash
-node <media-use-dir>/audio/scripts/audio.mjs --request ../work/bgm_request.json --hyperframes . --out ../work/bgm_meta.json --only bgm
-node <media-use-dir>/audio/scripts/wait-bgm.mjs --audio-meta ../work/bgm_meta.json --hyperframes . --timeout-ms 600000 --out ../work/bgm_status.json
-```
-
-`<media-use-dir>` is the installed `media-use` skill (`~/.claude/skills/media-use`).
-Run both commands in one shell call: the generator runs detached, and some agent shells kill leftover processes when a call ends.
-It writes `assets/bgm/track.wav`: a 30s clip, about 5 minutes on a laptop CPU.
-Continue only when `bgm_status.json` says `"status": "ready"`.
-If it failed within seconds with an empty log, run both commands once more; if it fails again, fall back to a bundled track and tell the user.
-Put the mood in the prompt (MusicGen ignores BPM and scale settings), listen to it before using it, and loop it like any short track (below).
 Then run the beat analysis on it like a custom track.
 
 If the video is longer than the track, loop it with a crossfade at a phrase boundary or fade it out under the last narration; never let it cut off abruptly.
