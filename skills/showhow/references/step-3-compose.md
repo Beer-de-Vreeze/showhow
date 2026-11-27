@@ -61,6 +61,7 @@ Write `<output-dir>/composition-brief.md` before creating the composition.
 - Composition directory: `<output-dir>/composition/`
 - Rendered video: `<output-dir>/<video-name>.mp4`
 - Format: [landscape / vertical / square] - [width]x[height], 30fps
+- Several formats: one timeline; the root carries `data-format`, set at render time (see "Several formats")
 - Duration: [sum of measured scene durations]
 
 ## Source Material
@@ -131,6 +132,15 @@ Requirements:
 The brief is the boundary: teaching content, steps, labels and audio levels belong to `/showhow`; composition implementation belongs to Hyperframes.
 
 ---
+
+## Several formats
+
+One composition and one timeline serve every format; captions and chapters are shared.
+Give the root `data-composition-variables` with `{"format": "landscape"}` as the default.
+The render wrapper runs once per format with `--variables '{"format":"vertical"}'` and `--resolution portrait`.
+A small script at the top of the composition reads `window.__hyperframes.getVariables().format` and sets `data-format` on the root before layout.
+Lay each format out for its frame with per-format CSS (`[data-format="vertical"] .stage { ... }`), not by cropping.
+Preview stills and snapshots set the same attribute by hand.
 
 ## Building the screens
 

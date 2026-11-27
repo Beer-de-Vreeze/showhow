@@ -74,6 +74,11 @@ The wrapper never passes `--quiet`, logs everything to `work/render.log`, succee
 uv run --project <skill-dir>/scripts <skill-dir>/scripts/render.py <output-dir>/composition <output-dir>/<video-name>.mp4 --work <output-dir>/work
 ```
 
+For several formats add `--format all` or `--format landscape,vertical`: the wrapper renders once per format into `<video-name>-landscape.mp4`, `-vertical.mp4` and `-square.mp4`, each with its own `work/<format>/render.log`.
+A single format keeps `<video-name>.mp4`.
+A failing format is named in the error and exits non-zero; the formats that rendered stay on disk, so re-run only the failed one with `--format <name>`.
+Bake the poster and run the video gates once per file; `captions.srt` and `chapters.txt` are the same for all.
+
 Flags after `--` go to `hyperframes render` unchanged.
 When `docker info` succeeds, prefer `-- --docker` for the final render: the same pinned Chrome and ffmpeg every time, so a re-render matches the one that was checked.
 The first Docker render builds the image (a few minutes); if it fails, render locally and say so.

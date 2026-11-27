@@ -15,7 +15,7 @@ Options (flags or plain language):
 |---|---|
 | `--mode howto\|update\|general\|explainer` | inferred: a task -> `howto`; a version, tag, PR, range or "what's new" -> `update`; a task this project's code can't show (a process, a third-party app, a physical task) -> `general`; a topic or concept ("how X works", "why Y") or a pasted script -> `explainer` |
 | `--style <name>` (alias `--tone`; see Styles) or freeform | `clean` for howto and general, `release` for update, `friendly` for explainer |
-| `--format landscape\|vertical\|square` | landscape (1920x1080; vertical 1080x1920, square 1080x1080), 30fps |
+| `--format landscape\|vertical\|square` | landscape (1920x1080; vertical 1080x1920, square 1080x1080), 30fps; `--format all` or a comma list (`landscape,vertical`) renders several; explainer defaults to all three |
 | `--audience <who>` | inferred |
 | `--theme <frame preset>` (`../hyperframes/assets/frame-presets/`) | product theme; general and explainer: the preset that fits the topic |
 | `--voice <Kokoro id>` (`npx hyperframes tts --list`) | `af_heart` |

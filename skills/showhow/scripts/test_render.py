@@ -7,7 +7,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from render import normalize_loudness, parse, render
+from render import normalize_loudness, parse, parse_formats, render, render_formats
 
 MEASUREMENT = """[Parsed_loudnorm_0 @ 0x1]
 {
@@ -52,6 +52,21 @@ class FakeRunner:
         if self.size is not None:
             self.out.write_bytes(b"x" * self.size)
         return self.code, self.text
+
+
+class PerOutputRunner:
+    """Fake CLI for several formats: writes the mp4 named by --output unless its name contains an entry of `fail`."""
+
+    def __init__(self, fail: tuple[str, ...] = ()):
+        self.fail, self.calls = fail, []
+
+    def __call__(self, cmd: list[str]) -> tuple[int, str]:
+        self.calls.append(cmd)
+        out = Path(cmd[cmd.index("--output") + 1])
+        if any(f in out.name for f in self.fail):
+            return 1, f"Error: chrome crashed on {out.name}\n"
+        out.write_bytes(b"x" * 32)
+        return 0, "encode done\n"
 
 
 def expect_exit(fn, text: str) -> None:
@@ -133,6 +148,34 @@ def main() -> None:
         extra = FakeRunner(out, 0, 1024)
         render(comp, out, work, extra=["--docker", "--quality", "high"], run=extra)
         assert extra.calls[0][-3:] == ["--docker", "--quality", "high"], extra.calls[0]
+
+        # multi_format_two_renders: landscape,vertical -> two runs at 1920x1080 and 1080x1920 with suffixed names.
+        base = root / "multi" / "video.mp4"
+        base.parent.mkdir()
+        two = PerOutputRunner()
+        render_formats(comp, base, root / "mwork", parse_formats("landscape,vertical"), run=two)
+        assert len(two.calls) == 2, two.calls
+        sizes = [c[c.index("--resolution") + 1] for c in two.calls]
+        assert sizes == ["landscape", "portrait"], sizes  # CLI presets for 1920x1080 and 1080x1920
+        assert [c[c.index("--variables") + 1] for c in two.calls] == ['{"format": "landscape"}', '{"format": "vertical"}']
+        assert sorted(p.name for p in base.parent.iterdir()) == ["video-landscape.mp4", "video-vertical.mp4"]
+
+        # single_format_keeps_name: one format writes <video-name>.mp4 and no suffixed file.
+        one_dir = root / "single"
+        one_dir.mkdir()
+        one = PerOutputRunner()
+        render_formats(comp, one_dir / "video.mp4", root / "swork", parse_formats("square"), run=one)
+        assert [p.name for p in one_dir.iterdir()] == ["video.mp4"] and len(one.calls) == 1
+
+        # failed_format_keeps_others: vertical fails -> non-zero exit naming vertical, landscape file kept.
+        fdir = root / "fail"
+        fdir.mkdir()
+        bad_run = PerOutputRunner(fail=("vertical",))
+        expect_exit(lambda: render_formats(comp, fdir / "video.mp4", root / "fwork", parse_formats("landscape,vertical"), run=bad_run), "vertical")
+        assert (fdir / "video-landscape.mp4").is_file() and not (fdir / "video-vertical.mp4").exists()
+        assert "chrome crashed" in (root / "fwork" / "vertical" / "render.log").read_text(encoding="utf-8")
+        assert parse_formats("all") == ["landscape", "vertical", "square"]
+        expect_exit(lambda: parse_formats("wide"), "unknown format")
 
         # loudnorm_two_pass: measure, then normalise with the measured values; the mp4 is replaced.
         out.write_bytes(b"rendered")
