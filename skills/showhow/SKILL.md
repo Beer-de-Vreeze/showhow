@@ -170,6 +170,7 @@ On the title, one step and the outro, also check the design floor's Refuse list 
 SFX clips get `data-duration` equal to the file's real length, or `check` warns about the slot.
 
 Start `npx hyperframes preview`, give the user the URL and ask them to watch for wrong labels or order; render without waiting for an answer, and redo it if they find one.
+In `explainer` mode do not render yet: write the preview stills and wait for approval (`references/explainer.md`, "Stop 2: preview stills").
 Render with the wrapper, never `npx hyperframes render` directly (a quiet render can exit non-zero with no message and no file):
 `uv run --project <skill-dir>/scripts <skill-dir>/scripts/render.py composition <video-name>.mp4 --work work [-- --docker]`.
 It logs to `work/render.log`, succeeds only when this run wrote a non-empty mp4, retries once, then normalises the soundtrack to -16 LUFS, -1 dBTP and prints the measured input; if it still fails, check free disk space and report the log tail.
