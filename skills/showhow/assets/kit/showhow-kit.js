@@ -106,6 +106,8 @@
       const e = el(sel);
       need("SplitText", "words");
       const s = SplitText.create(e, { type: "words", mask: "words" });
+      // The words exist only after the split, so CSS can't hide them: hide them here or the full text shows until t.
+      gsap.set(s.words, { yPercent: 110 });
       tl.fromTo(s.words, { yPercent: 110 }, { yPercent: 0, duration, ease: "power3.out", stagger: gap, immediateRender: false }, t);
     }
 
