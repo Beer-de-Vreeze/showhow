@@ -74,6 +74,9 @@ def caption_problems(srt_text: str, vertical: bool) -> list[str]:
         if timing is None:
             continue
         t = [int(x) for x in re.findall(r"\d+", rows[timing])]
+        if len(t) < 8:
+            problems.append(f"cue {rows[0].strip()}: timing {rows[timing].strip()!r} is not HH:MM:SS,mmm --> HH:MM:SS,mmm")
+            continue
         start, end = t[0] * 3600 + t[1] * 60 + t[2] + t[3] / 1000, t[4] * 3600 + t[5] * 60 + t[6] + t[7] / 1000
         lines = [r for r in rows[timing + 1:] if r.strip()]
         where = f"cue at {start:.2f}s"

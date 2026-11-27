@@ -161,14 +161,22 @@ Effort is a rough guess for an agent-run local pipeline built on Hyperframes, Ko
 
 ## Top 8 ideas for showhow, by value over effort
 
-1. Preview stills plus an explicit "approve script and plan" stop before render. Cheapest trust win, copies showhowai.com and Colossyan, and a wrong frame costs minutes to fix before and hours after.
-2. Clueprint-style saved style packs. Extend `verdicts.md` and `edits.md` into a named, reusable pack (story shape, visuals, motion, sound) applied with `--pack <name>`; Clueso's headline feature and it fits the file-based house style.
-3. One brand kit input (logo, colours, fonts, music, voice) read from a file or extracted from the repo, used by howto, update and explainer alike. Every competitor has it; Low effort because theme extraction already exists.
-4. Glossary and pronunciation file per project. Clueso, Trupeer and Synthesia all lead with it; showhow already respells TTS input, so persist those fixes and reuse them.
-5. "Refresh this video" mode: diff the code since the last render, patch only the changed scenes, re-render. Matches Supademo's stale-demo agents and Synthesia's edit-propagation, and git history makes it uniquely cheap here.
-6. Multi-aspect output in a single run for every mode, not only `explainer`. Already planned for explainer; showhowai.com sells it as a core point.
-7. Localisation pass: translate script, captions and on-screen text, pick a Kokoro or other local voice per language, keep glossary rules. Most requested enterprise feature across the set; scope to captions plus voice where a model exists.
-8. Quiz and chapter-aware export: an interactive HTML wrapper with end-of-video questions and a SCORM zip. Colossyan, Clueso, Synthesia and Pictory charge for it; medium effort, opens training buyers, lower priority than 1-7.
+1. Preview stills plus an explicit "approve script and plan" stop before render.
+   Cheapest trust win, copies showhowai.com and Colossyan, and a wrong frame costs minutes to fix before and hours after.
+2. Clueprint-style saved style packs.
+   Extend `verdicts.md` and `edits.md` into a named, reusable pack (story shape, visuals, motion, sound) applied with `--pack <name>`; Clueso's headline feature and it fits the file-based house style.
+3. One brand kit input (logo, colours, fonts, music, voice) read from a file or extracted from the repo, used by howto, update and explainer alike.
+   Every competitor has it; Low effort because theme extraction already exists.
+4. Glossary and pronunciation file per project.
+   Clueso, Trupeer and Synthesia all lead with it; showhow already respells TTS input, so persist those fixes and reuse them.
+5. "Refresh this video" mode: diff the code since the last render, patch only the changed scenes, re-render.
+   Matches Supademo's stale-demo agents and Synthesia's edit-propagation, and git history makes it uniquely cheap here.
+6. Multi-aspect output in a single run for every mode, not only `explainer`.
+   Already planned for explainer; showhowai.com sells it as a core point.
+7. Localisation pass: translate script, captions and on-screen text, pick a Kokoro or other local voice per language, keep glossary rules.
+   Most requested enterprise feature across the set; scope to captions plus voice where a model exists.
+8. Quiz and chapter-aware export: an interactive HTML wrapper with end-of-video questions and a SCORM zip.
+   Colossyan, Clueso, Synthesia and Pictory charge for it; medium effort, opens training buyers, lower priority than 1-7.
 
 Not recommended: avatars, voice cloning, analytics and in-app live guidance.
 They are expensive, off-brand for a no-recording local pipeline, and need hosted infrastructure.

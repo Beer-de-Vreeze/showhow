@@ -35,7 +35,8 @@ The first line that applies wins.
 4. The product's own theme (howto and update).
 5. The mode default: `showhow` for explainer; for general, the preset that fits the topic.
 
-**Other inputs.** `brand <name> <repo path or URL>`: make no video; create a brand kit (`references/brand-kits.md`) and stop.
+**Other inputs.**
+`brand <name> <repo path or URL>`: make no video; create a brand kit (`references/brand-kits.md`) and stop.
 `install`: on Windows run `powershell -NoProfile -ExecutionPolicy Bypass -File <skill-dir>/scripts/install.ps1`, report the result, tell the user to restart their agent app (a running session keeps its old PATH), and stop; elsewhere say the installer is Windows-only, list what README.md "Install" lists, and stop.
 `options`: list the modes (`howto`, `update`, `general`, `explainer`), the styles, the explainer visual types (the Visual menu in `references/explainer.md`, with the `scene3d` kinds `machine`, `globe` and `hero-number`), the themes (folder names in `assets/frame-presets/` here, `showhow` first, then those in `../hyperframes/assets/frame-presets/`), the brand kits in `~/.showhow/brands/` and the voices, each with its flag, and stop.
 `learn <output-dir>`: make no video; record lessons from that run (`references/house-style.md`, "`/showhow learn`") and stop.
@@ -151,7 +152,7 @@ Transcribe the clips to catch mispronounced product names; fix by respelling the
 Kokoro inline IPA markup (`[word](/ipa/)`) does not work here: `npx hyperframes tts` feeds the text to kokoro-onnx, which reads the markup aloud as symbols (checked 2026-11-27 on the kokoro-onnx phonemizer, not through the CLI itself), so respell; revisit if Hyperframes moves to misaki.
 `npx hyperframes transcribe` overwrites `transcript.json` on every run: copy it to `work/tx/words-NN.json` after each clip.
 Narration is English; if the user asks for another language, check `npx hyperframes tts --list` for a matching voice, and if there is none, offer English narration with captions in their language.
-Music: none by default in `clean`, `friendly` and `quick-tip`, to keep background audio at least 20 dB below the voice (WCAG 1.4.7) and the voice clear; with `--music`, and by default in `release` and `explainer` (`--no-music` wins), a quiet bed ducked under the voice (about 0.1 under narration, 0.3 without), never cut off abruptly.
+Music: none by default in `clean`, `friendly` and `quick-tip`, to keep background audio at least 20 dB below the voice (WCAG 1.4.7) and the voice clear; with `--music`, and by default in `release` and `explainer` (`--no-music` wins), a quiet bed ducked under the voice (about 0.035 under narration, 20 dB below the voice per `references/audio.md`; 0.3 without), never cut off abruptly.
 Use a bundled track; when none fits the mood, an Incompetech track (CC BY); no generated music (`references/audio.md`, Music).
 How-tos: SFX mainly confirm visible actions (a soft click per click, soft ticks on typing, one accent on the result).
 Updates: score it with high energy around the demos (a soft reveal hit, card sounds, tag ticks, a payoff (bells allowed), music up and beat-locked on the hook, cards and outro), clicks and typing inside the demos.
@@ -210,5 +211,6 @@ Keep creation and rendering local; publishing or uploading needs a separate expl
   If `~/VOICE.md` exists, write as its owner following its business sections; otherwise direct and plain.
   Audience's language, no hype or invented claims, no em dashes, `[link]` for anything you don't have.
 - **Tell the user** where everything is, the share post ready to paste (for LinkedIn: turn off its auto-captions, the captions are burned in), the loudness line and the gate lines, the goal line and the step or change list (so they can spot a wrong step without watching), the fictional substitutions, any label you couldn't verify, and offer to redo a scene, change the voice, or make a vertical or quick-tip cut.
-- **Offer a brand kit.** A howto or update run on a repo, with no `--brand` kit in play and no kit of that name in `~/.showhow/brands/`, ends by offering once to save the theme it read as a kit (`references/brand-kits.md`); one question, and a no is final for that run.
+- **Offer a brand kit.**
+  A howto or update run on a repo, with no `--brand` kit in play and no kit of that name in `~/.showhow/brands/`, ends by offering once to save the theme it read as a kit (`references/brand-kits.md`); one question, and a no is final for that run.
 - **Learn from the feedback.** When the user asks for changes, sort each into a one-off fix (this video only) or a lasting preference ("always", "never", the same correction twice); fix both, write the lasting ones to `~/.showhow/verdicts.md` and `edits.md`, and show the added lines as a diff (`references/house-style.md`).

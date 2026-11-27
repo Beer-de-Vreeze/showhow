@@ -82,6 +82,10 @@ def main() -> None:
     assert all(verdicts(good_e).values()) and "P-steps" not in verdicts(good_e), check_plan(parse_plan(good_e))
     assert not verdicts(expl(Thrust="It started in [NEED: launch year]."))["P-need"]
     assert not verdicts(expl(vThrust=""))["P-visual"]
+    # Two visuals in one voiced scene (spec #14 Testing Decisions), in each spelling the splitter accepts.
+    for two in ("flow, chart", "flow / chart", "flow and chart"):
+        name, ok, msg = [r for r in check_plan(parse_plan(expl(vThrust=two))) if r[0] == "P-visual"][0]
+        assert not ok and "scene 4 has 2 Visual" in msg, (two, msg)
     name, ok, msg = [r for r in check_plan(parse_plan(expl(vThrust="hologram"))) if r[0] == "P-visual"][0]
     assert not ok and "hologram" in msg, msg
     assert not verdicts(expl(38))["P-time"]
@@ -92,6 +96,16 @@ def main() -> None:
     # The template's empty "Narration:" on a silent outro must not swallow the next line as narration.
     silent = expl() + "### Scene 6 - Outro - 3s\nNarration:\nOn screen: The end\nAudio: music\n\n"
     assert parse_plan(silent)["scenes"][-1]["narration"] == "" and verdicts(silent)["P-visual"], check_plan(parse_plan(silent))
+
+    # P-render in explainer mode: one chapter per "### " section of the narration script (spec #14 "chapters per
+    # section"); with no sections in the script, 2-4 chapters (references/explainer.md).
+    sectioned = parse_plan(expl() + "## Narration script\n\n### Parts\nLine 1.\n\n### Ratio\nLine 2.\n\n### Trade\nLine 3.\n")
+    three = parse_chapters("00:00 Parts\n00:20 Ratio\n00:50 Trade\n", 90)
+    assert check_render(sectioned, three)[1], check_render(sectioned, three)
+    name, ok, msg = check_render(sectioned, three[:2])
+    assert not ok and "2 chapters" in msg and "3 sections" in msg, msg
+    assert not check_render(parse_plan(expl()), parse_chapters("00:00 All of it\n", 90))[1]
+    assert check_render(parse_plan(expl()), three)[1]
 
     # 2D motion styles: stroke-reveal is a known visual; parallax is for the first scene only.
     assert verdicts(expl(vThrust="stroke-reveal"))["P-visual"]
@@ -111,6 +125,22 @@ def main() -> None:
     name, ok, msg = [r for r in check_plan(parse_plan(s3d('{"kind": "volcano"}'))) if r[0] == "P-params"][0]
     assert not ok and "volcano" in msg, msg
 
+    # Numbers written as strings are checked too ("40%" and "2,500" reach the screen through hero-number), signs and
+    # float spelling match the narration's, and a model file name's digits are not figures.
+    def said(narration: str, params: str) -> tuple[bool, str]:
+        text = expl(Thrust=narration, vThrust="scene3d").replace("Visual: scene3d\n", f"Visual: scene3d\nParams: {params}\n")
+        return [r for r in check_plan(parse_plan(text)) if r[0] == "P-params"][0][1:]
+    ok, msg = said("Most of it is lost.", '{"kind": "hero-number", "value": "40%"}')
+    assert not ok and "40" in msg, msg
+    assert not said("It is very old.", '{"kind": "hero-number", "value": "2,500"}')[0]
+    assert said("Over 2,500 years old.", '{"kind": "hero-number", "value": "2,500"}')[0]
+    assert said("It runs at -40 degrees.", '{"kind": "hero-number", "value": -40}')[0]
+    assert said("It runs at -40 degrees.", '{"kind": "hero-number", "value": "-40°C"}')[0]
+    assert said("It costs 2.5 euros.", '{"kind": "hero-number", "value": 2.50}')[0]
+    assert said("It costs 2.50 euros.", '{"kind": "hero-number", "value": 2.5}')[0]
+    assert said("A gap of 0.00001 metres.", '{"kind": "hero-number", "value": 1e-05}')[0]
+    assert said("A gearbox.", '{"model": "gear-v2.glb"}')[0]
+
     # globe kind needs a country or a route of 2+ places (spec #14); route coordinates are not narration numbers.
     def p_params(params: str) -> tuple[bool, str]:
         return [r for r in check_plan(parse_plan(s3d(params))) if r[0] == "P-params"][0][1:]
@@ -119,6 +149,14 @@ def main() -> None:
     assert p_params('{"kind": "globe", "country": "BRA"}')[0]
     assert p_params('{"kind": "globe", "route": [{"name": "A", "lat": 37.39, "lon": -5.98}, {"name": "B", "lat": -22.91, "lon": -43.17}]}')[0]
     assert not p_params('{"kind": "globe", "route": [{"name": "A", "lat": 1, "lon": 2}]}')[0]
+    # The spec's plain-name route shape can't be drawn (globe.js needs coordinates): it fails, naming the place.
+    ok, msg = p_params('{"kind": "globe", "route": ["Seville", "Rio de Janeiro"]}')
+    assert not ok and "Seville" in msg and "lat" in msg, msg
+    assert not p_params('{"kind": "globe", "route": [{"name": "A", "lat": "37", "lon": -5.98}, {"name": "B", "lat": -22.91, "lon": -43.17}]}')[0]
+    # An unknown country code fails at plan time, not as a broken render; alpha-2 codes and any case are fine.
+    ok, msg = p_params('{"kind": "globe", "country": "XYZ"}')
+    assert not ok and "XYZ" in msg, msg
+    assert p_params('{"kind": "globe", "country": "gr"}')[0]
 
     for broken in ("no mode here", "## Mode\nhowto\n\n## Storyboard\nnothing\n"):
         try:

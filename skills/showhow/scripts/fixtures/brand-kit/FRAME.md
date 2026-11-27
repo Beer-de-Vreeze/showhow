@@ -2,7 +2,8 @@
 version: alpha
 name: Northwind - Frame (brand kit, fictional)
 description: >
-  Cool sea-glass ground, deep navy ink, one amber accent. A fictional brand used only to test the kit check.
+  Cool sea-glass ground, deep navy ink, one amber accent.
+  A fictional brand used only to test the kit check.
 logo: logo.svg
 fonts:
   - fonts/Inter-400.woff2
@@ -28,4 +29,5 @@ Navy ink on pale sea-glass, one amber accent for the thing the narration points 
 
 ## Colors
 
-Two neutrals (paper, ink), one muted ink, one accent. All values are invented for the fixture.
+Two neutrals (paper, ink), one muted ink, one accent.
+All values are invented for the fixture.

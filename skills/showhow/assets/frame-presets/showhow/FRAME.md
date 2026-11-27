@@ -2,7 +2,8 @@
 version: alpha
 name: Showhow - Frame (video / frame layer)
 description: >
-  Warm paper ground, ink line drawings, one teal accent. A drawn-by-hand explainer look that stays calm under narration.
+  Warm paper ground, ink line drawings, one teal accent.
+  A drawn-by-hand explainer look that stays calm under narration.
 unit: the frame - 1920x1080 primary; 9:16 and 1:1 documented
 principle: atoms are sacred, composition is free, numbers come from the script
 
@@ -10,7 +11,7 @@ colors:
   paper: "#F3ECDD"
   ink: "#23201B"
   muted: "#5B5547"
-  teal: "#0F6E6A"
+  accent: "#0F6E6A"
   line: "#23201B"
 
 typography:
@@ -31,7 +32,7 @@ components:
     stroke: "2.5px {colors.ink}, dot end on the part"
   bar:
     backgroundColor: "{colors.ink}"
-    focal: "{colors.teal}"
+    focal: "{colors.accent}"
     description: "One focal bar in teal, the rest ink; value above, label below."
 ---
 
@@ -39,27 +40,38 @@ components:
 
 ## Overview
 
-Ink on warm paper, drawn like a textbook plate. Garamond carries the title, Inter carries every label and number. Teal marks the one thing the narration points at. Not showhowai.com: no cream-and-orange-dot, and the paper is a flat colour, not a gradient.
+Ink on warm paper, drawn like a textbook plate.
+Garamond carries the title, Inter carries every label and number.
+Teal marks the one thing the narration points at.
+Not showhowai.com: no cream-and-orange-dot, and the paper is a flat colour, not a gradient.
 
 ## The Frame
 
-1920x1080 primary. Chrome text is at least 28px at 1080p. Margins 6cqw, one focal element per frame, at least half of a declarative frame empty.
+1920x1080 primary.
+Chrome text is at least 28px at 1080p.
+Margins 6cqw, one focal element per frame, at least half of a declarative frame empty.
 
 ## Colors
 
-Two neutrals (paper, ink), one muted ink for captions, one accent (teal). Teal is for the focal element only; a second accent is a defect.
+Two neutrals (paper, ink), one muted ink for captions, one accent (teal).
+Teal is for the focal element only; a second accent is a defect.
 
 ## Typography
 
-Two families: EB Garamond 700 for the title, Inter 400/700 for labels, captions and numbers. Sentence case. Tracking no tighter than -0.02em.
+Two families: EB Garamond 700 for the title, Inter 400/700 for labels, captions and numbers.
+Sentence case.
+Tracking no tighter than -0.02em.
 
 ## Depth & Surface
 
-Zero shadow, zero blur, zero fill on parts. Depth is line weight and white space.
+Zero shadow, zero blur, zero fill on parts.
+Depth is line weight and white space.
 
 ## Shapes
 
-Square corners on bars. Gears and parts are outlines. No rounded cards.
+Square corners on bars.
+Gears and parts are outlines.
+No rounded cards.
 
 ## Composition Rules
 
@@ -83,7 +95,8 @@ Square corners on bars. Gears and parts are outlines. No rounded cards.
 
 ## Numerals & Claims (hard rule)
 
-Never invent figures, dates or counts. Chart values come from the script or the source; the sample numbers (60, 120, 180, 240) exist only in the sample.
+Never invent figures, dates or counts.
+Chart values come from the script or the source; the sample numbers (60, 120, 180, 240) exist only in the sample.
 
 ## Pre-Render Self-Audit
 
@@ -97,4 +110,5 @@ Never invent figures, dates or counts. Chart values come from the script or the 
 
 - Motion is out of scope; the showhow motion signature lives in the design floor.
 - Sampled on one scene (title, labelled part, bar chart); maps, timelines and 3D need their own pass.
-- Fonts are the OFL files in `fonts/` beside this file (licences next to them); copy them to `composition/assets/fonts/` and declare `@font-face` with `src: url(assets/fonts/...)`. No CDN.
+- Fonts are the OFL files in `fonts/` beside this file (licences next to them); copy them to `composition/assets/fonts/` and declare `@font-face` with `src: url(assets/fonts/...)`.
+  No CDN.

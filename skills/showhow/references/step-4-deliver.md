@@ -75,8 +75,9 @@ uv run --project <skill-dir>/scripts <skill-dir>/scripts/render.py <output-dir>/
 ```
 
 For several formats add `--format all` or `--format landscape,vertical`: the wrapper renders once per format into `<video-name>-landscape.mp4`, `-vertical.mp4` and `-square.mp4`, each from a resized copy in `work/formats/<format>/` and with its own `work/<format>/render.log`.
-A single `--format` keeps `<video-name>.mp4`; without `--format` the composition renders as is.
-A failing format is named in the error and exits non-zero; the formats that rendered stay on disk, so re-run only the failed one with `--format <name>`.
+A single `--format` gets the same suffix (`--format vertical` writes `<video-name>-vertical.mp4`); without `--format` the composition renders as is.
+Each format is loudness-normalised as soon as it renders.
+A failing format is named in the error and exits non-zero; the formats that rendered stay on disk, normalised, so re-run only the failed one with `--format <name>`.
 Bake the poster and run the video gates once per file; `captions.srt` and `chapters.txt` are the same for all.
 
 Flags after `--` go to `hyperframes render` unchanged.

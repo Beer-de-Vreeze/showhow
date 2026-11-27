@@ -9,7 +9,7 @@ export const FONT_URL = "https://cdn.jsdelivr.net/npm/three@0.184.0/examples/fon
 
 // Fill defaults to the theme accent: the number is the one thing the narration points at.
 export async function buildHeroNumber(stage, P, { fontUrl = FONT_URL, color = theme.accent, width = 14, gap = 0.3 } = {}) {
-  if (P.value === undefined) throw new Error("hero-number: Params.value is required");
+  if (!String(P.value ?? "").trim()) throw new Error("hero-number: Params.value is required and must not be empty");
   const font = await new FontLoader().loadAsync(fontUrl);
   const size = 3;
   // One mesh per glyph, so each can be spaced by its extruded, projected bounds (a whole string overlaps once turned).

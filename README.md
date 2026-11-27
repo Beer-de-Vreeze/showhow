@@ -137,11 +137,14 @@ Ask for one with `--mode explainer`, or just ask how something works or paste a 
 /showhow --mode explainer how a gear train trades speed for force
 ```
 
-- **Your script or a drafted one.** A pasted script is narrated word for word.
+- **Your script or a drafted one.**
+  A pasted script is narrated word for word.
   Give a topic instead and showhow drafts the script, ties every fact to a source, and stops for your approval before it builds anything.
   A fact it cannot source shows up as `[NEED: what is missing]`, and the plan check refuses to render until you fill it in.
-- **Preview before render.** After the build, showhow writes one still per scene in every format and waits for your approval, so a wrong picture costs you a minute, not a render.
-- **Shape.** What you'll understand, the parts by name, one scene per sentence grouped into chapters, then a recap; no step counter.
+- **Preview before render.**
+  After the build, showhow writes one still per scene in every format and waits for your approval, so a wrong picture costs you a minute, not a render.
+- **Shape.**
+  What you'll understand, the parts by name, one scene per sentence grouped into chapters, then a recap; no step counter.
   60 to 120 seconds, 180 at most.
 - **Visual types**, one per sentence:
   - `flow` (boxes and arrows that build in order), `chart` (bars from zero, axes first), `map` (a labelled locator), `photo` (a licensed photo), `card` (one number, name or quote).
@@ -149,13 +152,17 @@ Ask for one with `--mode explainer`, or just ask how something works or paste a 
   - `scene3d`, one 3D stage per video with a `kind`: `machine` (gears, shafts and springs built from the script's numbers, moving in ratio, with a cutaway, an exploded view, slow motion and airflow), `globe` (a highlighted country, great-circle routes, a zoom that cuts to a flat map) or `hero-number` (one key figure as 3D type).
     Your own glTF model can stand in when no kind fits.
   - Every number in a 3D scene's parameters must be spoken, so the model never contradicts the voice.
-- **Three formats in one run.** 16:9, 9:16 and 1:1 by default, each laid out for its own frame, named `<video-name>-landscape.mp4`, `-vertical.mp4` and `-square.mp4`, sharing one `captions.srt` and `chapters.txt`.
+- **Three formats in one run.**
+  16:9, 9:16 and 1:1 by default, each laid out for its own frame, named `<video-name>-landscape.mp4`, `-vertical.mp4` and `-square.mp4`, sharing one `captions.srt` and `chapters.txt`.
   `--format landscape` renders just one.
-- **The `showhow` theme.** Warm paper, ink line drawings and one teal accent, with EB Garamond titles and Inter labels; the explainer default, and available in any mode with `--theme showhow`.
-- **Brand kits.** `--brand <name>` uses a local kit in `~/.showhow/brands/<name>/` (colours, fonts, logo) instead; 3D scenes and the 2D styles take their colours from it too.
+- **The `showhow` theme.**
+  Warm paper, ink line drawings and one teal accent, with EB Garamond titles and Inter labels; the explainer default, and available in any mode with `--theme showhow`.
+- **Brand kits.**
+  `--brand <name>` uses a local kit in `~/.showhow/brands/<name>/` (colours, fonts, logo) instead; 3D scenes and the 2D styles take their colours from it too.
   `/showhow brand <name> <repo or URL>` creates one.
 - **Music on by default**, a bundled track kept 20 dB under the voice; `--no-music` turns it off.
-- **Written companion.** `showhow.md` is the script as a short article with a numbered sources list.
+- **Written companion.**
+  `showhow.md` is the script as a short article with a numbered sources list.
 
 ## Styles, themes and voices
 
@@ -170,7 +177,8 @@ Four styles, in every mode:
 
 Presets are a starting point: add freeform direction such as `--style "calm, like Apple support videos"`.
 
-- **Themes:** `--theme <preset>` applies a frame preset to title cards, captions and step cards: `showhow` (the house theme) or any Hyperframes preset. Rebuilt product screens keep their own look.
+- **Themes:** `--theme <preset>` applies a frame preset to title cards, captions and step cards: `showhow` (the house theme) or any Hyperframes preset.
+  Rebuilt product screens keep their own look.
 - **Brand kits:** `--brand <name>` applies a local kit from `~/.showhow/brands/<name>/` (never committed); `/showhow brand <name> <repo or URL>` creates one.
 - **Design floor:** every video's own chrome (title, cards, counters, captions, outro) follows a short design floor adapted from impeccable: contrast and type checks, and a list of generated-design defaults it refuses, such as eyebrow labels and blurred gradient backgrounds. A `--theme` preset keeps its deliberate choices.
 - **House style:** showhow remembers how you like your videos.

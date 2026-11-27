@@ -1,7 +1,8 @@
 // Self-check for the scene3d pure maths. Run: node <skill-dir>/scripts/test_scene3d.mjs
 import assert from "node:assert/strict";
 import { hash, timeMap, layoutLabels, labelEdges, glyphOffsets } from "../assets/scene3d/scene3d-math.js";
-import { greatCircle } from "../assets/scene3d/globe-math.js";
+import { readFileSync } from "node:fs";
+import { greatCircle, countryCentre } from "../assets/scene3d/globe-math.js";
 import { gearOutline, meshAngle, crankSlider, explodeAmount, explodeOffsets, flowPoint } from "../assets/scene3d/machine-math.js";
 
 // hash: same input, same value, inside [0, 1), and spread out.
@@ -78,6 +79,16 @@ assert.ok(Math.abs(crankSlider(0, 1, 3.5).x - 4.5) < 1e-9 && Math.abs(crankSlide
   const lonM = lo1 + deg(Math.atan2(by, Math.cos(rad(la1)) + bx));
   const mid = greatCircle({ lat: la1, lon: lo1 }, { lat: la2, lon: lo2 }, 0.5);
   assert.ok(Math.abs(mid.lat - latM) < 0.01 && Math.abs(mid.lon - lonM) < 0.01, JSON.stringify([mid, latM, lonM]));
+}
+
+// Country centre: the largest polygon, not the first; France's first ring in the bundled map is French Guiana,
+// Norway's is Svalbard. Bounds are mainland France and mainland Norway.
+{
+  const { features } = JSON.parse(readFileSync(new URL("../assets/scene3d/data/ne_110m_admin_0_countries.min.geojson", import.meta.url), "utf8"));
+  const by = (a3) => features.find((f) => f.properties.a3 === a3);
+  const fra = countryCentre(by("FRA")), nor = countryCentre(by("NOR"));
+  assert.ok(fra.lat > 42 && fra.lat < 51 && fra.lon > -5 && fra.lon < 8, `FRA centre ${JSON.stringify(fra)}`);
+  assert.ok(nor.lat > 58 && nor.lat < 71 && nor.lon > 4 && nor.lon < 31, `NOR centre ${JSON.stringify(nor)}`);
 }
 
 // Exploded view: staggered ease per part index; worked values from at 8, stagger 0.2, dur 1.

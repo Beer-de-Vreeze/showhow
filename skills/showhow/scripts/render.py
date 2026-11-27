@@ -10,11 +10,13 @@ tail on failure.
       <output-dir>/composition <output-dir>/<video-name>.mp4 --work <output-dir>/work [--no-fast-capture] [--no-loudnorm] [-- --docker --quality high]
 
 --format: one render per format, each to <video-name>-<format>.mp4 (landscape 1920x1080,
-vertical 1080x1920, square 1080x1080); a single format keeps <video-name>.mp4. Each format renders
-a copy of the composition in <work>/formats/<format>/ whose root data-width, data-height and
-data-format are rewritten; the original is never edited, and CSS keys layout off
+vertical 1080x1920, square 1080x1080), also when only one is given. Each format renders
+a copy of the composition in <work>/formats/<format>/ whose root gets data-format and whose
+composition elements sized like the root (root, sub-composition hosts, compositions/*.html roots)
+get the format's data-width and data-height; the original is never edited, and CSS keys layout off
 [data-format="vertical"]. The root needs data-width and data-height. A failing format is named and
-exits non-zero; formats that rendered are kept. Without --format the composition renders as is.
+exits non-zero; formats that rendered are kept, each normalised as it finished. Without --format
+the composition renders as is.
 
 --prepare-only (with --format): write the per-format copies and stop; no render, no loudnorm.
 
@@ -170,24 +172,51 @@ def parse_formats(spec: str) -> list[str]:
     return list(dict.fromkeys(names))
 
 
+COMPOSITION_TAG = re.compile(r"<[^<>]*data-composition-id[^<>]*>")
+
+
+def attr(k: str) -> str:
+    """data-<k>="..." in either quote style; group 2 is the value."""
+    return rf"""data-{k}=(["'])(.*?)\1"""
+
+
 def size_copy(composition: Path, copy: Path, fmt: str) -> None:
-    """Copy the composition and set the copy's root data-width, data-height and data-format; the original is untouched."""
+    """Copy the composition; in the copy, every composition element (root, sub-composition hosts and the roots in
+    compositions/*.html) sized like the root gets the format's size, and the root gets data-format.
+    Elements at another size (an inset) keep theirs. The original is untouched."""
     index = composition / "index.html"
     if not index.is_file():
         raise SystemExit(f"no index.html in {composition}; pass the composition folder")
-    html = index.read_text(encoding="utf-8")
-    m = re.search(r"<[^<>]*data-composition-id[^<>]*>", html)
-    root = m.group(0) if m else ""
-    if not all(re.search(rf"data-{k}=", root) for k in ("width", "height")):
+    m = COMPOSITION_TAG.search(index.read_text(encoding="utf-8"))
+    sizes = [re.search(attr(k), m.group(0)) if m else None for k in ("width", "height")]
+    if not all(sizes):
         raise SystemExit(f"{index}: the root element (data-composition-id) needs data-width and data-height to render several formats")
+    landscape = tuple(s.group(2) for s in sizes)
     width, height = FORMATS[fmt]
-    new = re.sub(r'data-width="[^"]*"', f'data-width="{width}"', root)
-    new = re.sub(r'data-height="[^"]*"', f'data-height="{height}"', new)
-    new = re.sub(r'\s*data-format="[^"]*"', "", new)
-    new = new[:-1].rstrip("/").rstrip() + f' data-format="{fmt}"' + ("/>" if root.endswith("/>") else ">")
-    shutil.rmtree(copy, ignore_errors=True)
-    shutil.copytree(composition, copy)
-    (copy / "index.html").write_text(html.replace(root, new, 1), encoding="utf-8")
+
+    def resize(tag: str) -> str:
+        own = [re.search(attr(k), tag) for k in ("width", "height")]
+        if not all(own) or tuple(s.group(2) for s in own) != landscape:
+            return tag
+        return re.sub(attr("height"), f'data-height="{height}"', re.sub(attr("width"), f'data-width="{width}"', tag))
+
+    if copy.resolve().is_relative_to(composition.resolve()):
+        raise SystemExit(f"--work {copy.parent.parent} is inside the composition {composition}; copying it would recurse. Put work next to the composition.")
+    try:
+        # A stale copy that can't be removed (a preview or Explorer holding a file on Windows) fails this format by name.
+        if copy.exists():
+            shutil.rmtree(copy)
+        shutil.copytree(composition, copy)
+    except OSError as e:
+        raise SystemExit(f"could not rebuild the {fmt} copy at {copy}: {e}. Close anything using it and rerun.")
+    for page in [copy / "index.html", *sorted((copy / "compositions").glob("*.html"))]:
+        html = page.read_text(encoding="utf-8")
+        if page == copy / "index.html":
+            root = COMPOSITION_TAG.search(html).group(0)
+            new = re.sub(r"\s*" + attr("format"), "", root)
+            new = new[:-1].rstrip("/").rstrip() + f' data-format="{fmt}"' + ("/>" if root.endswith("/>") else ">")
+            html = html.replace(root, new, 1)
+        page.write_text(COMPOSITION_TAG.sub(lambda t: resize(t.group(0)), html), encoding="utf-8")
 
 
 def render_formats(
@@ -198,23 +227,27 @@ def render_formats(
     fast_capture: bool = True,
     extra: list[str] | None = None,
     run: Callable[[list[str]], tuple[int, str]] = run_cli,
+    after: Callable[[Path, Path], None] | None = None,
 ) -> list[Path]:
-    """One render per format; a failed format is named at the end and never deletes the ones that worked."""
+    """One render per format, each to <stem>-<format>; `after(mp4, work)` (loudnorm) runs as each one finishes,
+    so a later failed format never leaves the earlier ones un-normalised. Failures are named at the end."""
     done: list[Path] = []
     failed: list[str] = []
     for f in formats:
-        out = output if len(formats) == 1 else output.with_name(f"{output.stem}-{f}{output.suffix}")
+        # Always suffixed, so re-running one failed format of an "all" run lands next to the others.
+        out = output.with_name(f"{output.stem}-{f}{output.suffix}")
         try:
             copy = work / "formats" / f
             size_copy(composition, copy, f)
-            render(copy, out, work if len(formats) == 1 else work / f,
-                   fast_capture=fast_capture, extra=extra, run=run)
+            render(copy, out, work / f, fast_capture=fast_capture, extra=extra, run=run)
+            if after:
+                after(out, work / f)
             done.append(out)
         except SystemExit as e:
-            failed.append(f); why = str(e).splitlines()[0]
+            failed.append(f"{f} ({str(e).splitlines()[0]})")
             print(f"format {f} failed: {e}", file=sys.stderr)
     if failed:
-        raise SystemExit(f"render failed for format {', '.join(failed)} ({why}); kept: {', '.join(map(str, done)) or 'none'}")
+        raise SystemExit(f"render failed for format {'; '.join(failed)}; kept: {', '.join(map(str, done)) or 'none'}")
     return done
 
 
@@ -245,13 +278,12 @@ def main() -> None:
         render(a.composition, a.output, a.work, fast_capture=not a.no_fast_capture, extra=extra)
         outs = [(a.output, a.work)]
     else:
-        formats = parse_formats(a.format)
-        # A failed format exits here; the ones that worked stay on disk as rendered, un-normalised.
-        done = render_formats(a.composition, a.output, a.work, formats, fast_capture=not a.no_fast_capture, extra=extra)
-        outs = [(o, a.work if len(done) == 1 else a.work / f) for o, f in zip(done, formats)]
+        # Each format is normalised as it finishes; a failed format exits here and the others stay done.
+        render_formats(a.composition, a.output, a.work, parse_formats(a.format), fast_capture=not a.no_fast_capture,
+                       extra=extra, after=None if a.no_loudnorm else normalize_loudness)
+        return
     if not a.no_loudnorm:
-        for o, w in outs:
-            normalize_loudness(o, w)
+        normalize_loudness(a.output, a.work)
 
 
 if __name__ == "__main__":

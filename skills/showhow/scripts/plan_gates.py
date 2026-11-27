@@ -24,8 +24,9 @@ P-visual: every voiced scene has exactly one "Visual:" from VISUALS; parallax on
 P-time:   total under 180s; a total outside 60-120s passes with a warning.
 P-end:    the last scene before the outro is a recap.
 P-params: a "Visual: scene3d" scene has a "Params:" JSON object with a known "kind" (SCENE3D_KINDS) or a
-          "model"; a globe has a "country" or a "route" of 2+ places; every number in it appears in the narration ("stages": 12 needs "12" spoken).
-P-render: with --chapters, the rendered steps match the plan's count and each lasts the minimum.
+          "model"; a globe has a known "country" code or a "route" of 2+ {name, lat, lon} places; every number in it, strings included, appears in the narration ("stages": 12 and "value": "40%" need "12" and "40" spoken).
+P-render: with --chapters, the rendered steps match the plan's count and each lasts the minimum; in explainer
+          mode there is one chapter per "### " section of the narration script (2-4 when it has none).
 Exit code 1 when a gate fails.
 """
 
@@ -39,9 +40,9 @@ from pathlib import Path
 
 from video_gates import video_duration
 
-MIN_STEP = {"howto": 6.0, "quick-tip": 5.0, "update": 10.0, "general": 6.0, "explainer": 0.0}
+MIN_STEP = {"howto": 6.0, "quick-tip": 5.0, "update": 10.0, "general": 6.0}  # explainer has no steps
 HARD_LIMIT = {"howto": 180.0, "quick-tip": 60.0, "update": 120.0, "general": 180.0, "explainer": 180.0}
-# The visual menu for explainer scenes; later tickets add their types here (references/explainer.md).
+# The visual menu for explainer scenes; a new type is one entry here and one row in references/explainer.md.
 VISUALS = ("flow", "chart", "map", "photo", "card", "stroke-reveal", "kinetic-type", "data-anim", "morph", "flat-scene", "parallax", "scene3d")
 FIRST_SCENE_ONLY = ("parallax",)  # intro motion; it never competes with an explanation
 # Params.kind values with a recipe in assets/scene3d (references/3d-scenes.md); Params.model replaces any kind.
@@ -53,7 +54,7 @@ MULTI_ACTION = re.compile(r"\bthen\b|;|->|→|\band\s+(?:click|press|select|type
 def parse_plan(text: str) -> dict:
     mode_line = re.search(r"^## Mode\s*\n+\s*\[?(\w[\w-]*)", text, re.M)
     if not mode_line:
-        raise SystemExit("no '## Mode' section with howto, update or general in the plan")
+        raise SystemExit("no '## Mode' section with howto, update, general or explainer in the plan")
     mode = mode_line.group(1).lower()
     if mode not in ("howto", "update", "general", "explainer"):
         raise SystemExit(f"unknown mode {mode!r} in the plan")
@@ -91,7 +92,9 @@ def parse_plan(text: str) -> dict:
 
 
 def numbers(text: str) -> set[str]:
-    return set(re.findall(r"\d+(?:\.\d+)?", re.sub(r"(?<=\d),(?=\d{3})", "", text)))
+    """Digits as spoken: no thousands commas, no sign, no trailing decimal zeros ("2.50" and "2.5" match)."""
+    found = re.findall(r"\d+(?:\.\d+)?", re.sub(r"(?<=\d),(?=\d{3})", "", text))
+    return {n.rstrip("0").rstrip(".") if "." in n else n for n in found}
 
 
 def described_gaps(scene: dict) -> list[str]:
@@ -99,6 +102,11 @@ def described_gaps(scene: dict) -> list[str]:
     labels = re.findall(r"\*\*(.+?)\*\*", shown)
     spoken = said.replace("*", "").lower()
     return sorted(numbers(shown) - numbers(said)) + [f"'{b}'" for b in labels if b.lower() not in spoken]
+
+
+def body_scenes(scenes: list[dict]) -> list[dict]:
+    """The scenes minus any credits, outro or end card: P-end judges the last of these."""
+    return [sc for sc in scenes if not re.search(r"outro|credit|end card", sc["name"], re.I)] or scenes
 
 
 def has_action(scene: dict) -> bool:
@@ -141,8 +149,7 @@ def check_plan(plan: dict) -> list[tuple[str, bool, str]]:
 
     topic = mode == "general" and not any(has_action(sc) for sc in scenes)
     if mode in ("howto", "general") and not topic:
-        # A credits or outro card may follow "Now try it"; judge the last scene before it.
-        body = [sc for sc in scenes if not re.search(r"outro|credit|end card", sc["name"], re.I)] or scenes
+        body = body_scenes(scenes)
         ok = "try" in body[-1]["name"].lower()
         results.append(("P-end", ok, f"last scene is {body[-1]['name']!r}" + ("" if ok else "; end on 'Now try it' with a concrete example, not a recap")))
 
@@ -181,21 +188,33 @@ def check_explainer(plan: dict) -> list[tuple[str, bool, str]]:
         msg += "; warning: outside 60-120s"
     results.append(("P-time", total <= HARD_LIMIT["explainer"], msg))
 
-    body = [sc for sc in scenes if not re.search(r"outro|credit|end card", sc["name"], re.I)] or scenes
+    body = body_scenes(scenes)
     ok = "recap" in body[-1]["name"].lower()
     results.append(("P-end", ok, f"last scene is {body[-1]['name']!r}" + ("" if ok else "; end on a recap")))
     return results + check_params(plan)
 
 
 def param_numbers(value) -> list[str]:
+    """Every figure in Params, normalised like numbers(): strings too ("40%" reaches the screen as text)."""
     if isinstance(value, dict):
-        # lat and lon are map coordinates the plan states, not figures the narration speaks.
-        return [n for k, v in value.items() if k not in ("lat", "lon") for n in param_numbers(v)]
+        # lat and lon are map coordinates the plan states, not figures; a model's file name is not a figure either.
+        return [n for k, v in value.items() if k not in ("lat", "lon", "model") for n in param_numbers(v)]
     if isinstance(value, list):
         return [n for v in value for n in param_numbers(v)]
     if isinstance(value, (int, float)) and not isinstance(value, bool):
-        return [str(int(value)) if float(value).is_integer() else repr(value)]
+        return sorted(numbers(format(value, "f")))  # "f": 1e-05 is spoken 0.00001
+    if isinstance(value, str):
+        return sorted(numbers(value))
     return []
+
+
+COUNTRIES = Path(__file__).resolve().parent.parent / "assets" / "scene3d" / "data" / "ne_110m_admin_0_countries.min.geojson"
+
+
+def country_codes() -> set[str]:
+    """The alpha-3 and alpha-2 codes globe.js can find in the bundled Natural Earth file."""
+    features = json.loads(COUNTRIES.read_text(encoding="utf-8"))["features"]
+    return {f["properties"][k] for f in features for k in ("a3", "a2") if f["properties"].get(k)}
 
 
 def check_params(plan: dict) -> list[tuple[str, bool, str]]:
@@ -218,9 +237,14 @@ def check_params(plan: dict) -> list[tuple[str, bool, str]]:
         if not params.get("model") and kind not in SCENE3D_KINDS:
             bad.append(f"scene {s['n']} unknown kind {kind!r} and no model (kinds: {', '.join(SCENE3D_KINDS)})")
         if not params.get("model") and kind == "globe":
-            route = params.get("route")
-            if not params.get("country") and not (isinstance(route, list) and len(route) >= 2):
+            route, country = params.get("route"), params.get("country")
+            if not country and not (isinstance(route, list) and len(route) >= 2):
                 bad.append(f"scene {s['n']} globe needs Params.country or a Params.route of 2+ places")
+            if country and str(country).upper() not in country_codes():
+                bad.append(f"scene {s['n']} globe country {country!r} is not an ISO alpha-3 or alpha-2 code in the bundled map")
+            for p in route if isinstance(route, list) else []:
+                if not (isinstance(p, dict) and all(isinstance(p.get(k), (int, float)) and not isinstance(p.get(k), bool) for k in ("lat", "lon"))):
+                    bad.append(f"scene {s['n']} globe route place {p!r} needs {{\"name\", \"lat\", \"lon\"}} with numbers")
         missing = [n for n in param_numbers(params) if n not in spoken]
         if missing:
             bad.append(f"scene {s['n']} Params numbers not in the narration: {', '.join(missing)}")
@@ -243,7 +267,10 @@ def parse_chapters(text: str, duration: float) -> list[tuple[str, float]]:
 def check_render(plan: dict, chapters: list[tuple[str, float]]) -> tuple[str, bool, str]:
     mode = plan["mode"]
     if mode == "explainer":
-        return ("P-render", True, f"{len(chapters)} chapters (one per section; no step count to match)")
+        # One chapter per "### " section of the narration script; a script without sections still needs 2-4.
+        sections = len(re.findall(r"^### ", plan["script"], re.M))
+        ok = len(chapters) == sections if sections else 2 <= len(chapters) <= 4
+        return ("P-render", ok, f"{len(chapters)} chapters vs " + (f"{sections} sections in the narration script" if sections else "2-4 sections expected"))
     word = {"update": r"^change\s*\d+", "general": r"^(?:step|point)\s*\d+"}.get(mode, r"^step\s*\d+")
     steps = [(t, d) for t, d in chapters if re.match(word, t, re.I)]
     planned = max((s["counter"][1] for s in step_scenes(plan)), default=0)

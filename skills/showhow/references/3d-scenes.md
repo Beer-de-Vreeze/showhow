@@ -37,11 +37,12 @@ A new kind is one row here, one entry in `SCENE3D_KINDS` in `scripts/plan_gates.
 | Export | What it does |
 |---|---|
 | `onSeek(key, build)` | Registers `window.__hf.buildReady[key]` at once, awaits `build()` and the fonts, then calls the `render(t)` that `build()` returned on every `hf-seek`; `?t=<seconds>` previews one frame in a plain browser |
+| `fitToRoot(root)` | Sizes the root and every canvas in it from the root's `data-width` and `data-height` and returns `{ width, height }`; pass them to `createStage`, so each `--format` copy gets a full-size stage |
 | `createStage({ canvas, width, height, background, viewHeight, view })` | Renderer with pixel ratio 1, `preserveDrawingBuffer` and `stencil`; flat ambient plus one key light; `project(point)` gives frame pixels |
 | `orthoCamera`, `VIEWS` | Orthographic camera from `iso`, `dimetric`, `front` or `top`; animate `camera.zoom` for a dive, never the distance |
 | `part(geometry, stage, { color, edges, silhouette })` | Three-step toon fill with polygon offset, fat edge lines (`LineSegments2`, pixels at stage size), optional inverted-hull silhouette |
 | `loadModel(url, stage, { size })` | Loads `Params.model`, fits and centres it, gives it the same flat look; a load failure fails the build |
-| `labels(container, stage, items)` | HTML plates with SVG leaders; returns `layout(t)` for `render(t)`; plates fade in at each item's `at` |
+| `labels(container, stage, items)` | HTML plates with SVG leaders inside a band that scales with `stage.height` unless `top`/`bottom` are passed; returns `layout(t)` for `render(t)`; plates fade in at each item's `at` |
 | `hash(i, seed)`, `seedOf(text)` | Integer hash to [0, 1) and an FNV-1a seed from text; the only randomness allowed |
 | `timeMap(t, keys)` | Piecewise-linear time for slow motion; slope 1 outside the keys |
 | `layoutLabels(anchors, opts)` | Left and right slot columns sorted by anchor y, one pitch apart, so leaders never cross |
@@ -84,6 +85,7 @@ A new kind is one row here, one entry in `SCENE3D_KINDS` in `scripts/plan_gates.
   Define the variables on the composition root and use `var(--ink)` for the label plates and leaders (the fixtures show it).
 - Labels at least 40 px, at most 5 to 7 on screen, inside the title-safe band; check that no plate covers the object at the most zoomed frame.
 - Pass `avoid: machine` to `labels` and the plate columns step outward to stay 70 px clear of the object's screen bounds, whatever the zoom or exploded height (`labelEdges`).
+- Never hard-code 1920x1080: call `fitToRoot(root)` and pass its `width` and `height` to `createStage`; a fixed canvas renders a cropped landscape corner in the vertical and square copies (seen on a vertical still of the gear-train fixture).
 - In a 1080 px wide frame (vertical, square) the columns run out of room and are clamped to the edge, over the object: widen `viewHeight` (about `110 * height / width` for the gear train), keep plates to a word or two, and pass a smaller `margin` and `gap`.
 
 ### Params.model
@@ -107,13 +109,15 @@ A new kind is one row here, one entry in `SCENE3D_KINDS` in `scripts/plan_gates.
 ```
 
 - `country` is an ISO 3166-1 code, alpha-3 or alpha-2 (`BRA`, `BR`), from the Natural Earth `ADM0_A3` and `ISO_A2_EH` columns; it fills in the accent colour over the first second.
+  A code that is not in the bundled map fails P-params.
 - `route` lists places in order; each pair of neighbours becomes one great-circle arc that draws on over 2 s.
-  The plan states every coordinate; nothing is geocoded.
+  Each place is an object `{"name", "lat", "lon"}` with numeric `lat` and `lon`; the plan states every coordinate, nothing is geocoded.
+  Plain names (`["Seville", "Rio de Janeiro"]`, the shorthand spec #14 shows) fail P-params: look the coordinates up and write them in.
   `lat` and `lon` are exempt from the "numbers are spoken" half of P-params; any other number in `Params` still has to be narrated.
   `side` (`left` or `right`) is optional and picks the label column.
 - A globe needs a `country` or a `route` of 2 or more places; `plan_gates.py` fails it otherwise.
   Say in the narration that the arc is the shortest path if the route is not literally flown.
-- `focus` (`{lat, lon}`) overrides the centre the globe settles on; the default is the mean direction of the route, or of the country.
+- `focus` (`{lat, lon}`) overrides the centre the globe settles on; the default is the mean direction of the route, or of the country's largest polygon (France settles on France, not French Guiana).
 - Avoid antipodal route pairs: they have no single shortest arc.
 - Data: `assets/scene3d/data/ne_110m_admin_0_countries.min.geojson`, Natural Earth 110m, public domain (see `data/README.md`).
   Pass its URL to `buildGlobe`; the file is fetched, so serve it next to the composition.

@@ -61,6 +61,19 @@ export function orthoCamera(width, height, { viewHeight = 10, view = "iso", targ
   return camera;
 }
 
+// Sizes the root and every canvas in it from the root's data-width and data-height, which render.py --format rewrites
+// in each format's copy, so the vertical copy draws a 1080x1920 stage instead of a cropped 1920x1080 one.
+export function fitToRoot(root) {
+  const width = Number(root.dataset.width), height = Number(root.dataset.height);
+  if (!(width > 0 && height > 0)) throw new Error("scene3d: the root needs data-width and data-height");
+  Object.assign(root.style, { width: `${width}px`, height: `${height}px` });
+  for (const c of root.querySelectorAll("canvas")) {
+    c.width = width; c.height = height;
+    Object.assign(c.style, { width: `${width}px`, height: `${height}px` });
+  }
+  return { width, height };
+}
+
 export function createStage({ canvas, width = 1920, height = 1080, background, viewHeight = 10, view = "iso" }) {
   // Fixed pixel ratio and a kept drawing buffer, so capture never depends on the host's devicePixelRatio.
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true, stencil: true });
@@ -161,7 +174,8 @@ export async function loadModel(url, stage, { size = 10, restyle = true, color =
 // Build once, then call the returned layout(t) from render(t), after the scene is posed.
 // avoid: the Object3D (the whole machine) the plates stay `gap` px clear of; the columns step outward when zoom
 // or an exploded view grows it. Without it they sit at `margin`.
-export function labels(container, stage, items, { margin = 150, top = 140, bottom = 900, pitch = 84, avoid = null, gap = 70, pad = 24 } = {}) {
+// The default band scales with the stage (140 and 900 px at 1080 tall), so portrait frames use their full height.
+export function labels(container, stage, items, { margin = 150, top = Math.round(stage.height * 0.13), bottom = Math.round(stage.height * 0.833), pitch = 84, avoid = null, gap = 70, pad = 24 } = {}) {
   const ns = "http://www.w3.org/2000/svg";
   const svg = document.createElementNS(ns, "svg");
   svg.setAttribute("width", stage.width);

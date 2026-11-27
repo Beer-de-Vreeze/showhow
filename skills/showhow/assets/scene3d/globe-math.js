@@ -53,3 +53,13 @@ export function centreOf(places) {
   const sum = places.map(toVec).reduce((s, v) => [s[0] + v[0], s[1] + v[1], s[2] + v[2]]);
   return fromVec(sum.map((c) => c / Math.hypot(...sum)));
 }
+
+// Polygon rings of a GeoJSON country feature as arrays of [lon, lat].
+export const rings = (f) => (f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates).flat();
+
+// Centre of a country: its largest ring by planar lon/lat area, so France settles on France, not French Guiana.
+export function countryCentre(f) {
+  const area = (r) => Math.abs(r.reduce((s, [x, y], i) => { const [x2, y2] = r[(i + 1) % r.length]; return s + x * y2 - x2 * y; }, 0));
+  const big = rings(f).reduce((a, b) => (area(b) > area(a) ? b : a));
+  return centreOf(big.map(([lon, lat]) => ({ lat, lon })));
+}

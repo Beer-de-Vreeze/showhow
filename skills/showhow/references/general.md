@@ -83,6 +83,7 @@ Pick per outside step, in this order:
 - Never 3D for product UI, rebuilt screens, charts, or a step done on a real screen.
 
 **Charts stay honest in motion.** Bar charts start at zero. Animate in stages, about 1s each: axes and scale first, then the values; never rescale an axis and change values in the same move. No 3D, no rotation.
+A bar's label shows the value the bar is drawn at, on every frame (`kit.bar`, `motion-2d.md`).
 
 The teaching laws still hold: point before acting means the thing being talked about gets the ring, spotlight or zoom while the voice names it.
 Keep one stage across consecutive steps (same diagram growing, same card position) so the steps read as one flow.

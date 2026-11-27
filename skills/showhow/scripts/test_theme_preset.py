@@ -13,8 +13,9 @@ def main() -> None:
     frame = (PRESET / "FRAME.md").read_text(encoding="utf-8")
     head = frame.split("---")[1]
     assert re.search(r"^name: .*Showhow", head, re.M), "frontmatter name"
-    for hexval in ("#F3ECDD", "#23201B", "#0F6E6A"):  # paper, ink, teal
-        assert hexval in head, f"missing colour {hexval}"
+    for key, hexval in (("paper", "#F3ECDD"), ("ink", "#23201B"), ("accent", "#0F6E6A")):
+        # The keys brand_kit.py requires (REQUIRED_COLORS), so a kit copied from this preset passes its check.
+        assert re.search(rf'^\s+{key}: "{hexval}"', head, re.M), f"missing colour {key}: {hexval}"
     for section in ("## Overview", "## Colors", "## Typography", "## Aspect-Ratio Behavior", "## Pre-Render Self-Audit"):
         assert section in frame, f"missing {section}"
 

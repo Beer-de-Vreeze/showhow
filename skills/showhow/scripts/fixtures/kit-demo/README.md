@@ -7,6 +7,7 @@ From `skills/showhow/scripts`:
 
 ```bash
 mkdir -p fixtures/kit-demo/assets/kit && cp ../assets/kit/* fixtures/kit-demo/assets/kit/
+mkdir -p fixtures/kit-demo/assets/gsap && (cd "$(mktemp -d)" && npm pack gsap@3.14.2 && tar xzf gsap-3.14.2.tgz && cp package/dist/gsap.min.js "$OLDPWD/fixtures/kit-demo/assets/gsap/")
 (cd fixtures/kit-demo && npx hyperframes check)
 uv run --project . render.py fixtures/kit-demo out/kit-demo.mp4 --work out/work
 uv run --project . frame_sheet.py out/kit-demo.mp4 --at 0,1.2,1.6,2.0,3.5,4.0,4.5,5.8 -o out/work/check.jpg --cols 4

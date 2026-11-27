@@ -8,6 +8,7 @@ From `skills/showhow/scripts`:
 
 ```bash
 mkdir -p fixtures/machine-effects/assets/scene3d && cp ../assets/scene3d/* fixtures/machine-effects/assets/scene3d/
+mkdir -p fixtures/machine-effects/assets/gsap && (cd "$(mktemp -d)" && npm pack gsap@3.14.2 && tar xzf gsap-3.14.2.tgz && cp package/dist/gsap.min.js "$OLDPWD/fixtures/machine-effects/assets/gsap/")
 npx hyperframes snapshot fixtures/machine-effects --at 3,6,10,14,3 --no-end --no-browser-gpu
 ```
 

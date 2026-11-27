@@ -55,7 +55,7 @@ With `--no-voice`, the same script becomes the caption text; plan about 0.35s pe
 [pasted / drafted]
 
 ## Formats (explainer only)
-[landscape]
+[landscape, vertical, square (the default; one name renders only that format)]
 
 ## Format: [landscape / vertical / square] - [width]x[height]
 ## Target duration: [seconds, from the script word count]
@@ -88,8 +88,8 @@ Highlight: [the exact element that gets the ring / spotlight / zoom, and when]
 Action: [cursor click / typing "value" / select option / drag, or none]
 Result: [what visibly changes after the action]
 Narration: [the lines for this scene]
-Visual: [explainer only: one of flow / chart / map / photo / card]
-Params: [explainer only, optional: JSON for the visual, e.g. {"key": "value"}]
+Visual: [explainer only: exactly one type from the visual menu in `references/explainer.md` (`VISUALS` in plan_gates.py)]
+Params: [explainer only, optional: JSON for the visual, e.g. {"kind": "machine", "driver": 12}; every number in it is spoken (P-params)]
 Caption: [same as narration, one phrase at a time, at most 37 characters per line, 2 lines (3 on vertical), 0.3s per word on screen]
 On screen: [title cards and labels, if any; every number and **bold label** written here must also be spoken in this scene's Narration (P-described)]
 Audio: [click / typing / none; music level]

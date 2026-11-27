@@ -7,6 +7,7 @@ From `skills/showhow/scripts`:
 
 ```bash
 mkdir -p fixtures/globe-route/assets/scene3d && cp -r ../assets/scene3d/* fixtures/globe-route/assets/scene3d/
+mkdir -p fixtures/globe-route/assets/gsap && (cd "$(mktemp -d)" && npm pack gsap@3.14.2 && tar xzf gsap-3.14.2.tgz && cp package/dist/gsap.min.js "$OLDPWD/fixtures/globe-route/assets/gsap/")
 npx hyperframes snapshot fixtures/globe-route --at 3,10,3 --no-end --no-browser-gpu -o out/globe-route
 ```
 

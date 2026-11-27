@@ -46,7 +46,8 @@ Technique lists are my synthesis from general motion-design practice plus the ci
 - Real production: an illustrator draws on a whiteboard, it is filmed and re-timed to narration in After Effects [19, secondary].
 - Code version: reveal a pre-made drawing with a mask or stroke, optionally with a hand image [19, secondary].
 - Suits: abstract ideas, talks, history.
-- Needs hand-made art: the drawings and the hand. Stroke reveal of generated shapes is the no-art fallback (below).
+- Needs hand-made art: the drawings and the hand.
+  Stroke reveal of generated shapes is the no-art fallback (below).
 - Example: RSA Animate by Cognitive Media [19, secondary].
 
 ### Isometric illustration
@@ -70,13 +71,15 @@ Technique lists are my synthesis from general motion-design practice plus the ci
 - Defined by: a character acts and reacts; rigs with joints or swappable pose and mouth sprites.
 - Techniques: squash and stretch, anticipation, follow-through, overlap, arcs; Kurzgesagt rigs characters with joints [18, secondary].
 - Suits: story and persona-driven content.
-- Needs hand-made art: character and poses. Rive and Lottie fit here but need authored files [14][16].
+- Needs hand-made art: character and poses.
+  Rive and Lottie fit here but need authored files [14][16].
 
 ### Shape morphing and transitions
 - Defined by: one shape becomes another; scene changes happen through a shape growing, wiping or morphing.
 - Techniques: match cuts (same position and size either side), compatible start and end shapes, no blur mid-morph.
 - Suits: "A becomes B" (a step, a before/after) and bridges between scenes.
-- GSAP: MorphSVG between two paths [4]. Manim's `Transform` is the same idea [13].
+- GSAP: MorphSVG between two paths [4].
+  Manim's `Transform` is the same idea [13].
 - Example: GSAP MorphSVG demo, diamond to lightning bolt [4].
 
 ### Line drawing / stroke reveal
@@ -131,7 +134,8 @@ Manim ideas reproducible with GSAP (my mapping of the Manim reference [13]):
 - Redundancy: graphics plus narration beat graphics plus narration plus on-screen text [20, secondary].
 - Seductive details (interesting but irrelevant additions) lowered recall and transfer in four experiments, and signaling did not remove the effect [21].
 - Rey's meta-analysis found a significant seductive detail effect, small to medium for retention and medium for transfer, with moderators such as cognitive load [22, secondary summary].
-- Counter-evidence: one later study found no significant main effect in an animated lesson [22, secondary summary]. "Decoration always harms" is likely but not settled.
+- Counter-evidence: one later study found no significant main effect in an animated lesson [22, secondary summary].
+  "Decoration always harms" is likely but not settled.
 - Animation versus static: Tversky, Morrison and Betrancourt found the evidence for animation not encouraging, because animated versions often carried extra information or interactivity [23].
 - They propose the Congruence Principle (the graphic matches the concept) and the Apprehension Principle (changes must be slow and clear enough to perceive) [23].
 - Hoffler and Leutner's meta-analysis of 26 studies found an overall advantage for animation, d = 0.37, larger when representational rather than decorational (d = 0.40) [24].
@@ -149,12 +153,24 @@ What a motion style should avoid to stay a teaching video:
 
 Ranked by fit: feasible in GSAP/SVG, deterministic, good for teaching, buildable by an agent without hand-made assets.
 
-1. Stroke reveal and diagram build-up (connectors, outlines, flows). GSAP: DrawSVG. Same idea as Manim `Create`/`Write`; supports signaling and segmenting directly.
-2. Kinetic typography for definitions, rules and quote cards. GSAP: SplitText with mask reveals. Matches the house rule of whole words, 4-6 frames apart [25].
-3. Infographic / data animation (bars, rings, counters, icon arrays). GSAP: tween object values with `onUpdate`. Representational by nature.
-4. Shape morph for "A becomes B" and match-cut transitions. GSAP: MorphSVG. Equivalent of Manim `Transform`.
-5. Flat vector from primitives, with an isometric variant (cube and prism helpers). GSAP: timeline `stagger` with `back.out`; MotionPath for things that travel. Agent-built scenes only, no rigged characters.
-6. 2.5D parallax as a light scene setter. GSAP: per-layer tweens on a shared timeline with a depth multiplier. Lowest teaching value; offer for intros only.
+1. Stroke reveal and diagram build-up (connectors, outlines, flows).
+   GSAP: DrawSVG.
+   Same idea as Manim `Create`/`Write`; supports signaling and segmenting directly.
+2. Kinetic typography for definitions, rules and quote cards.
+   GSAP: SplitText with mask reveals.
+   Matches the house rule of whole words, 4-6 frames apart [25].
+3. Infographic / data animation (bars, rings, counters, icon arrays).
+   GSAP: tween object values with `onUpdate`.
+   Representational by nature.
+4. Shape morph for "A becomes B" and match-cut transitions.
+   GSAP: MorphSVG.
+   Equivalent of Manim `Transform`.
+5. Flat vector from primitives, with an isometric variant (cube and prism helpers).
+   GSAP: timeline `stagger` with `back.out`; MotionPath for things that travel.
+   Agent-built scenes only, no rigged characters.
+6. 2.5D parallax as a light scene setter.
+   GSAP: per-layer tweens on a shared timeline with a depth multiplier.
+   Lowest teaching value; offer for intros only.
 
 Needs hand-made art, do not offer as agent-built: character animation, cutout/collage, hand-drawn whiteboard footage, authored Lottie and Rive files.
 Offer "whiteboard" only in its code form (stroke reveal on generated shapes) and name it that way.

@@ -16,14 +16,14 @@ Levels with narration:
 | Layer | Volume | Notes |
 |---|---|---|
 | Narration | 1.0 | One clip per scene, own track |
-| Music under voice | 0.08-0.14 | Duck to this whenever a narration clip plays |
+| Music under voice | about 0.035 (20 dB below the voice, measured as below) | Duck to this whenever a narration clip plays (WCAG 1.4.7) |
 | Music with no voice (title, outro, `--no-voice`) | 0.25-0.35 | `release` goes to 0.35-0.4 on the hook, change-to-change bridges and outro |
 | SFX (clicks, typing) | 0.35-0.55 | Soft; they confirm an action, they don't announce it |
 | SFX accents in `release` (reveals, change cards, payoffs) | 0.55-0.8 | Between narration lines, or at most 0.5 under the voice |
 | Final result accent | 0.5-0.65 | One per video |
 
 Check the 20 dB rule with numbers, not the table: measure a voice clip and the track (`ffmpeg -i <file> -af ebur128 -f null -`, the last `I:`), then pick the bed volume `10 ^ ((voice - music - 20) / 20)`.
-Measured 2026-11-27: Kokoro `af_heart` clips sit near -22 LUFS and the bundled tracks near -14 LUFS, so a bed under the voice needs about 0.035, well below the 0.08-0.14 above (which leaves only 12-16 dB); `explainer` and any style that keeps the bed under narration use the measured value.
+Measured 2026-11-27: Kokoro `af_heart` clips sit near -22 LUFS and the bundled tracks near -14 LUFS, so a bed under the voice needs about 0.035 (0.08-0.14, the old table value, leaves only 12-16 dB).
 
 ---
 
@@ -254,7 +254,7 @@ These rules apply when Hyperframes is implementing the composition and the motio
 Composition notation:
 ```
 Scene 3 - Step 2: Add a file - 9.4s
-  Narration scene-03.wav at 0.3s     ->  music ducks to 0.1 at 0.1s
+  Narration scene-03.wav at 0.3s     ->  music ducks to 0.035 at 0.1s
   Ring on "Add knowledge" at 1.2s    ->  (no SFX, the voice names it)
   Cursor presses at 2.6s             ->  SFX: ui/mouseclick1 at 2.6s
   File dialog slides in at 2.8s      ->  SFX: interface/drop_001 at 2.8s, volume 0.4
@@ -321,8 +321,8 @@ Never above 0.4 for music in an instructional video.
 
 ### Ducking under the voice
 
-Keep the music at its bed level and duck it to 0.08-0.14 for each narration clip (0.2s ramp down just before the clip, 0.4s ramp up after), using the best Hyperframes-supported way to automate volume.
-If ducking isn't possible, keep the music at 0.08-0.12 for the whole video.
+Keep the music at its bed level and duck it to the measured level (about 0.035, 20 dB below the voice) for each narration clip (0.2s ramp down just before the clip, 0.4s ramp up after), using the best Hyperframes-supported way to automate volume.
+If ducking isn't possible, keep the music at that level for the whole video.
 
 If the music file doesn't exist, skip it and notify the user after rendering.
 
