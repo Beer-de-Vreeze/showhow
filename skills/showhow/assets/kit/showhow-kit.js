@@ -111,12 +111,13 @@
     }
 
     // The from shape is the path's HTML d, or the end shape of its previous morph (call morphs in time order),
-    // so a second morph continues instead of snapping back to the HTML shape.
+    // so a second morph continues instead of snapping back to the HTML shape. toShape is path data or a path's selector.
     const shapes = new Map();
     function morph(t, sel, toShape, d, { ease = "power2.inOut" } = {}) {
       const e = el(sel);
+      const end = /^\s*[Mm]/.test(toShape) ? toShape : el(toShape).getAttribute("d"); // stored as path data, never "#circle"
       tl.fromTo(e, { attr: { d: shapes.get(e) ?? e.getAttribute("d") } }, { morphSVG: toShape, duration: d, ease, immediateRender: false }, t);
-      shapes.set(e, toShape);
+      shapes.set(e, end);
     }
 
     function along(t, sel, path, d, { ease = "power1.inOut", autoRotate = false } = {}) {

@@ -17,6 +17,7 @@ node("#sh-count-2", nodes["#root"]);
 
 node("#path", nodes["#root"]).getAttribute = () => "M0 0L10 10";
 node("#words", nodes["#root"]);
+node("#circle", nodes["#root"]).getAttribute = () => "M9 9L1 1";
 node("#num", nodes["#root"]);
 node("#a", nodes["#root"]);
 node("#b", nodes["#root"]);
@@ -24,6 +25,7 @@ node("#b", nodes["#root"]);
 globalThis.document = { querySelector: (s) => nodes[s] || null };
 globalThis.gsap = { set: () => {} };
 globalThis.SplitText = { create: () => ({ words: ["w1", "w2"] }) };
+Object.assign(globalThis, { DrawSVGPlugin: {}, MorphSVGPlugin: {}, MotionPathPlugin: {} });
 globalThis.window = globalThis;
 new Function(readFileSync(new URL("../assets/kit/showhow-kit.js", import.meta.url), "utf8"))();
 
@@ -75,4 +77,9 @@ if (tweens.length - n !== 2) throw new Error("rise must tween each element on it
 // A second morph on one path starts from the first one's end shape, not the HTML d (call morphs in time order).
 kit.morph(3, "#path", "M1 1L2 2", 1);
 if (froms.at(-1).attr.d !== "M5 5L20 20") throw new Error(`chained morph started from ${froms.at(-1).attr.d}`);
+// A morph to a selector stores that path's d, so the next morph starts from real path data, not "#circle".
+kit.morph(4, "#path", "#circle", 1);
+kit.morph(5, "#path", "M0 0L3 3", 1);
+if (froms.at(-1).attr.d !== "M9 9L1 1") throw new Error(`morph after a selector target started from ${froms.at(-1).attr.d}`);
+expectThrow(() => kit.morph(6, "#path", "#missing", 1), "no element #missing");
 console.log("ok");
