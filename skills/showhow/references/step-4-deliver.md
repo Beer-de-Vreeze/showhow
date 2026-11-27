@@ -77,8 +77,9 @@ Write `captions.srt` first (below): the wrapper takes each scene's settled momen
 uv run --project <skill-dir>/scripts <skill-dir>/scripts/render.py <output-dir>/composition <output-dir>/<video-name>.mp4 --work <output-dir>/work --plan <output-dir>/showhow-plan.md
 ```
 
-The wrapper renders every format the plan lists, each from a resized copy in `work/formats/<format>/` and with its own `work/<format>/render.log`.
-Several formats write `<video-name>-landscape.mp4`, `-vertical.mp4` and `-square.mp4`; one format writes `<video-name>.mp4`.
+With one format, the wrapper renders the composition as is to `<video-name>.mp4` and logs to `work/render.log`.
+With several, it renders each from a resized copy in `work/formats/<format>/`, with its own `work/<format>/render.log`, to `<video-name>-landscape.mp4`, `-vertical.mp4` and `-square.mp4`.
+`--plan` is optional for a one-format render, but without it (and without `--poster-at`) there is no poster; the wrapper says so.
 Each file is loudness-normalised and gets its poster (below) as soon as it renders.
 A failing format is named in the error and exits non-zero; the formats that rendered stay on disk, finished, so re-run only the failed one with `--format <name>` (it always writes `<video-name>-<name>.mp4`, next to the others).
 Run the video gates once per file the wrapper wrote; `captions.srt` and `chapters.txt` are the same for all.
@@ -138,10 +139,28 @@ The poster is the still shown before the video plays.
 For instructional videos the best poster is the **title card** (how-to: the goal line; update: "What's new in [version]"), or the finished result with the title over it.
 Pick a settled moment: text fully in, not mid-transition, and no caption on screen (half a sentence under the title looks broken as a thumbnail).
 
-The render wrapper makes it: for each mp4 it writes `<same name>.jpg` from that file's own frame, so a vertical or square file gets its own layout, at scene 1's settled moment (0.1 s after its last caption cue ends).
+The render wrapper makes it: for each mp4 it writes `<same name>.jpg` from that file's own frame, so a vertical or square file gets its own layout.
+The moment is the settled moment (0.1 s after the last caption cue ends) of the first scene that holds without voice, so no caption is on screen; usually scene 1, the title.
 Then it bakes the jpg in as frame 0, after the loudness pass (the bake copies the audio), replacing only the first frame's pixels; duration, frame count and audio stay the same.
-For another moment (the finished result with the title), re-run the render with `--poster-at <seconds>`.
-Look at each jpg; if one lands on a transition or a caption, give the scene more hold after its last cue, or pick another moment.
+For another moment (the finished result with the title), run the same render command with `--poster-at <seconds>`: when the composition has not changed since the render, it only re-takes and re-bakes the poster, with no new render.
+Look at each jpg.
+
+When every scene is voiced to its end, the wrapper warns that the poster may show a caption.
+Then make a caption-free poster from a copy with the captions hidden, and bake it over frame 0 (from `<output-dir>`):
+
+```bash
+cp -r composition work/poster
+# add `.cap { display: none !important; }` (your caption selector) to work/poster/index.html's <style>
+npx hyperframes snapshot work/poster --at <seconds> --no-end -o work/poster-snap --describe false
+ffmpeg -y -i work/poster-snap/frame-00-at-<seconds>s.png -q:v 2 <video-name>.jpg
+ffmpeg -y -i <video-name>.mp4 -i <video-name>.jpg \
+  -filter_complex "[0:v][1:v]overlay=0:0:enable='eq(n,0)'[v]" \
+  -map "[v]" -map "0:a?" -c:v libx264 -crf 18 -preset slow -pix_fmt yuv420p \
+  -c:a copy -movflags +faststart work/poster.mp4 \
+  && mv -f work/poster.mp4 <video-name>.mp4
+```
+
+With several formats, snapshot `work/formats/<format>` instead of `composition`, once per format, and name the files `<video-name>-<format>`.
 
 Players that show the first frame before playback (Teams, SharePoint, Slack, a plain `<video>` tag) use frame 0 as the idle thumbnail.
 YouTube doesn't: it offers its own auto-picked frames or a custom upload, so upload the jpg there as the thumbnail.
