@@ -10,7 +10,7 @@ colors:
   paper: "#F3ECDD"
   ink: "#23201B"
   muted: "#5B5547"
-  teal: "#0F6E6A"
+  accent: "#0F6E6A"
   line: "#23201B"
 
 typography:
@@ -31,7 +31,7 @@ components:
     stroke: "2.5px {colors.ink}, dot end on the part"
   bar:
     backgroundColor: "{colors.ink}"
-    focal: "{colors.teal}"
+    focal: "{colors.accent}"
     description: "One focal bar in teal, the rest ink; value above, label below."
 ---
 
