@@ -15,6 +15,9 @@ P-time:   each step lasts at least 6s (quick-tip 5s, update changes 10s); the wh
           under the hard limit (howto 180s, quick-tip 60s, update 120s).
 P-end:    a howto (and a general task) ends on a "Now try it" scene, not a recap; a credits outro
           after it is fine; quick-tip ends on the result and a general topic video on its recap.
+P-described: every number and **bold label** in a scene's optional "On screen:" line is also in that
+          scene's "Narration:" line (WCAG 1.2.5); numbers match by digits ("40x" and "1,700" match
+          "40" and "1700"), labels ignore case. Runs in every mode; skipped without "On screen:" lines.
 P-render: with --chapters, the rendered steps match the plan's count and each lasts the minimum.
 Exit code 1 when a gate fails.
 """
@@ -49,10 +52,14 @@ def parse_plan(text: str) -> dict:
         body = m.group(4)
         counter = re.search(r"^Counter:\s*\"?(?:(?:Step|Change|Point)\s+)?(\d+)\s+of\s+(\d+)", body, re.M | re.I)
         action = re.search(r"^Action:\s*(.+)$", body, re.M)
+        on_screen = re.search(r"^On screen:\s*(.+)$", body, re.M)
+        narration = re.search(r"^Narration:\s*(.+)$", body, re.M)
         scenes.append({
             "n": int(m.group(1)), "name": m.group(2).strip(), "secs": float(m.group(3)),
             "counter": (int(counter.group(1)), int(counter.group(2))) if counter else None,
             "action": action.group(1).strip() if action else "",
+            "on_screen": on_screen.group(1).strip() if on_screen else "",
+            "narration": narration.group(1).strip() if narration else "",
         })
     if not scenes:
         raise SystemExit("no '### Scene N - name - Ns' blocks in the plan's storyboard")
@@ -62,6 +69,17 @@ def parse_plan(text: str) -> dict:
         for k, sc in enumerate(acts, 1):
             sc["counter"] = (k, len(acts))
     return {"mode": mode, "scenes": scenes}
+
+
+def numbers(text: str) -> set[str]:
+    return set(re.findall(r"\d+(?:\.\d+)?", re.sub(r"(?<=\d),(?=\d{3})", "", text)))
+
+
+def described_gaps(scene: dict) -> list[str]:
+    shown, said = scene["on_screen"], scene["narration"]
+    labels = re.findall(r"\*\*(.+?)\*\*", shown)
+    spoken = said.replace("*", "").lower()
+    return sorted(numbers(shown) - numbers(said)) + [f"'{b}'" for b in labels if b.lower() not in spoken]
 
 
 def has_action(scene: dict) -> bool:
@@ -106,6 +124,10 @@ def check_plan(plan: dict) -> list[tuple[str, bool, str]]:
         body = [sc for sc in scenes if not re.search(r"outro|credit|end card", sc["name"], re.I)] or scenes
         ok = "try" in body[-1]["name"].lower()
         results.append(("P-end", ok, f"last scene is {body[-1]['name']!r}" + ("" if ok else "; end on 'Now try it' with a concrete example, not a recap")))
+
+    if any(s["on_screen"] for s in scenes):
+        gaps = [f"scene {s['n']} missing {', '.join(g)}" for s in scenes if s["on_screen"] and (g := described_gaps(s))]
+        results.append(("P-described", not gaps, "on-screen facts are spoken" if not gaps else "; ".join(gaps)))
     return results
 
 
