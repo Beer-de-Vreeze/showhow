@@ -23,24 +23,31 @@ ffprobe -v error -show_entries format=duration -of csv=p=0 <output-dir>/composit
 
 Set each scene's duration to `clip length + 0.5-1.0s` (longer after a step's result, shorter in `quick-tip`), and `clip length + about 2s` for a scene that ends a subtask (marked in the plan).
 Start each clip about 0.3s after its scene starts, so the voice doesn't collide with the transition.
+Each clip is an `<audio id="voice-NN" data-start data-duration data-track-index data-volume src>` in the composition; an `<audio>` without an `id` renders silent, and `check` fails it as `media_missing_id`.
 Update the scene durations in `showhow-plan.md` to the measured values.
 
 **Listen for mispronunciations** of product names and labels: transcribe the clips (see `media-use` / `npx hyperframes transcribe`) and compare with the script.
-`npx hyperframes transcribe` writes `transcript.json` and overwrites it on every run, so copy it right after each clip:
+`npx hyperframes transcribe` writes `transcript.json` into its project directory (`-d`; without it, 0.9.85 wrote it next to the audio, inside the composition) and overwrites it on every run, so point it at `work/tx` and rename it right after each clip:
 
 ```bash
 mkdir -p <output-dir>/work/tx
 for n in 01 02 03; do
-  npx hyperframes transcribe <output-dir>/composition/assets/voice/scene-$n.wav && cp transcript.json <output-dir>/work/tx/words-$n.json
+  npx hyperframes transcribe <output-dir>/composition/assets/voice/scene-$n.wav -d <output-dir>/work/tx && mv <output-dir>/work/tx/transcript.json <output-dir>/work/tx/words-$n.json
 done
 ```
 Fix by respelling in the TTS input only (e.g. "Azure" -> "Azhure"); captions keep the correct spelling.
+Kokoro inline IPA markup (`[word](/ipa/)`) does not work here: `npx hyperframes tts` feeds the text to kokoro-onnx, which reads the markup aloud as symbols (checked 2026-11-27 on the kokoro-onnx phonemizer, not through the CLI itself), so respelling is the only fix; revisit if Hyperframes moves to misaki.
+
+Narration is English; if the user asks for another language, check `npx hyperframes tts --list` for a matching voice, and if there is none, offer English narration with captions in their language.
 
 ## Caption timing
 
 Captions show the script text, not the transcription.
 Get word timings by transcribing each narration clip (`npx hyperframes transcribe`, see `media-use`) and align the script's phrases to them.
 If transcription is unavailable, spread each scene's phrases evenly across its clip duration.
+Split phrases so every cue keeps the "Captions match the voice" law in SKILL.md (line length, line count, reading time); Step 4's G-captions gate checks it.
+Kokoro speaks about 3 words a second, faster than that reading time, so one-line cues that follow the voice phrase by phrase come out too short: put two phrases in one two-line cue, and let a scene's last cue run on into the hold.
+Break a two-line cue where its lines come out closest in length, not by filling line 1 to the limit: a greedy fill leaves one orphan word ("side.") on line 2, and G-captions does not catch it.
 Keep the phrase list with timings; Step 4 writes it to `captions.srt`.
 
 With `--no-voice`, time the captions by reading speed (about 0.35s per word, min 1.5s per phrase) and let that set scene durations.
@@ -53,26 +60,28 @@ Write `<output-dir>/composition-brief.md` before creating the composition.
 # Hyperframes Composition Brief: [Title]
 
 ## Objective
-[howto: Teach [audience] how to [task] in [product]. / update: Show [audience] what's new in [product] [version].]
+[howto: Teach [audience] how to [task] in [product]. / update: Show [audience] what's new in [product] [version]. / general: Teach [audience] how to [task or process], or explain [topic] point by point. / explainer: Explain [topic] to [audience].]
 
 ## Output
 - Composition directory: `<output-dir>/composition/`
 - Rendered video: `<output-dir>/<video-name>.mp4`
 - Format: [landscape / vertical / square] - [width]x[height], 30fps
+- Several formats: one timeline; the root carries `data-format`, rewritten per format by the wrapper (see "Several formats")
 - Duration: [sum of measured scene durations]
 
 ## Source Material
-- Project root: [path]
-- Files the screens come from: [components, routes, style files]
+- Project root: [path, or none for general and explainer]
+- Files the screens come from: [components, routes, style files; general: the screenshots of the real pages; explainer: none]
 - Product name and version: [...]
 - Exact UI labels used in the steps: [list]
 - Fictional data to show: [list from the plan]
+- Sources (general, explainer): `work/sources.md`, with each picture's license
 
 ## Teaching Direction
-- Mode: [howto / update]
+- Mode: [howto / update / general / explainer]
 - Style preset and direction: [...]
 - Goal line: [...]
-- Step or change list: [numbered, one line each]
+- Step or change list: [numbered, one line each; general topic: the points; explainer: the sections, each with its sentence scenes and their `Visual:`]
 - Avoid:
   - Marketing language and invented claims
   - Abstract filler visuals where a real screen exists
@@ -94,10 +103,10 @@ Scene summary:
 2. [...]
 
 ## Teaching elements
-- Step counter: [position, format "Step 2 of 4" / "2 of 3"], same place in every step scene
-- Highlight: [ring / spotlight / zoom], accent color [value], one target at a time
-- Cursor: [system-like arrow], smooth 0.5-0.8s moves, rests 0.2-0.3s on the target before it clicks, a quick press (the kit's `ripple`: a 2-frame squash, a 3-frame spring back), and the target answers (pressed state, menu opening) a frame after the press
-- Captions: [band position], max 2 lines x ~42 chars, high contrast plate, never over the highlight
+- Step counter: [position, format "Step 2 of 4" / "Change 2 of 3" / "Point 2 of 5"], same place in every step scene; none in a quick-tip or an explainer
+- Highlight: [ring / spotlight / zoom], accent color [value], one target at a time; explainer: none, the scene's `Visual:` carries it
+- Cursor: [system-like arrow], smooth 0.5-0.8s moves, rests 0.2-0.3s on the target before it clicks, a quick press (the kit's `ripple`: a 2-frame squash, a 3-frame spring back), and the target answers (pressed state, menu opening) a frame after the press; explainer: none
+- Captions: [band position], within the "Captions match the voice" law in SKILL.md, high contrast plate, never over the highlight
 - Title and outro cards: [text]
 - Credit line: [the short credits from `credits.txt`, or none]
 
@@ -113,8 +122,9 @@ Load `hyperframes` (the contract, `references/motion.md`, `references/format.md`
 Prefer native Hyperframes conventions over anything in `/showhow`.
 
 Requirements:
-- Every step is shown on the real product UI (rendered components, screenshots of the running app, or a faithful rebuild from the project's styles and copy).
+- Every step is shown on the real product UI (rendered components, screenshots of the running app, or a faithful rebuild from the project's styles and copy); a general video uses the rebuilt screens and pictures from `work/sources.md`.
 - For every step: orient -> point (highlight + narration names the label) -> act (cursor/typing) -> result held until the narration ends.
+- Explainer: each sentence scene plays its one `Visual:` from the plan (`references/explainer.md`, Visual menu), its picture entering on the scene's first frame.
 - Within one screen, move between steps with camera moves (zoom/pan), not fades.
 - Captions match the script verbatim and are timed to the voice.
 - Keep all text readable in the final render; UI text that the narration names must be legible at the chosen zoom.
@@ -130,6 +140,18 @@ The brief is the boundary: teaching content, steps, labels and audio levels belo
 
 ---
 
+## Several formats
+
+One composition and one timeline serve every format; captions and chapters are shared.
+The formats are the plan's `## Formats` (or its `## Format:` line); the wrapper reads them from `--plan`.
+Author the root at landscape: `data-width="1920" data-height="1080"` (the wrapper needs both) and `data-format="landscape"`.
+For each format the render wrapper copies the composition to `work/formats/<format>/` and sets the copy's root `data-format`; every composition element sized like the root (the root, sub-composition hosts, and the roots in `compositions/*.html`) gets the format's `data-width` and `data-height`, and one at another size (an inset) keeps its own.
+Your composition is never edited.
+Lay each format out for its frame with per-format CSS (`[data-format="vertical"] .stage { ... }`), not by cropping; use JS that reads the root's `data-format` only if CSS can't do it.
+To snapshot one format yourself, snapshot its copy in `work/formats/<format>/` (`render.py ... --stills` writes the copies and the preview stills).
+A 3D canvas is sized in pixels, so size it from its container at build time (`clientWidth`, `clientHeight`) and pass those to `createStage`; widen `viewHeight` on narrow frames so the object fits (`references/3d-scenes.md`).
+Vertical: keep captions clear of the right-hand app rail (`check` warns `outside_safe_zone`): a caption box inset more on the right than the left, about 38px type.
+
 ## Building the screens
 
 If you render the project's own components or screenshot the running app:
@@ -139,8 +161,18 @@ If you render the project's own components or screenshot the running app:
 - Hide dev-only chrome (devtools, debug banners, browser UI) unless showing the browser is the point.
 - Keep one screenshot per step state, named `step-NN-<state>.png` in `composition/assets/screens/`.
 
-Put the video's own chrome colors (backgrounds, title and card fills, tags, counters, rings, ripples, fades) in one `:root` block of CSS variables taken from the product theme, and use only `var(--...)` below it, so a retheme is one edit.
-Pass the same accent to `bake_highlights.py` as `color`.
+Stage the composition once `composition/index.html` exists with a `<head>` (stage.py writes its block there and stops without the file), before building the scenes, and again after any theme change or after replacing `index.html`:
+
+`uv run --project <skill-dir>/scripts python <skill-dir>/scripts/stage.py composition (--theme <name or folder> | --brand <name>)`
+
+It copies every asset the composition may use (the kit, `scene3d` with its data, GSAP and its plugins, three.js and the hero-number typeface, the theme's fonts), writes `assets/theme.css` with `@font-face` and one `:root` token set (`--paper`, `--ink`, `--accent`, `--muted`, `--font-display`, `--font-body`) from the theme's `FRAME.md`, and puts the three.js import map and the theme link in `index.html`'s head.
+Everything is local at render time and every version pin lives in `stage.py`; never copy these by hand or load them from a CDN.
+For the product's own theme (howto, update), write a `FRAME.md` with those colours and a `title` and `label` font family into `work/theme/`, and pass `--theme work/theme`.
+Add the font files as `work/theme/fonts/<Family>-<weight>.woff2` only when you have them (an open font the product ships); `fonts/` is optional.
+Without it (system fonts such as Segoe UI, or a commercial or CDN font), staging writes the family names with a system font stack and no `@font-face`; never invent font files.
+Use only `var(--...)` for the chrome colors and fonts (backgrounds, title and card fills, tags, counters, rings, ripples, fades), so a retheme is one re-run.
+`bake_highlights.py` takes the ring colour from the same file: pass `--theme composition/assets/theme.css`.
+When the accent has low contrast against the screenshot under a ring (a blue ring on a blue toolbar), give that ring a `"color"` in hex that stands out there.
 
 For a desktop app whose frontend is a web SPA, render the frontend in a browser with its API calls mocked.
 If the app needs a backend you cannot run, rebuild the screens from its components and styles instead.
@@ -150,9 +182,9 @@ If the app needs a backend you cannot run, rebuild the screens from its componen
 Hand-computed ring and cursor coordinates drift once fonts load and layouts settle, and put rings in the wrong place.
 Use the showhow kit for rings, the cursor, click ripples and the step counter: it measures each target by element and writes every tween as a `fromTo`.
 
-1. Copy `<skill-dir>/assets/kit/showhow-kit.js` and `showhow-kit.css` into `composition/assets/kit/`.
+1. `stage.py` (above) has put the kit in `composition/assets/kit/`.
 2. In each scene that uses it, inside `<template>`: `<link rel="stylesheet" href="assets/kit/showhow-kit.css" />` and `<script src="assets/kit/showhow-kit.js"></script>` before the scene's own script.
-3. Set `--sh-accent` in the theme `:root` block to the same accent you pass to `bake_highlights.py` as `color` (optional: `--sh-ring-width`, `--sh-ring-radius`, `--sh-ripple-size`, `--sh-ripple-fill`).
+3. Rings and ripples take `--accent` from the staged theme (optional overrides: `--sh-ring-width`, `--sh-ring-radius`, `--sh-ripple-size`, `--sh-ripple-fill`).
 4. Write every kit element in the HTML with a stable id, as direct children of the scene root (or of a `#world` camera layer at 0,0): one `.sh-ring` per ring, one `.sh-ripple` per click, one `.sh-cursor`, and a `.sh-counter` with one span per step.
    Give rings, ripples and the cursor `data-layout-ignore`.
    Ids must be unique across the whole video, so with more than one scene prefix them per scene (`#s2-cursor`, `#s2-count-1`) and pass `cursor: "#s2-cursor"` and `countPrefix: "#s2-count-"` to `showhowKit`.
@@ -195,7 +227,7 @@ Hyperframes has dropped such overlays from the rendered mp4 deterministically (a
 Image swaps always rendered, so draw the ring into a copy of the still and fade that copy in over the clean one:
 
 1. Record each ring as `{ t, d, screen, x, y, w, h, pad, zoom }` instead of emitting tweens, and each screen change as `{ t, name, fade }`; `zoom` is the camera's on-screen scale at `t`, so the stroke looks the same at any zoom.
-2. Write them as a timeline spec (`rings` + `shows`, format in the script's docstring) and run `uv run --project <skill-dir>/scripts <skill-dir>/scripts/bake_highlights.py work/rings.json`.
+2. Write them as a timeline spec (`rings` + `shows`, format in the script's docstring) and run `uv run --project <skill-dir>/scripts <skill-dir>/scripts/bake_highlights.py work/rings.json --theme composition/assets/theme.css`.
    The script cuts each screen's time at every ring start and end, bakes one still per span (overlapping rings share a still), clamps a ring that outlives its screen to that cut, compares times in whole centiseconds, and fails on a ring that lands in no span, a ring on the wrong screen, or an id that isn't a CSS-safe selector.
    Don't re-implement the span cutting in the build script.
 3. Read `work/rings.overlays.json` and put one `<img id="img-<id>">` per entry above the clean screens in `#world`.
@@ -208,6 +240,8 @@ Cursor and click ripples can stay DOM elements from the kit; give each ripple it
 
 Write every tween as `tl.fromTo(sel, from, { ..., immediateRender: false }, t)` and give every highlight or ripple its own element.
 A pooled element re-tweened with `tl.to` picks up whatever state the last seek left, and render workers seek out of order.
+Make every frame a pure function of time, and wait for fonts and images to load before any frame is captured.
+Write big files (the composition, long scripts) with a file tool, not a shell heredoc; long heredocs fail on Windows (`ENAMETOOLONG`).
 
 ## Overlays keep the viewer oriented
 
@@ -219,7 +253,7 @@ Dim only the content area under a sheet, not the header.
 When `credits.txt` has lines (bundled or Incompetech music, CC BY images or sounds, the trademark line for a rebuilt third-party app from general.md), show them in the video too, so the credit travels with the file wherever it is shared.
 - Short form, one line per source: `Music: Sascha Ende (ende.app), CC BY 4.0`, `Photo: <author>, <license>`. Two lines at most; join more with ` · `.
 - On the outro, from the moment it settles to the last frame, at least 2.5s.
-- Bottom edge inside the safe area, centered or aligned with the outro text, in the theme's secondary text color at about 2% of the frame height (20-22px at 1080p), no plate.
+- Bottom edge inside the safe area, centered or aligned with the outro text, in the theme's secondary text color at 28px on a 1080px short side (`check`'s type floor; smaller text warns `text_below_floor`), no plate.
 - No caption on screen at the same time; end the last caption before the credit line appears.
 - It fades in with the outro and gets no motion or sound of its own.
 
@@ -263,7 +297,7 @@ Before moving to delivery, verify:
 - [ ] Every step shows the real UI with the named control highlighted before it is used.
 - [ ] Every label spoken or captioned matches the UI text exactly.
 - [ ] Every claim about what the product does, its names and numbers, appears in the project; fictional demo data is listed in the plan.
-- [ ] The step or change counter is present and consistent.
+- [ ] The step or change counter is present and consistent (none in a quick-tip or an explainer).
 - [ ] Captions are timed and never cover the highlighted target.
 - [ ] Design floor, judged on `npx hyperframes snapshot` frames of the title, one step and the outro: no BANNED item in the chrome, contrast passes on every card and caption plate, at most two type families with tracking no tighter than -0.04em, nested radii are concentric, and every card enters and leaves with the same motion.
 - [ ] When `credits.txt` has lines, the outro shows the credit line for at least 2.5s with no caption over it.

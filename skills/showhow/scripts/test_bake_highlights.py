@@ -56,19 +56,49 @@ def main() -> None:
         (base / "screens").mkdir()
         Image.new("RGB", (200, 100), "white").save(base / "screens" / "board.png")
         spec = base / "rings.json"
+        theme = base / "theme.css"  # as stage.py writes it
+        theme.write_text(":root {\n  --paper: #EEF3F5;\n  --accent: #D9822B;\n}\n", encoding="utf-8")
 
         # A target at the image edge: the padding is clamped instead of failing.
         spec.write_text(json.dumps({"pad": 6, "shows": [{"t": 0, "name": "board"}],
                                     "rings": [{"t": 1, "d": 1, "screen": "board", "x": 0, "y": 0, "w": 50, "h": 20}]}), encoding="utf-8")
-        assert [p.name for p in bake(spec)] == ["board-r0.png"]
+        assert [p.name for p in bake(spec, theme)] == ["board-r0.png"]
         assert (base / "rings.overlays.json").exists()
+        # The ring is drawn in the staged theme's accent (#D9822B), here on the top edge of the clamped ring.
+        assert Image.open(base / "rings" / "board-r0.png").getpixel((28, 1)) == (0xD9, 0x82, 0x2B)
+
+        # A "color" overrides the accent where it would vanish into the screenshot (a blue ring on a blue toolbar):
+        # per ring, or for the whole spec (the older field); the ring's own wins.
+        ringed = json.loads(spec.read_text(encoding="utf-8"))
+        spec.write_text(json.dumps({**ringed, "color": "#000000"}), encoding="utf-8")
+        bake(spec, theme)
+        assert Image.open(base / "rings" / "board-r0.png").getpixel((28, 1)) == (0, 0, 0)
+        ringed["rings"][0]["color"] = "#0000FF"
+        spec.write_text(json.dumps({**ringed, "color": "#000000"}), encoding="utf-8")
+        bake(spec, theme)
+        assert Image.open(base / "rings" / "board-r0.png").getpixel((28, 1)) == (0, 0, 255)
+        ringed["rings"][0].pop("color")
+        spec.write_text(json.dumps(ringed), encoding="utf-8")
+
+        # A colour PIL can't read, or a theme without --accent, fails by name instead of a traceback or a default.
+        other, t2 = base / "other.json", base / "t2.css"
+        for bad_spec, bad_theme, text in (({**ringed, "color": "oklch(0.6 0.1 200)"}, theme.read_text(encoding="utf-8"), "oklch"),
+                                          (json.loads(spec.read_text(encoding="utf-8")), ":root { --ink: #000; }", "--accent")):
+            other.write_text(json.dumps(bad_spec), encoding="utf-8")
+            t2.write_text(bad_theme, encoding="utf-8")
+            try:
+                bake(other, t2)
+            except SystemExit as e:
+                assert text in str(e), e
+            else:
+                raise AssertionError(f"expected a failure naming {text}")
 
         # A box really outside the image fails, and leaves no overlays file pointing at missing stills.
         (base / "rings.overlays.json").unlink()
         spec.write_text(json.dumps({"shows": [{"t": 0, "name": "board"}],
                                     "rings": [{"t": 1, "d": 1, "screen": "board", "x": 180, "y": 0, "w": 50, "h": 20}]}), encoding="utf-8")
         try:
-            bake(spec)
+            bake(spec, theme)
         except SystemExit as e:
             assert "falls outside" in str(e), e
         else:
@@ -77,7 +107,7 @@ def main() -> None:
 
         spec.write_text(json.dumps({"scale": 2}), encoding="utf-8")
         try:
-            bake(spec)
+            bake(spec, theme)
         except SystemExit as e:
             assert "give" in str(e), e
         else:

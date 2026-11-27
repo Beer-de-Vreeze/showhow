@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      /* The theme (assets/theme.css) comes from stage.py; this sheet only lays the fixture out. */
+      html, body { margin: 0; background: var(--paper); }
+      #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: var(--paper); font-family: var(--font-body); }
+      #stage, #flat { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+      #flat { opacity: 0; }
+      #title { position: absolute; left: 150px; top: 56px; padding: 8px 20px; border-radius: 10px; background: var(--paper); font-family: var(--font-display); font-size: 48px; font-weight: 700; color: var(--ink); }
+      .s3d-leaders { position: absolute; inset: 0; pointer-events: none; }
+      .s3d-leaders line { stroke: var(--ink); stroke-width: 2.5; }
+      .s3d-leaders circle { fill: var(--accent); stroke: var(--ink); stroke-width: 2; }
+      .s3d-label { position: absolute; left: 0; top: 0; padding: 10px 18px; border: 2.5px solid var(--ink); border-radius: 10px; background: var(--paper); color: var(--ink); font-size: 40px; font-weight: 600; white-space: nowrap; }
+    </style>
+  </head>
+  <body>
+    <!-- data-params is the plan's Params: object. Coordinates are stated in the plan; nothing is geocoded. -->
+    <div id="root" data-composition-id="main" data-start="0" data-duration="12" data-width="1920" data-height="1080"
+         data-params='{"kind": "globe", "country": "BRA", "route": [{"name": "Seville", "lat": 37.39, "lon": -5.98, "side": "right"}, {"name": "Rio de Janeiro", "lat": -22.91, "lon": -43.17, "side": "left"}]}'>
+      <canvas id="stage" width="1920" height="1080"></canvas>
+      <canvas id="flat" width="1920" height="1080"></canvas>
+      <div id="title">Seville to Rio de Janeiro</div>
+    </div>
+    <script src="assets/gsap/gsap.min.js"></script><!-- local GSAP, staged by stage.py -->
+    <script>
+      // HyperFrames' contract wants a registered timeline; the 3D frame itself is drawn from hf-seek.
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+    </script>
+    <script type="module">
+      import { createStage, fitToRoot, onSeek, ease } from "./assets/scene3d/scene3d.js";
+      import { buildGlobe } from "./assets/scene3d/globe.js";
+
+      const root = document.getElementById("root");
+      const P = JSON.parse(root.dataset.params);
+
+      onSeek("globe-route", async () => {
+        const { width, height } = fitToRoot(root); // sizes both canvases, so the flat map matches the stage
+        const stage = createStage({ canvas: document.getElementById("stage"), width, height, viewHeight: (10 * height) / Math.min(width, height), view: "front" });
+        const globe = await buildGlobe(stage, root, P, "./assets/scene3d/data/ne_110m_admin_0_countries.min.geojson");
+        globe.flatMap(document.getElementById("flat"));
+        const { cut, cutFade } = globe.timing;
+        const flat = document.getElementById("flat");
+        return (t) => {
+          globe.pose(t);
+          // Match cut: the flat locator map is the globe's final frame, so a short dissolve hides the swap.
+          flat.style.opacity = ease((t - cut) / cutFade);
+        };
+      });
+    </script>
+  </body>
+</html>

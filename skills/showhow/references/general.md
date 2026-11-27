@@ -83,6 +83,7 @@ Pick per outside step, in this order:
 - Never 3D for product UI, rebuilt screens, charts, or a step done on a real screen.
 
 **Charts stay honest in motion.** Bar charts start at zero. Animate in stages, about 1s each: axes and scale first, then the values; never rescale an axis and change values in the same move. No 3D, no rotation.
+A bar's label shows the value the bar is drawn at, on every frame (`kit.bar`, `motion-2d.md`).
 
 The teaching laws still hold: point before acting means the thing being talked about gets the ring, spotlight or zoom while the voice names it.
 Keep one stage across consecutive steps (same diagram growing, same card position) so the steps read as one flow.
@@ -94,8 +95,10 @@ State carries forward across the switch: the token copied on the outside page is
 Mixed videos keep the product's theme; rebuilt third-party screens keep their own look inside it.
 In `general` mode there is no product theme to read. Unless the user names brand colors or fonts:
 
-1. Browse `../hyperframes/assets/frame-presets/` (the table in `../hyperframes/references/look.md`) and pick the preset that fits the topic and audience (`blue-professional` -> calm and neutral, `capsule` -> warm).
-2. Copy its `FRAME.md` to `<output-dir>/composition/frame.md` and take the video's `:root` colors and fonts from it; add the user's brand colors or fonts if given. Fonts that aren't bundled need `@font-face` files.
+1. Browse `assets/frame-presets/` here and `../hyperframes/assets/frame-presets/` (the lookup order is in `SKILL.md`; the table in `../hyperframes/references/look.md`) and pick the preset that fits the topic and audience (`blue-professional` -> calm and neutral, `capsule` -> warm).
+2. Stage the composition with it: `stage.py composition --theme <name>` (`step-3-compose.md`).
+   Staging maps a stock preset's colour keys onto `paper`, `ink`, `accent` and `muted` (rule in `scripts/stage.py`) and, as the presets ship no font files, writes the font names with a system-font fallback instead of `@font-face`.
+   A preset whose colours can't be mapped (most stock presets name no accent), or whose accent has under 3:1 contrast against paper, fails staging and names the colours: then write `work/theme/FRAME.md` with those keys, taking the preset's own colours with judgment (and the user's brand colors or fonts if given), put any font files in `work/theme/fonts/`, and pass `--theme work/theme`.
 
 If the presets aren't installed, choose a calm palette and an embeddable font pairing per `../hyperframes/references/look.md` and write it into the plan.
 

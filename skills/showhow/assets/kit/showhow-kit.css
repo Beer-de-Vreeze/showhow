@@ -1,9 +1,9 @@
-/* showhow kit starting states. Set --sh-accent (and optionally the others) in the composition's
-   theme :root block; pass the same accent to bake_highlights.py as `color`. */
+/* showhow kit starting states. Rings and ripples take --accent from the theme stage.py writes (assets/theme.css);
+   optional per-composition overrides: --sh-ring-width, --sh-ring-radius, --sh-ripple-size, --sh-ripple-fill. */
 .sh-ring {
   position: absolute;
   box-sizing: border-box;
-  border: var(--sh-ring-width, 4px) solid var(--sh-accent, #2f80ed);
+  border: var(--sh-ring-width, 4px) solid var(--accent);
   border-radius: var(--sh-ring-radius, 10px);
   opacity: 0;
   pointer-events: none;
@@ -17,7 +17,7 @@
   border-radius: 50%;
   /* Light fill plus accent stroke reads on both dark buttons and light backgrounds. */
   background: var(--sh-ripple-fill, rgba(255, 255, 255, 0.75));
-  border: 3px solid var(--sh-accent, #2f80ed);
+  border: 3px solid var(--accent);
   opacity: 0;
   pointer-events: none;
   z-index: 51;

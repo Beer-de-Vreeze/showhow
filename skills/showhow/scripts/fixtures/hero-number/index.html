@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      /* The theme (assets/theme.css) comes from stage.py; this sheet only lays the fixture out. */
+      html, body { margin: 0; background: var(--paper); }
+      #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: var(--paper); font-family: var(--font-body); }
+      #stage { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+      #title { position: absolute; left: 150px; top: 64px; font-family: var(--font-display); font-size: 48px; font-weight: 700; color: var(--ink); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="6" data-width="1920" data-height="1080" data-params='{"kind": "hero-number", "value": 1200}'>
+      <canvas id="stage" width="1920" height="1080"></canvas>
+      <div id="title">Kilometres of canal in the network</div>
+    </div>
+    <script src="assets/gsap/gsap.min.js"></script><!-- local GSAP, staged by stage.py -->
+    <script>
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+    </script>
+    <script type="module">
+      import { createStage, fitToRoot, onSeek } from "./assets/scene3d/scene3d.js";
+      import { buildHeroNumber } from "./assets/scene3d/hero-number.js";
+
+      const root = document.getElementById("root");
+      const P = JSON.parse(root.dataset.params);
+      onSeek("hero-number", async () => {
+        const { width, height } = fitToRoot(root);
+        // A view at least 17.8 units wide (the landscape view) keeps the 14-unit-wide number inside a narrow frame.
+        return buildHeroNumber(createStage({ canvas: document.getElementById("stage"), width, height, viewHeight: Math.max(10, (17.8 * height) / width), view: "front" }), P);
+      });
+    </script>
+  </body>
+</html>

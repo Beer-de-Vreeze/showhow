@@ -1,0 +1,92 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      /* The theme (assets/theme.css) comes from stage.py; this sheet only lays the fixture out. */
+      html, body { margin: 0; background: var(--paper); }
+      #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: var(--paper); font-family: var(--font-body); }
+      #stage { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+      #title { position: absolute; left: 150px; top: 64px; font-family: var(--font-display); font-size: 48px; font-weight: 700; color: var(--ink); }
+      .s3d-leaders { position: absolute; inset: 0; pointer-events: none; }
+      .s3d-leaders line { stroke: var(--ink); stroke-width: 2.5; }
+      .s3d-leaders circle { fill: var(--accent); stroke: var(--ink); stroke-width: 2; }
+      .s3d-label { position: absolute; left: 0; top: 0; padding: 10px 18px; border: 2.5px solid var(--ink); border-radius: 10px; background: var(--paper); color: var(--ink); font-size: 40px; font-weight: 600; white-space: nowrap; }
+    </style>
+  </head>
+  <body>
+    <!-- data-params is the plan's Params: object; a "model" in it swaps in a glTF with nodes named driver, idler, driven. -->
+    <div id="root" data-composition-id="main" data-start="0" data-duration="12" data-width="1920" data-height="1080"
+         data-params='{"kind": "machine", "driver": 12, "idler": 24, "driven": 36}'>
+      <canvas id="stage" width="1920" height="1080"></canvas>
+      <div id="title">A 12-tooth gear turns a 36-tooth gear</div>
+    </div>
+    <script src="assets/gsap/gsap.min.js"></script><!-- local GSAP, staged by stage.py -->
+    <script>
+      // HyperFrames' contract wants a registered timeline; the 3D frame itself is drawn from hf-seek.
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+    </script>
+    <script type="module">
+      import { THREE, createStage, fitToRoot, part, loadModel, labels, timeMap, ease, onSeek, theme, tint } from "./assets/scene3d/scene3d.js";
+      import { gearGeometry, latheGeometry, meshAngle } from "./assets/scene3d/machine.js";
+
+      const root = document.getElementById("root");
+      const P = JSON.parse(root.dataset.params);
+
+      onSeek("gear-train", async () => {
+        // Size from the root, so the format copies (render.py --format) draw a full portrait or square stage; a narrow frame widens viewHeight.
+        const { width, height } = fitToRoot(root);
+        const stage = createStage({ canvas: document.getElementById("stage"), width, height, viewHeight: Math.max(82, (110 * height) / width) });
+        const m = 1, teeth = [P.driver, P.idler, P.driven];
+        // Centres in a row along the shape plane's x: centre distance = m * (N1 + N2) / 2.
+        const xs = [0, (m * (teeth[0] + teeth[1])) / 2];
+        xs.push(xs[1] + (m * (teeth[1] + teeth[2])) / 2);
+        // Centre the train's outline (tip circles) in the frame; loadModel centres a model the same way.
+        const left = teeth[0] / 2 + m, right = xs[2] + teeth[2] / 2 + m;
+        const machine = new THREE.Group();
+        // Nudged on screen (iso screen-right is world +x, -z) so both label columns stay clear of the teeth.
+        machine.position.set(-(right - left) / 2 - 1, 0, 1);
+        stage.scene.add(machine);
+
+        let gears;
+        if (P.model) {
+          const model = await loadModel(P.model, stage, { size: right + left });
+          model.position.x = (right - left) / 2;
+          machine.add(model);
+          gears = ["driver", "idler", "driven"].map((n) => model.getObjectByName(n));
+        } else {
+          const colors = [theme.accent, tint(theme.paper, theme.ink, 0.12), tint(theme.paper, theme.ink, 0.28)];
+          gears = teeth.map((n, i) => {
+            const g = part(gearGeometry({ teeth: n, module: m, width: 2, bore: 1.2 }), stage, { color: colors[i] });
+            g.position.x = xs[i];
+            g.add(part(latheGeometry([[0, -3], [1.2, -3], [1.2, 3], [0, 3]], 32), stage, { color: tint(theme.paper, theme.ink, 0.5) }));
+            machine.add(g);
+            return g;
+          });
+        }
+
+        const layout = labels(root, stage, [
+          { text: `Driver - ${P.driver} teeth`, anchor: gears[0], at: 0.5, side: "left" },
+          { text: `Idler - ${P.idler} teeth`, anchor: gears[1], at: 1.0, side: "left" },
+          { text: `Driven - ${P.driven} teeth`, anchor: gears[2], at: 1.5, side: "right" },
+        ], { top: 0.22 * height, bottom: 0.833 * height, avoid: machine });
+
+        await stage.renderer.compileAsync(stage.scene, stage.camera);
+
+        // 0-5s full speed, 5-9s a quarter speed (slow motion), then full speed again.
+        const slow = [[0, 0], [5, 5], [9, 6], [12, 9]];
+        return (t) => {
+          const a0 = 0.9 * timeMap(t, slow); // driver radians, from t alone
+          const a1 = meshAngle(a0, teeth[0], teeth[1], 0);
+          const a2 = meshAngle(a1, teeth[1], teeth[2], 0);
+          [a0, a1, a2].forEach((a, i) => (gears[i].rotation.y = a));
+          stage.camera.zoom = 1 + 0.15 * ease((t - 6) / 2); // slow dive during the slow motion
+          stage.camera.updateProjectionMatrix();
+          stage.draw();
+          layout(t);
+        };
+      });
+    </script>
+  </body>
+</html>

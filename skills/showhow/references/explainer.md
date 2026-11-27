@@ -1,0 +1,121 @@
+# Explainer mode
+
+An explainer is a narrated video about an idea, a mechanism, a place or a piece of history.
+Every voiced sentence gets one visual, so the picture always follows the words.
+It is the closest cousin of `general` mode: read `references/general.md` and reuse its rules by reference, not by copy.
+
+Reused from `general.md` as they are:
+- Sources, in order of trust, and "Never invent a label" (Step 1: Gather the facts).
+- Topic image order and licensing, credits, and the "Shown as of" note for rebuilt third-party screens.
+- Schematics for mechanisms, the 3D rule (never for UI, screens or charts), and honest charts in motion.
+- The design system: the theme comes from the lookup order in `SKILL.md`, which defaults to the bundled `showhow` preset; `stage.py` (`step-3-compose.md`) copies its `FRAME.md` and fonts and writes the token set, for a preset or a brand kit alike.
+
+What this file replaces: the step shape, the counters and the "Now try it" ending.
+
+## Script input
+
+There are two inputs.
+
+- **A pasted script** is narrated word for word.
+  The only change allowed is respelling a word in the TTS input; captions, plan and companion keep the user's text.
+  There is no approval stop for it: write `## Script source` as `pasted` and go on to the plan.
+- **A topic** gets a drafted script under the script rules in `references/step-2-plan.md`, every fact tied to a source in `work/sources.md`.
+  Write `## Script source` as `drafted`, show the script, and **stop 1**: wait for the user's approval before building anything.
+
+For the Step 1 gate, answer the howto rubric as `general.md` adapts it for a topic (what the viewer will understand, who they are, the points instead of steps, the parts, the style) in `work/inspect.md`; `step-1-inspect.md` has no explainer rubric of its own.
+
+A fact you can't source is written `[NEED: <what is missing>]` in the script, never guessed.
+`plan_gates.py` fails P-need while any `[NEED` is left, so the video can't render with a hole in it; ask the user to fill each one.
+
+## Shape
+
+Outcome -> Name the parts -> one scene per voiced sentence, grouped into sections -> Recap.
+
+| Scene | Purpose | Typical duration |
+|---|---|---|
+| Outcome | Title and one line: what you'll understand. Reads with the sound off. | 3-5s |
+| Name the parts | One short scene: the 2-4 parts the explanation uses, each labelled on one picture with what it does in a few words (pre-training, `general.md` points shape). | 5-8s |
+| Sentence scenes | One voiced sentence, one visual, as long as the narration plus 0.5-1.0s of hold. No step minimum. | 3-10s each |
+| Recap | The main idea again in one picture and one or two sentences. | 4-8s |
+
+- No step counter anywhere ("2 of 5" turns an explainer into a checklist).
+- Each scene's picture starts entering on the scene's first frame; later parts wait for their words.
+  A visual that waits for its first word leaves the plain ground on screen for 6-12 frames between scenes, and G-blank fails it (seen on the first full render).
+- Group the sentence scenes into 2-4 sections; each section is a chapter in `chapters.txt`, named for what it explains.
+  The first section also holds the outcome and the parts scenes (chapters start at 00:00), and the last one the recap; the credits outro belongs to no section.
+- Length: SKILL.md's explainer shape sets the target and the limit, and P-time checks them; over the target is a warning, over the limit fails: cut sentences or split the video.
+- Style `friendly` unless the user names another.
+  Music is on by default, bundled and ducked under the voice (`references/audio.md`); `--no-music` wins.
+- Readability, one-picture-per-point and "works muted" from the teaching laws still apply.
+
+## Visual menu
+
+Each voiced scene carries `Visual: <type>`, exactly one value from this table, and optionally `Params: {json}` for types that need numbers or names.
+Parallax or other decorative motion is for the intro only; it never competes with an explanation.
+
+| Type | Use it for | How it plays |
+|---|---|---|
+| `flow` | A process or sequence | Boxes and arrows that build line by line, in the order the voice says them |
+| `chart` | Numbers and comparisons | Bars or lines from zero; axes first, then values (honest charts, `general.md`) |
+| `map` | Where something is | Static map with a labelled locator for each place named |
+| `photo` | The real thing | A licensed photo (`general.md`), cropped or slowly zoomed to the part being discussed |
+| `card` | One number, name or quote | Big text, one idea, held until the sentence ends |
+| `stroke-reveal` | A diagram or route built line by line | DrawSVG on paths, constant speed, connector before label (`motion-2d.md`) |
+| `kinetic-type` | A definition, rule or phrase to remember | SplitText whole words out of a mask, 5 frames apart (`motion-2d.md`) |
+| `data-anim` | A quantity changing | Counter tween with `onUpdate`/`textContent`, bars grown from their baseline (`motion-2d.md`) |
+| `morph` | "A becomes B", or a match cut between scenes | MorphSVG between two paths, same position and size either side (`motion-2d.md`) |
+| `flat-scene` | An abstract process as a concrete picture | Flat or isometric SVG from primitives, timeline stagger, MotionPath for travellers (`motion-2d.md`) |
+| `parallax` | The intro scene only | Layers pushed at depth-scaled speeds (`motion-2d.md`); the gate rejects it anywhere but scene 1 |
+| `scene3d` | Something whose shape is the point: a working machine, a globe, a hero number | One 3D stage per video, reused across scenes; `Params:` names the `kind` and its numbers, or a `model` (`references/3d-scenes.md`) |
+
+The 2D motion rows have a recipe each in `references/motion-2d.md`.
+Later releases add rows here; `VISUALS` in `scripts/plan_gates.py` is the list the gate checks against, so a new type is one row here and one entry there.
+`scripts/test_plan_gates.py` fails when this table's types and `VISUALS` differ.
+A scene with no voice (a title, a hold) needs no `Visual:`.
+Every fact shown in a visual is also spoken in that scene (P-described).
+
+## Stop 2: preview stills
+
+Explainer only.
+After `npx hyperframes check` passes and before the render, write one still per scene in each chosen format to `work/preview/<format>/scene-NN.png`, show them, and wait for the user's approval.
+Other modes keep "render without waiting".
+
+- **Command:** write `captions.srt` first (`references/step-4-deliver.md`), then
+  `uv run --project <skill-dir>/scripts <skill-dir>/scripts/render.py composition <video-name>.mp4 --work work --plan showhow-plan.md --stills`.
+  For every format in the plan's `## Formats` it writes the per-format copy in `work/formats/<format>/` (the copy the render will use) and snapshots it once per scene to `work/preview/<format>/scene-NN.png`; nothing renders.
+- **Moment:** each scene's settled moment, 0.1 s after the scene's last caption cue ends in `captions.srt` (at most 0.1 s before the scene ends; 0.3 s before the end for a scene without a cue).
+  So the visual must have finished building by then.
+- **Captions and the still:** end each scene's last cue after the voice and its G-captions reading time, and give the scene enough hold after it; a cue held to the scene's end leaves no caption-free moment, and its still shows the caption.
+- **Approval:** list the stills by scene and format, say what each shows in one sentence, and stop.
+  A rejected still means fix the composition, re-run `check`, redo only the stills that changed and ask again.
+  Render only after the user approves.
+
+## Plan template additions
+
+On top of `references/step-2-plan.md`:
+
+- `## Mode` is `explainer`.
+- `## Script source` is `pasted` or `drafted`.
+- `## Narration script` has one `### <section>` heading per section; P-render counts them against `chapters.txt`.
+- `## Formats` lists the formats to render; the default is all three (`landscape, vertical, square`); one name renders only that format.
+- Each storyboard scene has `Visual:` and, when the type takes numbers or names, `Params:`; `Counter:` is `none`.
+- `## Sources` and `## Unverified` stay, as in `general` mode.
+
+## Gates
+
+`uv run --project <skill-dir>/scripts <skill-dir>/scripts/plan_gates.py showhow-plan.md` runs after the plan and again with `--chapters` and `--video` after the render:
+
+- **P-need:** no `[NEED` marker in the narration.
+- **P-visual:** every voiced scene has exactly one known `Visual:`; an unknown type is named in the failure.
+- **P-time:** the total stays under the explainer limit; a total outside the target passes with a warning.
+- **P-end:** the last scene before the outro is a recap.
+- **P-params:** a `scene3d` scene has a known `Params.kind` or a `Params.model`, and every number in its `Params:` (strings like `"40%"` included) is spoken in the narration.
+  A globe needs a country code from the bundled map or a route of `{"name", "lat", "lon"}` places (`references/3d-scenes.md`).
+- **P-described:** as in every mode.
+- **P-render** (with `--chapters` and `--video`): one chapter per `### ` section heading in `## Narration script`, or 2-4 chapters when the script has no headings.
+- There is no P-steps or P-action: explainers have no counters.
+
+## Deliverables
+
+As in other modes, with one change: `showhow.md` is the script as a short article, one heading per section with the section's narration as paragraphs, then a numbered **Sources** list (the URLs and user files from `work/sources.md`).
+`chapters.txt` has one line per section.

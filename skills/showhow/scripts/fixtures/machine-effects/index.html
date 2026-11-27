@@ -1,0 +1,115 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      /* The theme (assets/theme.css) comes from stage.py; this sheet only lays the fixture out. */
+      html, body { margin: 0; background: var(--paper); }
+      #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: var(--paper); font-family: var(--font-body); }
+      #stage { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+      #title { position: absolute; left: 150px; top: 64px; font-family: var(--font-display); font-size: 48px; font-weight: 700; color: var(--ink); }
+      .s3d-leaders { position: absolute; inset: 0; pointer-events: none; }
+      .s3d-leaders line { stroke: var(--ink); stroke-width: 2.5; }
+      .s3d-leaders circle { fill: var(--accent); stroke: var(--ink); stroke-width: 2; }
+      .s3d-label { position: absolute; left: 0; top: 0; padding: 10px 18px; border: 2.5px solid var(--ink); border-radius: 10px; background: var(--paper); color: var(--ink); font-size: 40px; font-weight: 600; white-space: nowrap; }
+    </style>
+  </head>
+  <body>
+    <!-- Four scenes in one 16 s composition, each with the Params: a plan would give it (a boolean switches an effect on).
+         When each effect plays is this page's timing; Params carries only what the narration must agree with. -->
+    <div id="root" data-composition-id="main" data-start="0" data-duration="16" data-width="1920" data-height="1080">
+      <canvas id="stage" width="1920" height="1080"></canvas>
+      <div id="title"></div>
+    </div>
+    <script src="assets/gsap/gsap.min.js"></script><!-- local GSAP, staged by stage.py -->
+    <script>
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+    </script>
+    <script type="module">
+      import { THREE, createStage, fitToRoot, part, labels, timeMap, ease, seedOf, onSeek, theme, tint } from "./assets/scene3d/scene3d.js";
+      import { gearGeometry, latheGeometry, meshAngle, explodeAmount, explodeOffsets, sectionCut, flowParticles } from "./assets/scene3d/machine.js";
+
+      const root = document.getElementById("root");
+      const title = document.getElementById("title");
+      const base = { kind: "machine", driver: 12, idler: 24, driven: 36 };
+      const SCENES = [
+        { start: 0, title: "Airflow over the machine", params: { ...base, flow: true } },
+        { start: 4, title: "Cutaway", params: { ...base, cut: true } },
+        { start: 8, title: "Exploded view", params: { ...base, explode: true } },
+        { start: 12, title: "Slow motion", params: { ...base, slowmo: true } },
+      ];
+      const sceneAt = (t) => SCENES.reduce((cur, sc) => (t >= sc.start ? sc : cur), SCENES[0]);
+
+      onSeek("machine-effects", async () => {
+        const { width, height } = fitToRoot(root);
+        const stage = createStage({ canvas: document.getElementById("stage"), width, height, viewHeight: Math.max(82, (110 * height) / width) });
+        const m = 1, teeth = [base.driver, base.idler, base.driven];
+        const xs = [0, (m * (teeth[0] + teeth[1])) / 2];
+        xs.push(xs[1] + (m * (teeth[1] + teeth[2])) / 2);
+        const left = teeth[0] / 2 + m, right = xs[2] + teeth[2] / 2 + m;
+        const machine = new THREE.Group();
+        machine.position.set(-(right - left) / 2 - 1, 0, 1);
+        stage.scene.add(machine);
+
+        // Parts in explode order, bottom to top: base plate, gears, shafts. thick is each part's size along its axis.
+        // Colours are tints of the theme; the driver, the part the narration names, takes the accent.
+        const parts = [];
+        const add = (group, x, y, thick) => {
+          group.position.set(x, y, 0);
+          machine.add(group);
+          parts.push({ group, thick, home: group.position.clone() });
+          return group;
+        };
+        add(part(new THREE.BoxGeometry(right - left + 8, 1, 30), stage, { color: tint(theme.paper, theme.ink, 0.16) }), (right - left) / 2 - 1, -5, 1);
+        const colors = [theme.accent, tint(theme.paper, theme.ink, 0.2), tint(theme.paper, theme.ink, 0.38)];
+        // Stacked driven first, so the stack climbs against the row's slope on screen and the levels read as levels.
+        const gears = [];
+        [2, 1, 0].forEach((i) => (gears[i] = add(part(gearGeometry({ teeth: teeth[i], module: m, width: 2, bore: 1.2 }), stage, { color: colors[i] }), xs[i], 0, 2)));
+        [2, 1, 0].forEach((i) => add(part(latheGeometry([[0, -3], [1.2, -3], [1.2, 3], [0, 3]], 32), stage, { color: tint(theme.paper, theme.ink, 0.62) }), xs[i], 0, 6));
+        // Every part ends up one gear thickness (2) plus a clear gap (9) from the next, staggered up the axis.
+        const out = explodeOffsets(parts.map((p) => ({ y: p.home.y, t: p.thick })), 9);
+        const top = out[out.length - 1];
+
+        const setCut = sectionCut(stage, machine);
+        const flow = flowParticles(stage, { count: 220, seed: seedOf("machine-effects"), size: 16, speed: 0.2, length: 90, spread: 12 });
+        flow.position.set(machine.position.x + (right - left) / 2 - 1, 4, machine.position.z);
+        stage.scene.add(flow); // not in machine, so the label columns ignore the cloud
+
+        const layout = labels(root, stage, [
+          { text: `Driver - ${base.driver} teeth`, anchor: gears[0], at: 0.5, side: "left" },
+          { text: `Idler - ${base.idler} teeth`, anchor: gears[1], at: 1.0, side: "left" },
+          { text: `Driven - ${base.driven} teeth`, anchor: gears[2], at: 1.5, side: "right" },
+        ], { top: 0.22 * height, bottom: 0.833 * height, avoid: machine });
+        await stage.renderer.compileAsync(stage.scene, stage.camera);
+
+        const slow = [[0, 0], [12, 12], [16, 13.6]]; // 0.4 speed from 12 s on
+        return (t) => {
+          const sc = sceneAt(t), p = sc.params;
+          title.textContent = sc.title;
+          const a0 = 0.9 * timeMap(t, slow);
+          const a1 = meshAngle(a0, teeth[0], teeth[1], 0);
+          const a2 = meshAngle(a1, teeth[1], teeth[2], 0);
+          [a0, a1, a2].forEach((a, i) => (gears[i].rotation.y = a));
+
+          // Cutaway: the plane sinks from above the gears to mid-thickness, holds, then lifts out again.
+          const cutIn = p.cut ? ease((t - 4.5) / 1.5) * (1 - ease((t - 7.4) / 0.6)) : 0;
+          setCut(cutIn > 0 ? 1.2 - 1.2 * cutIn : 50);
+          // Exploded view: staggered out, folding back in the last 0.8 s.
+          let ex = 0;
+          parts.forEach((pt, i) => {
+            const e = p.explode ? explodeAmount(i, t, { at: 8, stagger: 0.15, dur: 1 }) * (1 - ease((t - 11.2) / 0.8)) : 0;
+            pt.group.position.set(pt.home.x, pt.home.y + out[i] * e, pt.home.z);
+            ex = Math.max(ex, e);
+          });
+          machine.position.y = -0.5 * top * ex; // keep the stack centred while it grows
+          flow.update(t, p.flow ? ease((t - 0.3) / 0.5) * (1 - ease((t - 3.6) / 0.4)) : 0);
+          stage.camera.zoom = 1 - 0.3 * ex + (p.slowmo ? 0.15 * ease((t - 12) / 2) : 0);
+          stage.camera.updateProjectionMatrix();
+          stage.draw();
+          layout(t);
+        };
+      });
+    </script>
+  </body>
+</html>

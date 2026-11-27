@@ -2,7 +2,8 @@
 __pycache__/
 *.pyc
 
-# kit-demo fixture: kit is copied in before each run; render output and CLI artifacts
-skills/showhow/scripts/fixtures/kit-demo/assets/kit/
-skills/showhow/scripts/fixtures/kit-demo/.hyperframes/
+# fixture checks and renders: check_fixture.py stages copies of the fixtures here
 skills/showhow/scripts/out/
+
+# hyperframes state written next to any composition it previews or snapshots
+.hyperframes/

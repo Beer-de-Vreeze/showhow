@@ -8,6 +8,9 @@ It does not prescribe Hyperframes implementation details; Hyperframes decides th
 
 `<output-dir>` already exists: SKILL.md names it before Step 1.
 Keep the headings and storyboard fields below exactly as given: `scripts/plan_gates.py` parses them.
+Each scene heading is `### Scene N - name - Ns`, with the duration in seconds.
+Each field starts a line as `Field:`, with no bold or list marker, once per scene; a field may continue on the following lines up to the next field.
+A heading or field the script can't read fails P-parse with its line number.
 
 ## Write the script first
 
@@ -30,7 +33,7 @@ With `--no-voice`, the same script becomes the caption text; plan about 0.35s pe
 # Showhow Plan: [Title]
 
 ## Mode
-[howto / update / general] - [task, topic, or release and range]
+[howto / update / general / explainer] - [task, topic, or release and range]
 
 ## Goal
 [howto and general: "After this video you can ..." (or "... you know how ..." for a topic) / update: "What's new in [version]: ..."]
@@ -51,7 +54,14 @@ With `--no-voice`, the same script becomes the caption text; plan about 0.35s pe
 ## House style
 [the `~/.showhow/verdicts.md` rules that apply to this video, and any skipped because a teaching law wins; "none" when the file doesn't exist (house-style.md)]
 
+## Script source (explainer only)
+[pasted / drafted]
+
+## Formats (explainer only)
+[explainer: landscape, vertical, square (the default; one name renders only that format); other modes ignore this section]
+
 ## Format: [landscape / vertical / square] - [width]x[height]
+[howto, update and general: replace the placeholder with one format, e.g. "## Format: landscape - 1920x1080"; an explainer uses "## Formats" above instead]
 ## Target duration: [seconds, from the script word count]
 
 ## Visual identity (from the project; general mode: from the preset)
@@ -74,7 +84,7 @@ With `--no-voice`, the same script becomes the caption text; plan about 0.35s pe
 
 ## Storyboard
 
-### Scene 1 - [name] - [duration]s
+### Scene 1 - [name] - 4s
 Source: [code / outside]
 Screen: [which real screen / component is shown, and its state]
 Counter: ["Step 1 of 4" (howto), "Change 1 of 3" (update), "Point 2 of 5" (general topic), or none; none in a quick-tip]
@@ -82,12 +92,15 @@ Highlight: [the exact element that gets the ring / spotlight / zoom, and when]
 Action: [cursor click / typing "value" / select option / drag, or none]
 Result: [what visibly changes after the action]
 Narration: [the lines for this scene]
-Caption: [same as narration, one phrase at a time, max 2 lines of ~42 characters]
-On-screen text: [title cards or labels, if any]
+Visual: [explainer only: exactly one type from the visual menu in `references/explainer.md` (`VISUALS` in plan_gates.py)]
+Params: [explainer only, optional: JSON for the visual, e.g. {"kind": "machine", "driver": 12}; every number in it is spoken (P-params)]
+Caption: [same as narration, one phrase at a time, within the "Captions match the voice" law in SKILL.md (G-captions)]
+On screen: [title cards and labels, if any; every number and **bold label** written here must also be spoken in this scene's Narration (P-described)]
 Audio: [click / typing / none; music level]
 Transition: [cut / soft fade / slide / zoom-out] -> Scene 2
 
-### Scene 2 - ...
+### Scene 2 - [name] - 8s
+[the same fields as Scene 1]
 
 ## Chapters
 00:00 [Intro]
@@ -111,6 +124,11 @@ Transition: [cut / soft fade / slide / zoom-out] -> Scene 2
 | Now try it | One line inviting the viewer to do the task now, with a concrete example or practice data. | 3-5s |
 
 Mark each subtask boundary in the storyboard (the end of a group of steps that finishes one part of the task) and give it about 2s of silent hold on the result.
+
+### explainer
+
+Scenes, visuals and the script input rules are in `references/explainer.md`.
+One voiced sentence per scene, each with a `Visual:`, no counters, a recap before the outro.
 
 ### update
 
@@ -148,7 +166,7 @@ Never highlight more than one control at a time.
 
 Captions are on by default.
 Place them in a fixed band (bottom in landscape, lower third in vertical) and move them to the top for a scene if the highlighted target sits in that band.
-Max two lines, max ~42 characters per line.
+Each cue keeps the "Captions match the voice" law in SKILL.md; G-captions checks it after the render.
 
 ## Duration check
 
@@ -160,7 +178,7 @@ If a step's narration needs more than ~15s, the step is too big; split it.
 ## Audio planning
 
 - **Voice** leads. Everything else sits under it.
-- **Music**: none by default for `clean`, `friendly` and `quick-tip`; a quiet bed with `--music` (see `audio.md` for levels). `release` plans music louder on the hook, bridges and outro, ducked under the voice, with strong cues picked for the hook, change cards and outro.
+- **Music**: none by default for `clean`, `friendly` and `quick-tip`, except in `explainer` mode, where it is on (SKILL.md); a quiet bed with `--music` (see `audio.md` for levels). `release` plans music louder on the hook, bridges and outro, ducked under the voice, with strong cues picked for the hook, change cards and outro.
 - **SFX (howto)**: mainly for visible actions - a soft click on each click, soft key ticks on typing, one gentle accent on the final result.
 - **SFX (update)**: plan them around the demos - a soft hit on the hook reveal, card sounds as each change card arrives, a tick for each "New"/"Fixed" tag, a payoff on the outro (a bell is fine). Inside the UI demo, clicks and typing only.
 - The full library is available (see `audio.md`); note the moment and intent in the plan, not the filename.

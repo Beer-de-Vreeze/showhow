@@ -3,8 +3,7 @@
 ## Validate
 
 ```bash
-cd <output-dir>/composition
-npx hyperframes check   # the single pre-render gate - fix every error it reports
+npx hyperframes check composition   # from <output-dir>; the single pre-render gate - fix every error it reports
 ```
 
 Fix all errors, including WCAG contrast failures (they gate as errors).
@@ -30,13 +29,13 @@ Other escape hatches that exist: `data-layout-allow-overflow` (intentional ellip
 Then capture key frames and look at them:
 
 ```bash
-npx hyperframes snapshot   # PNG key frames
+npx hyperframes snapshot composition   # PNG key frames
 ```
 
 Snapshot every ring moment and every result, in one call, into `work/snap/`:
 
 ```bash
-npx hyperframes snapshot --no-end --describe false -o ../work/snap --at 4.5,16.5,21.5,24
+npx hyperframes snapshot composition --no-end --describe false -o work/snap --at 4.5,16.5,21.5,24
 ```
 
 Read the contact sheets it writes and **describe every frame in one sentence** (what is on screen, what the viewer should look at) before you judge any of them; a frame you can't describe, or that reads as an empty slide, is a finding.
@@ -51,13 +50,14 @@ Then check every frame:
 - **Nothing shows ahead of its content**: `::before` bullets, list dots, icons or borders of a line whose words are still hidden. Hide the whole line, not only its words.
 - **A typing caret follows the typed text.** Per-character spans hidden with `opacity` still take up width, so move the caret to the last shown character instead of leaving it inline after the full text.
 - **What a step creates stays visible later**: an attached file appears in the sent message, a chosen model in the reply header, a picked workspace in the header.
+- **No muddy crossfades.** A plain crossfade between two busy layouts makes a double exposure; stagger it (old content out, then new content in) or dip through the background for 3 frames at most.
 
 Fix, re-run `check`, and re-snapshot only the frames you changed.
 
 ## Preview
 
 ```bash
-npx hyperframes preview
+npx hyperframes preview composition
 ```
 
 Tell the user the preview is running and give them the localhost URL.
@@ -70,9 +70,18 @@ Don't wait for an answer: render now, and re-render if they find a wrong label o
 Render with the wrapper, never `npx hyperframes render` directly: with `--quiet` a failed render can exit non-zero with no error message and no file.
 The wrapper never passes `--quiet`, logs everything to `work/render.log`, succeeds only when this run wrote a non-empty mp4, retries once, and prints the log tail when it fails twice.
 
+Write `captions.srt` first (below): the wrapper takes each scene's settled moment from it.
+
 ```bash
-uv run --project <skill-dir>/scripts <skill-dir>/scripts/render.py <output-dir>/composition <output-dir>/<video-name>.mp4 --work <output-dir>/work
+uv run --project <skill-dir>/scripts <skill-dir>/scripts/render.py <output-dir>/composition <output-dir>/<video-name>.mp4 --work <output-dir>/work --plan <output-dir>/showhow-plan.md
 ```
+
+With one format, the wrapper renders the composition as is to `<video-name>.mp4` and logs to `work/render.log`.
+With several, it renders each from a resized copy in `work/formats/<format>/`, with its own `work/<format>/render.log`, to `<video-name>-landscape.mp4`, `-vertical.mp4` and `-square.mp4`.
+`--plan` is optional for a one-format render, but without it (and without `--poster-at`) there is no poster; the wrapper says so.
+Each file is loudness-normalised and gets its poster (below) as soon as it renders.
+A failing format is named in the error and exits non-zero; the formats that rendered stay on disk, finished, so re-run only the failed one with `--format <name>` (it always writes `<video-name>-<name>.mp4`, next to the others).
+Run the video gates once per file the wrapper wrote; `captions.srt` and `chapters.txt` are the same for all.
 
 Flags after `--` go to `hyperframes render` unchanged.
 When `docker info` succeeds, prefer `-- --docker` for the final render: the same pinned Chrome and ffmpeg every time, so a re-render matches the one that was checked.
@@ -81,7 +90,6 @@ After a successful render the wrapper normalises the soundtrack in place to -16 
 If normalisation fails it exits non-zero and leaves the rendered mp4 as it was: report the log tail rather than shipping it un-normalised.
 `--no-loudnorm` skips it, only when the user asks.
 A video without an audio stream, or with a silent one (`--no-voice --no-music --no-sfx`), is skipped with a note.
-Bake the poster after the wrapper: the bake copies the audio, so the loudness survives.
 If the wrapper fails twice, check free disk space (`df -h .`; a render needs a few GB of scratch) and report its log tail to the user instead of retrying further.
 
 Add `-- --quality draft` for faster iteration, `-- --quality high` for final delivery.
@@ -93,7 +101,7 @@ When the composition tweens `height`, `width`, `top`/`left` or padding, add `--n
 **Check the mp4, not only the snapshots.** Pull frames from the rendered file at every ring and result moment into one sheet and look at it:
 
 ```bash
-uv run --project <skill-dir>/scripts <skill-dir>/scripts/frame_sheet.py ../<video-name>.mp4 --overlays ../work/rings.overlays.json --at 5.5,88 -o ../work/check.jpg
+uv run --project <skill-dir>/scripts <skill-dir>/scripts/frame_sheet.py <video-name>.mp4 --overlays work/rings.overlays.json --at 5.5,88 -o work/check.jpg
 ```
 
 Add `--crop x,y,w,h` (video pixels) to zoom every frame on one region when a ring is small.
@@ -108,8 +116,8 @@ Loudness is already normalised by the wrapper; earshot is for timing and masking
 Pass every SFX `data-start` from `index.html` as cues, so it reports where each one actually sounds:
 
 ```bash
-earshot measure ../<video-name>.mp4
-earshot timeline ../<video-name>.mp4 --cues "2.6,2.8,9.4" --out ../work/timeline.json
+earshot measure <video-name>.mp4
+earshot timeline <video-name>.mp4 --cues "2.6,2.8,9.4" --out work/timeline.json
 ```
 
 For a 45 s video, `measure` takes about 20 s and `timeline` about 50 s (most of it model loading), so run both once per render, not per fix.
@@ -129,33 +137,21 @@ Add the share of cues within 40 ms to the delivery report, next to the wrapper's
 The poster is the still shown before the video plays.
 For instructional videos the best poster is the **title card** (how-to: the goal line; update: "What's new in [version]"), or the finished result with the title over it.
 Pick a settled moment: text fully in, not mid-transition, and no caption on screen (half a sentence under the title looks broken as a thumbnail).
-From `<output-dir>/composition`:
 
-```bash
-# use the timestamp of the settled title or result frame, e.g. 2.4s
-ffmpeg -ss 2.4 -i ../<video-name>.mp4 -frames:v 1 -q:v 2 ../<video-name>.jpg
-```
+The render wrapper makes it: for each mp4 it writes `<same name>.jpg` from that file's own frame, so a vertical or square file gets its own layout.
+The moment is the settled moment (0.1 s after the last caption cue ends) of the first scene that holds without voice, so no caption is on screen; usually scene 1, the title.
+Then it bakes the jpg in as frame 0, after the loudness pass (the bake copies the audio), replacing only the first frame's pixels; duration, frame count and audio stay the same.
+For another moment (the finished result with the title), run the same render command with `--poster-at <seconds>`: when the composition has not changed since the render, it only re-takes and re-bakes the poster, with no new render.
+Look at each jpg.
 
-If the frame lands on a transition, nudge the timestamp a few tenths of a second and re-extract.
-
-When the voice talks over the title, no frame of the mp4 is caption-free.
-Snapshot a copy of the composition with the captions hidden instead (from `<output-dir>`):
+When every scene is voiced to its end, the wrapper warns that the poster may show a caption.
+Then make a caption-free poster from a copy with the captions hidden, and bake it over frame 0 (from `<output-dir>`):
 
 ```bash
 cp -r composition work/poster
 # add `.cap { display: none !important; }` (your caption selector) to work/poster/index.html's <style>
-npx hyperframes snapshot work/poster --at 5.5 --no-end -o work/poster-snap --describe false
-ffmpeg -y -i work/poster-snap/frame-00-at-5.5s.png -q:v 2 <video-name>.jpg
-```
-
-### Bake the poster as frame 0
-
-Players that show the first frame before playback (Teams, SharePoint, Slack, a plain `<video>` tag) use frame 0 as the idle thumbnail.
-YouTube doesn't: it offers its own auto-picked frames or a custom upload, so upload `<video-name>.jpg` there as the thumbnail.
-Replace only the first frame's pixels with the poster; duration, frame count and audio stay the same.
-From `<output-dir>`:
-
-```bash
+npx hyperframes snapshot work/poster --at <seconds> --no-end -o work/poster-snap --describe false
+ffmpeg -y -i work/poster-snap/frame-00-at-<seconds>s.png -q:v 2 <video-name>.jpg
 ffmpeg -y -i <video-name>.mp4 -i <video-name>.jpg \
   -filter_complex "[0:v][1:v]overlay=0:0:enable='eq(n,0)'[v]" \
   -map "[v]" -map "0:a?" -c:v libx264 -crf 18 -preset slow -pix_fmt yuv420p \
@@ -163,12 +159,16 @@ ffmpeg -y -i <video-name>.mp4 -i <video-name>.jpg \
   && mv -f work/poster.mp4 <video-name>.mp4
 ```
 
-Keep `<video-name>.jpg` alongside as the upload thumbnail.
+With several formats, snapshot `work/formats/<format>` instead of `composition`, once per format, and name the files `<video-name>-<format>`.
+
+Players that show the first frame before playback (Teams, SharePoint, Slack, a plain `<video>` tag) use frame 0 as the idle thumbnail.
+YouTube doesn't: it offers its own auto-picked frames or a custom upload, so upload the jpg there as the thumbnail.
 
 ## Write captions.srt
 
 Write the caption phrases and timings from Step 3 to `<output-dir>/captions.srt`, even though captions are burned in: players that support subtitles (Stream, SharePoint, YouTube) use it for search and accessibility.
 Times are absolute in the final video (scene start + phrase offset).
+Write it before the render: the render wrapper reads it, next to the plan, for the preview stills and the poster moment.
 
 ```
 1
@@ -184,15 +184,16 @@ With `--no-captions`, still write `captions.srt` (it only skips the burned-in ve
 
 ## Run the video gates
 
-Once `captions.srt` exists, measure the final mp4 (from `<output-dir>`):
+Measure every mp4 the wrapper wrote, one run per file (from `<output-dir>`):
 
 ```bash
-uv run --project <skill-dir>/scripts <skill-dir>/scripts/video_gates.py <video-name>.mp4 --srt captions.srt
+uv run --project <skill-dir>/scripts <skill-dir>/scripts/video_gates.py <mp4> --srt captions.srt
 ```
 
 - **G-blank:** no run of more than 3 blank frames (one flat colour: an empty ground between scenes, a black or white flash).
   A dip through the background lasts 3 frames at most; a longer empty gap reads as a broken video.
   A designed cut to black at the very end may run 15 frames.
+- **G-captions:** every cue in `captions.srt` keeps the "Captions match the voice" law in SKILL.md (line length, line count, reading time); the gate reads the frame size from the mp4 for the vertical line count.
 - **G-end:** the video ends at most 1.4s after the last caption, or 3.5s when `credits.txt` exists (the outro credit line needs 2.5s).
   Under 0.5s is a note: the result may be cut off.
 
@@ -212,6 +213,13 @@ One line per scene group, starting at `00:00`, in the YouTube chapter format (al
 ```
 
 Use the measured scene start times from the render.
+An update names its changes `Change N - <what changed>` (`00:12 Change 1 - Search by invoice number`), and a general task video its steps `Step N` or `Point N`; `plan_gates.py --chapters` counts those titles.
+
+## Write credits.txt
+
+Write it only when a bundled or Incompetech music track is used, an image or sound license asks for attribution, or a third-party app's screens are rebuilt (its trademark line).
+One line per source (title, author, license, URL); `audio.md` and `general.md` give the exact lines.
+The same credits appear on the outro credit line (step-3-compose.md, "Credit line").
 
 ## Write showhow.md
 

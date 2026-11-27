@@ -5,7 +5,7 @@ All SFX are CC0 (Kenney.nl, public domain).
 In an instructional video the **voice leads**.
 Music and SFX support it and must never compete with it.
 Action-matched SFX are on by default unless the user passes `--no-sfx` or the assets are missing.
-**Music depends on the style:** off by default for `clean`, `friendly` and `quick-tip` (background music hurt retention and transfer in Moreno & Mayer 2000), on for `release`.
+**Music depends on the style:** off by default for `clean`, `friendly` and `quick-tip` (a bed has to stay at least 20 dB below the voice to meet WCAG 1.4.7 and keep the voice clear), on for `release` and `explainer`.
 `--music` turns the bed on for any style; `--no-music` turns it off for any style and wins over `--music`.
 Clicks and typing stay in every style: they mark actions, and sound tied to an action doesn't hurt learning the way a bed does.
 
@@ -16,11 +16,14 @@ Levels with narration:
 | Layer | Volume | Notes |
 |---|---|---|
 | Narration | 1.0 | One clip per scene, own track |
-| Music under voice | 0.08-0.14 | Duck to this whenever a narration clip plays |
+| Music under voice | about 0.035 (20 dB below the voice, measured as below) | Duck to this whenever a narration clip plays (WCAG 1.4.7) |
 | Music with no voice (title, outro, `--no-voice`) | 0.25-0.35 | `release` goes to 0.35-0.4 on the hook, change-to-change bridges and outro |
 | SFX (clicks, typing) | 0.35-0.55 | Soft; they confirm an action, they don't announce it |
 | SFX accents in `release` (reveals, change cards, payoffs) | 0.55-0.8 | Between narration lines, or at most 0.5 under the voice |
 | Final result accent | 0.5-0.65 | One per video |
+
+Check the 20 dB rule with numbers, not the table: measure a voice clip and the track (`ffmpeg -i <file> -af ebur128 -f null -`, the last `I:`), then pick the bed volume `10 ^ ((voice - music - 20) / 20)`.
+Measured 2026-11-27: Kokoro `af_heart` clips sit near -22 LUFS and the bundled tracks near -14 LUFS, so a bed under the voice needs about 0.035 (0.08-0.14, the old table value, leaves only 12-16 dB).
 
 ---
 
@@ -251,7 +254,7 @@ These rules apply when Hyperframes is implementing the composition and the motio
 Composition notation:
 ```
 Scene 3 - Step 2: Add a file - 9.4s
-  Narration scene-03.wav at 0.3s     ->  music ducks to 0.1 at 0.1s
+  Narration scene-03.wav at 0.3s     ->  music ducks to 0.035 at 0.1s
   Ring on "Add knowledge" at 1.2s    ->  (no SFX, the voice names it)
   Cursor presses at 2.6s             ->  SFX: ui/mouseclick1 at 2.6s
   File dialog slides in at 2.8s      ->  SFX: interface/drop_001 at 2.8s, volume 0.4
@@ -281,7 +284,8 @@ When a video uses one, add a line to `credits.txt`: `Music: "Happy Beats / Busin
 Also credit it in the video itself, so the credit travels with the file: the short line `Music: Sascha Ende (ende.app), CC BY 4.0` on the outro (step-3-compose.md, Credit line).
 
 The bundled tracks are all upbeat business music; when none fits the video's mood, pick an Incompetech track (below).
-Generate a bed with MusicGen (Generated bed, below) only when the user asks for generated or original music, or when Incompetech is unreachable or has nothing that fits; if that fails too, use the closest bundled track and say so.
+If Incompetech is unreachable or has nothing that fits, use the closest bundled track and say so.
+The order is always the bundled track, then Incompetech (CC BY); no generated music, because the common open generators ship non-commercial weights.
 
 ### Incompetech (Kevin MacLeod)
 
@@ -302,31 +306,6 @@ f="Angel Share.mp3"; curl -s -f -o "assets/music/$f" "https://incompetech.com/mu
 Add to `credits.txt`: `Music: "<title>" by Kevin MacLeod (incompetech.com), CC BY 4.0, https://creativecommons.org/licenses/by/4.0/`, and put `Music: Kevin MacLeod (incompetech.com), CC BY 4.0` on the outro credit line.
 Then run the beat analysis on it like a custom track.
 
-### Generated bed (MusicGen)
-
-Use it when the user asks for generated or original music, or when Incompetech is unreachable or has nothing that fits; otherwise use a bundled or Incompetech track.
-It runs locally with the media-use audio engine (MusicGen via `HYPERFRAMES_PYTHON`; nothing leaves the machine).
-From `<output-dir>/composition`:
-
-Write `../work/bgm_request.json` with a file tool (heredocs fail on Windows):
-
-```json
-{"lines": [], "bgm": {"mode": "generate", "prompt": "uplifting corporate tech, bright modern piano with synth pads, 108 bpm"}}
-```
-
-```bash
-node <media-use-dir>/audio/scripts/audio.mjs --request ../work/bgm_request.json --hyperframes . --out ../work/bgm_meta.json --only bgm
-node <media-use-dir>/audio/scripts/wait-bgm.mjs --audio-meta ../work/bgm_meta.json --hyperframes . --timeout-ms 600000 --out ../work/bgm_status.json
-```
-
-`<media-use-dir>` is the installed `media-use` skill (`~/.claude/skills/media-use`).
-Run both commands in one shell call: the generator runs detached, and some agent shells kill leftover processes when a call ends.
-It writes `assets/bgm/track.wav`: a 30s clip, about 5 minutes on a laptop CPU.
-Continue only when `bgm_status.json` says `"status": "ready"`.
-If it failed within seconds with an empty log, run both commands once more; if it fails again, fall back to a bundled track and tell the user.
-Put the mood in the prompt (MusicGen ignores BPM and scale settings), listen to it before using it, and loop it like any short track (below).
-Then run the beat analysis on it like a custom track.
-
 If the video is longer than the track, loop it with a crossfade at a phrase boundary or fade it out under the last narration; never let it cut off abruptly.
 
 ### In a composition
@@ -342,8 +321,8 @@ Never above 0.4 for music in an instructional video.
 
 ### Ducking under the voice
 
-Keep the music at its bed level and duck it to 0.08-0.14 for each narration clip (0.2s ramp down just before the clip, 0.4s ramp up after), using the best Hyperframes-supported way to automate volume.
-If ducking isn't possible, keep the music at 0.08-0.12 for the whole video.
+Keep the music at its bed level and duck it to the measured level (about 0.035, 20 dB below the voice) for each narration clip (0.2s ramp down just before the clip, 0.4s ramp up after), using the best Hyperframes-supported way to automate volume.
+If ducking isn't possible, keep the music at that level for the whole video.
 
 If the music file doesn't exist, skip it and notify the user after rendering.
 
