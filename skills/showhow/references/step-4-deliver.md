@@ -70,15 +70,17 @@ Don't wait for an answer: render now, and re-render if they find a wrong label o
 Render with the wrapper, never `npx hyperframes render` directly: with `--quiet` a failed render can exit non-zero with no error message and no file.
 The wrapper never passes `--quiet`, logs everything to `work/render.log`, succeeds only when this run wrote a non-empty mp4, retries once, and prints the log tail when it fails twice.
 
+Write `captions.srt` first (below): the wrapper takes each scene's settled moment from it.
+
 ```bash
-uv run --project <skill-dir>/scripts <skill-dir>/scripts/render.py <output-dir>/composition <output-dir>/<video-name>.mp4 --work <output-dir>/work
+uv run --project <skill-dir>/scripts <skill-dir>/scripts/render.py <output-dir>/composition <output-dir>/<video-name>.mp4 --work <output-dir>/work --plan <output-dir>/showhow-plan.md
 ```
 
-For several formats add `--format all` or `--format landscape,vertical`: the wrapper renders once per format into `<video-name>-landscape.mp4`, `-vertical.mp4` and `-square.mp4`, each from a resized copy in `work/formats/<format>/` and with its own `work/<format>/render.log`.
-A single `--format` gets the same suffix (`--format vertical` writes `<video-name>-vertical.mp4`); without `--format` the composition renders as is.
-Each format is loudness-normalised as soon as it renders.
-A failing format is named in the error and exits non-zero; the formats that rendered stay on disk, normalised, so re-run only the failed one with `--format <name>`.
-Bake the poster and run the video gates once per file; `captions.srt` and `chapters.txt` are the same for all.
+The wrapper renders every format the plan lists, each from a resized copy in `work/formats/<format>/` and with its own `work/<format>/render.log`.
+Several formats write `<video-name>-landscape.mp4`, `-vertical.mp4` and `-square.mp4`; one format writes `<video-name>.mp4`.
+Each file is loudness-normalised and gets its poster (below) as soon as it renders.
+A failing format is named in the error and exits non-zero; the formats that rendered stay on disk, finished, so re-run only the failed one with `--format <name>` (it always writes `<video-name>-<name>.mp4`, next to the others).
+Run the video gates once per file the wrapper wrote; `captions.srt` and `chapters.txt` are the same for all.
 
 Flags after `--` go to `hyperframes render` unchanged.
 When `docker info` succeeds, prefer `-- --docker` for the final render: the same pinned Chrome and ffmpeg every time, so a re-render matches the one that was checked.
@@ -87,7 +89,6 @@ After a successful render the wrapper normalises the soundtrack in place to -16 
 If normalisation fails it exits non-zero and leaves the rendered mp4 as it was: report the log tail rather than shipping it un-normalised.
 `--no-loudnorm` skips it, only when the user asks.
 A video without an audio stream, or with a silent one (`--no-voice --no-music --no-sfx`), is skipped with a note.
-Bake the poster after the wrapper: the bake copies the audio, so the loudness survives.
 If the wrapper fails twice, check free disk space (`df -h .`; a render needs a few GB of scratch) and report its log tail to the user instead of retrying further.
 
 Add `-- --quality draft` for faster iteration, `-- --quality high` for final delivery.
@@ -135,46 +136,20 @@ Add the share of cues within 40 ms to the delivery report, next to the wrapper's
 The poster is the still shown before the video plays.
 For instructional videos the best poster is the **title card** (how-to: the goal line; update: "What's new in [version]"), or the finished result with the title over it.
 Pick a settled moment: text fully in, not mid-transition, and no caption on screen (half a sentence under the title looks broken as a thumbnail).
-From `<output-dir>/composition`:
 
-```bash
-# use the timestamp of the settled title or result frame, e.g. 2.4s
-ffmpeg -ss 2.4 -i ../<video-name>.mp4 -frames:v 1 -q:v 2 ../<video-name>.jpg
-```
-
-If the frame lands on a transition, nudge the timestamp a few tenths of a second and re-extract.
-
-When the voice talks over the title, no frame of the mp4 is caption-free.
-Snapshot a copy of the composition with the captions hidden instead (from `<output-dir>`):
-
-```bash
-cp -r composition work/poster
-# add `.cap { display: none !important; }` (your caption selector) to work/poster/index.html's <style>
-npx hyperframes snapshot work/poster --at 5.5 --no-end -o work/poster-snap --describe false
-ffmpeg -y -i work/poster-snap/frame-00-at-5.5s.png -q:v 2 <video-name>.jpg
-```
-
-### Bake the poster as frame 0
+The render wrapper makes it: for each mp4 it writes `<same name>.jpg` from that file's own frame, so a vertical or square file gets its own layout, at scene 1's settled moment (0.1 s after its last caption cue ends).
+Then it bakes the jpg in as frame 0, after the loudness pass (the bake copies the audio), replacing only the first frame's pixels; duration, frame count and audio stay the same.
+For another moment (the finished result with the title), re-run the render with `--poster-at <seconds>`.
+Look at each jpg; if one lands on a transition or a caption, give the scene more hold after its last cue, or pick another moment.
 
 Players that show the first frame before playback (Teams, SharePoint, Slack, a plain `<video>` tag) use frame 0 as the idle thumbnail.
-YouTube doesn't: it offers its own auto-picked frames or a custom upload, so upload `<video-name>.jpg` there as the thumbnail.
-Replace only the first frame's pixels with the poster; duration, frame count and audio stay the same.
-From `<output-dir>`:
-
-```bash
-ffmpeg -y -i <video-name>.mp4 -i <video-name>.jpg \
-  -filter_complex "[0:v][1:v]overlay=0:0:enable='eq(n,0)'[v]" \
-  -map "[v]" -map "0:a?" -c:v libx264 -crf 18 -preset slow -pix_fmt yuv420p \
-  -c:a copy -movflags +faststart work/poster.mp4 \
-  && mv -f work/poster.mp4 <video-name>.mp4
-```
-
-Keep `<video-name>.jpg` alongside as the upload thumbnail.
+YouTube doesn't: it offers its own auto-picked frames or a custom upload, so upload the jpg there as the thumbnail.
 
 ## Write captions.srt
 
 Write the caption phrases and timings from Step 3 to `<output-dir>/captions.srt`, even though captions are burned in: players that support subtitles (Stream, SharePoint, YouTube) use it for search and accessibility.
 Times are absolute in the final video (scene start + phrase offset).
+Write it before the render: the render wrapper reads it, next to the plan, for the preview stills and the poster moment.
 
 ```
 1
@@ -190,16 +165,16 @@ With `--no-captions`, still write `captions.srt` (it only skips the burned-in ve
 
 ## Run the video gates
 
-Once `captions.srt` exists, measure the final mp4 (from `<output-dir>`):
+Measure every mp4 the wrapper wrote, one run per file (from `<output-dir>`):
 
 ```bash
-uv run --project <skill-dir>/scripts <skill-dir>/scripts/video_gates.py <video-name>.mp4 --srt captions.srt
+uv run --project <skill-dir>/scripts <skill-dir>/scripts/video_gates.py <mp4> --srt captions.srt
 ```
 
 - **G-blank:** no run of more than 3 blank frames (one flat colour: an empty ground between scenes, a black or white flash).
   A dip through the background lasts 3 frames at most; a longer empty gap reads as a broken video.
   A designed cut to black at the very end may run 15 frames.
-- **G-captions:** every cue in `captions.srt` has lines of at most 37 characters (BBC), at most 2 lines (3 with `--vertical`, for a vertical video), and stays on screen at least 0.3s per word.
+- **G-captions:** every cue in `captions.srt` has lines of at most 37 characters (BBC), at most 2 lines (3 in a vertical video; the gate reads the frame size from the mp4), and stays on screen at least 0.3s per word.
 - **G-end:** the video ends at most 1.4s after the last caption, or 3.5s when `credits.txt` exists (the outro credit line needs 2.5s).
   Under 0.5s is a note: the result may be cut off.
 

@@ -45,7 +45,7 @@ def caption_units() -> None:
     # BBC limit of 37 characters per line: 37 passes, 38 fails.
     assert caption_problems(cue("x" * 37), False) == []
     assert any("38 characters" in p for p in caption_problems(cue("x" * 38), False))
-    # 3 lines fail in landscape, pass with --vertical; 4 fail either way.
+    # 3 lines fail in landscape, pass in a vertical video; 4 fail either way.
     three = cue("one two\nthree four\nfive six")
     assert any("3 lines" in p for p in caption_problems(three, False))
     assert caption_problems(three, True) == []
@@ -96,13 +96,17 @@ def end_to_end() -> None:
         srt.write_text("1\n00:00:00,000 --> 00:00:05,200\nHello\n", encoding="utf-8")
         assert "G-end PASS (note)" in gates(video, srt).stdout
 
-        # G-captions through the CLI: a 38-character line fails; 3 lines fail unless --vertical.
+        # G-captions through the CLI: a 38-character line fails; 3 lines fail on this landscape video and pass on a
+        # portrait one, read from the mp4's own frame size.
         srt.write_text(cue("x" * 38, "00:00:05,200"), encoding="utf-8")
         cli = gates(video, srt)
         assert cli.returncode == 1 and "G-captions FAIL" in cli.stdout, cli.stdout
         srt.write_text(cue("one two\nthree four\nfive six", "00:00:05,200"), encoding="utf-8")
         assert "G-captions FAIL" in gates(video, srt).stdout
-        assert "G-captions PASS" in gates(video, srt, "--vertical").stdout
+        portrait = Path(d) / "p.mp4"
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "testsrc2=s=180x320:r=30:d=5.3",
+                        "-c:v", "libx264", "-pix_fmt", "yuv420p", str(portrait)], check=True)
+        assert "G-captions PASS" in gates(portrait, srt).stdout
 
 
 if __name__ == "__main__":

@@ -137,11 +137,12 @@ The brief is the boundary: teaching content, steps, labels and audio levels belo
 ## Several formats
 
 One composition and one timeline serve every format; captions and chapters are shared.
+The formats are the plan's `## Formats` (or its `## Format:` line); the wrapper reads them from `--plan`.
 Author the root at landscape: `data-width="1920" data-height="1080"` (the wrapper needs both) and `data-format="landscape"`.
 For each format the render wrapper copies the composition to `work/formats/<format>/` and sets the copy's root `data-format`; every composition element sized like the root (the root, sub-composition hosts, and the roots in `compositions/*.html`) gets the format's `data-width` and `data-height`, and one at another size (an inset) keeps its own.
 Your composition is never edited.
 Lay each format out for its frame with per-format CSS (`[data-format="vertical"] .stage { ... }`), not by cropping; use JS that reads the root's `data-format` only if CSS can't do it.
-Preview stills and snapshots set the same three attributes by hand.
+To snapshot one format yourself, snapshot its copy in `work/formats/<format>/` (`render.py ... --stills` writes the copies and the preview stills).
 A 3D canvas is sized in pixels, so size it from its container at build time (`clientWidth`, `clientHeight`) and pass those to `createStage`; widen `viewHeight` on narrow frames so the object fits (`references/3d-scenes.md`).
 Vertical: keep captions clear of the right-hand app rail (`check` warns `outside_safe_zone`): a caption box inset more on the right than the left, about 38px type.
 
