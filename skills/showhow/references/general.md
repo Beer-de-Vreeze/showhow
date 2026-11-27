@@ -97,7 +97,8 @@ In `general` mode there is no product theme to read. Unless the user names brand
 
 1. Browse `assets/frame-presets/` here and `../hyperframes/assets/frame-presets/` (the lookup order is in `SKILL.md`; the table in `../hyperframes/references/look.md`) and pick the preset that fits the topic and audience (`blue-professional` -> calm and neutral, `capsule` -> warm).
 2. Stage the composition with it: `stage.py composition --theme <name>` (`step-3-compose.md`).
-   A preset without `paper`, `ink`, `accent` and `muted` colours or without its font files fails staging, naming what is missing: then write `work/theme/FRAME.md` with those keys mapped from the preset (and the user's brand colors or fonts if given), put the font files in `work/theme/fonts/`, and pass `--theme work/theme`.
+   Staging maps a stock preset's colour keys onto `paper`, `ink`, `accent` and `muted` (rule in `scripts/stage.py`) and, as the presets ship no font files, writes the font names with a system-font fallback instead of `@font-face`.
+   A preset whose colours can't be mapped fails staging, naming the missing key: then write `work/theme/FRAME.md` with those keys (and the user's brand colors or fonts if given), put any font files in `work/theme/fonts/`, and pass `--theme work/theme`.
 
 If the presets aren't installed, choose a calm palette and an embeddable font pairing per `../hyperframes/references/look.md` and write it into the plan.
 
