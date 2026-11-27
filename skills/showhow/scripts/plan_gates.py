@@ -18,6 +18,11 @@ P-end:    a howto (and a general task) ends on a "Now try it" scene, not a recap
 P-described: every number and **bold label** in a scene's optional "On screen:" line is also in that
           scene's "Narration:" line (WCAG 1.2.5); numbers match by digits ("40x" and "1,700" match
           "40" and "1700"), labels ignore case. Runs in every mode; skipped without "On screen:" lines.
+Explainer mode (no counters, so no P-steps or P-action; P-time has no step minimum):
+P-need:   no "[NEED" marker left in the narration (scenes or the "## Narration script" section).
+P-visual: every voiced scene has exactly one "Visual:" from VISUALS.
+P-time:   total under 180s; a total outside 60-120s passes with a warning.
+P-end:    the last scene before the outro is a recap.
 P-render: with --chapters, the rendered steps match the plan's count and each lasts the minimum.
 Exit code 1 when a gate fails.
 """
@@ -31,8 +36,10 @@ from pathlib import Path
 
 from video_gates import video_duration
 
-MIN_STEP = {"howto": 6.0, "quick-tip": 5.0, "update": 10.0, "general": 6.0}
-HARD_LIMIT = {"howto": 180.0, "quick-tip": 60.0, "update": 120.0, "general": 180.0}
+MIN_STEP = {"howto": 6.0, "quick-tip": 5.0, "update": 10.0, "general": 6.0, "explainer": 0.0}
+HARD_LIMIT = {"howto": 180.0, "quick-tip": 60.0, "update": 120.0, "general": 180.0, "explainer": 180.0}
+# The visual menu for explainer scenes; later tickets add their types here (references/explainer.md).
+VISUALS = ("flow", "chart", "map", "photo", "card")
 MAX_STEPS = {"howto": 8, "quick-tip": 3, "update": 5, "general": 8}
 MULTI_ACTION = re.compile(r"\bthen\b|;|->|→|\band\s+(?:click|press|select|type|open|choose|drag)\b", re.I)
 
@@ -42,7 +49,7 @@ def parse_plan(text: str) -> dict:
     if not mode_line:
         raise SystemExit("no '## Mode' section with howto, update or general in the plan")
     mode = mode_line.group(1).lower()
-    if mode not in ("howto", "update", "general"):
+    if mode not in ("howto", "update", "general", "explainer"):
         raise SystemExit(f"unknown mode {mode!r} in the plan")
     if mode != "update" and re.search(r"^- Preset:\s*`?quick-tip", text, re.M | re.I):
         mode = "quick-tip"
@@ -54,12 +61,14 @@ def parse_plan(text: str) -> dict:
         action = re.search(r"^Action:\s*(.+)$", body, re.M)
         on_screen = re.search(r"^On screen:\s*(.+)$", body, re.M)
         narration = re.search(r"^Narration:\s*(.+)$", body, re.M)
+        visual = re.search(r"^Visual:\s*(.+)$", body, re.M)
         scenes.append({
             "n": int(m.group(1)), "name": m.group(2).strip(), "secs": float(m.group(3)),
             "counter": (int(counter.group(1)), int(counter.group(2))) if counter else None,
             "action": action.group(1).strip() if action else "",
             "on_screen": on_screen.group(1).strip() if on_screen else "",
             "narration": narration.group(1).strip() if narration else "",
+            "visual": visual.group(1).strip("[]*` ").lower() if visual else "",
         })
     if not scenes:
         raise SystemExit("no '### Scene N - name - Ns' blocks in the plan's storyboard")
@@ -68,7 +77,8 @@ def parse_plan(text: str) -> dict:
         acts = [sc for sc in scenes if has_action(sc)]
         for k, sc in enumerate(acts, 1):
             sc["counter"] = (k, len(acts))
-    return {"mode": mode, "scenes": scenes}
+    script = re.search(r"^## Narration script\s*\n(.*?)(?=^## |\Z)", text, re.M | re.S)
+    return {"mode": mode, "scenes": scenes, "script": script.group(1) if script else ""}
 
 
 def numbers(text: str) -> set[str]:
@@ -93,6 +103,8 @@ def step_scenes(plan: dict) -> list[dict]:
 def check_plan(plan: dict) -> list[tuple[str, bool, str]]:
     mode, scenes, steps = plan["mode"], plan["scenes"], step_scenes(plan)
     results = []
+    if mode == "explainer":
+        return check_explainer(plan) + check_described(scenes)
 
     totals = {c[1] for c in (s["counter"] for s in steps)}
     order = [s["counter"][0] for s in steps]
@@ -125,9 +137,41 @@ def check_plan(plan: dict) -> list[tuple[str, bool, str]]:
         ok = "try" in body[-1]["name"].lower()
         results.append(("P-end", ok, f"last scene is {body[-1]['name']!r}" + ("" if ok else "; end on 'Now try it' with a concrete example, not a recap")))
 
-    if any(s["on_screen"] for s in scenes):
-        gaps = [f"scene {s['n']} missing {', '.join(g)}" for s in scenes if s["on_screen"] and (g := described_gaps(s))]
-        results.append(("P-described", not gaps, "on-screen facts are spoken" if not gaps else "; ".join(gaps)))
+    return results + check_described(scenes)
+
+
+def check_described(scenes: list[dict]) -> list[tuple[str, bool, str]]:
+    if not any(s["on_screen"] for s in scenes):
+        return []
+    gaps = [f"scene {s['n']} missing {', '.join(g)}" for s in scenes if s["on_screen"] and (g := described_gaps(s))]
+    return [("P-described", not gaps, "on-screen facts are spoken" if not gaps else "; ".join(gaps))]
+
+
+def check_explainer(plan: dict) -> list[tuple[str, bool, str]]:
+    scenes = plan["scenes"]
+    needs = re.findall(r"\[NEED[^\]]*\]?", plan["script"] + " " + " ".join(s["narration"] for s in scenes))
+    results = [("P-need", not needs, "no [NEED] markers left" if not needs else "unfilled: " + "; ".join(needs))]
+
+    bad = []
+    for s in scenes:
+        if not s["narration"]:
+            continue
+        kinds = [v.strip() for v in re.split(r"[,/+]|\band\b", s["visual"]) if v.strip()]
+        if len(kinds) != 1:
+            bad.append(f"scene {s['n']} has {len(kinds) or 'no'} Visual: values (need exactly one)")
+        elif kinds[0] not in VISUALS:
+            bad.append(f"scene {s['n']} unknown visual {kinds[0]!r} (allowed: {', '.join(VISUALS)})")
+    results.append(("P-visual", not bad, "one known visual per voiced scene" if not bad else "; ".join(bad)))
+
+    total = sum(s["secs"] for s in scenes)
+    msg = f"total {total:.0f}s (limit {HARD_LIMIT['explainer']:.0f}s)"
+    if not 60 <= total <= 120:
+        msg += "; warning: outside 60-120s"
+    results.append(("P-time", total <= HARD_LIMIT["explainer"], msg))
+
+    body = [sc for sc in scenes if not re.search(r"outro|credit|end card", sc["name"], re.I)] or scenes
+    ok = "recap" in body[-1]["name"].lower()
+    results.append(("P-end", ok, f"last scene is {body[-1]['name']!r}" + ("" if ok else "; end on a recap")))
     return results
 
 
@@ -146,6 +190,8 @@ def parse_chapters(text: str, duration: float) -> list[tuple[str, float]]:
 
 def check_render(plan: dict, chapters: list[tuple[str, float]]) -> tuple[str, bool, str]:
     mode = plan["mode"]
+    if mode == "explainer":
+        return ("P-render", True, f"{len(chapters)} chapters (one per section; no step count to match)")
     word = {"update": r"^change\s*\d+", "general": r"^(?:step|point)\s*\d+"}.get(mode, r"^step\s*\d+")
     steps = [(t, d) for t, d in chapters if re.match(word, t, re.I)]
     planned = max((s["counter"][1] for s in step_scenes(plan)), default=0)

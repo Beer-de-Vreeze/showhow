@@ -30,7 +30,7 @@ With `--no-voice`, the same script becomes the caption text; plan about 0.35s pe
 # Showhow Plan: [Title]
 
 ## Mode
-[howto / update / general] - [task, topic, or release and range]
+[howto / update / general / explainer] - [task, topic, or release and range]
 
 ## Goal
 [howto and general: "After this video you can ..." (or "... you know how ..." for a topic) / update: "What's new in [version]: ..."]
@@ -50,6 +50,12 @@ With `--no-voice`, the same script becomes the caption text; plan about 0.35s pe
 
 ## House style
 [the `~/.showhow/verdicts.md` rules that apply to this video, and any skipped because a teaching law wins; "none" when the file doesn't exist (house-style.md)]
+
+## Script source (explainer only)
+[pasted / drafted]
+
+## Formats (explainer only)
+[landscape]
 
 ## Format: [landscape / vertical / square] - [width]x[height]
 ## Target duration: [seconds, from the script word count]
@@ -82,6 +88,8 @@ Highlight: [the exact element that gets the ring / spotlight / zoom, and when]
 Action: [cursor click / typing "value" / select option / drag, or none]
 Result: [what visibly changes after the action]
 Narration: [the lines for this scene]
+Visual: [explainer only: one of flow / chart / map / photo / card]
+Params: [explainer only, optional: JSON for the visual, e.g. {"key": "value"}]
 Caption: [same as narration, one phrase at a time, at most 37 characters per line, 2 lines (3 on vertical), 0.3s per word on screen]
 On screen: [title cards and labels, if any; every number and **bold label** written here must also be spoken in this scene's Narration (P-described)]
 Audio: [click / typing / none; music level]
@@ -111,6 +119,11 @@ Transition: [cut / soft fade / slide / zoom-out] -> Scene 2
 | Now try it | One line inviting the viewer to do the task now, with a concrete example or practice data. | 3-5s |
 
 Mark each subtask boundary in the storyboard (the end of a group of steps that finishes one part of the task) and give it about 2s of silent hold on the result.
+
+### explainer
+
+Scenes, visuals and the script input rules are in `references/explainer.md`.
+One voiced sentence per scene, each with a `Visual:`, no counters, a recap before the outro.
 
 ### update
 
