@@ -5,8 +5,8 @@
 from plan_gates import check_plan, check_render, parse_chapters, parse_plan
 
 
-def scene(n: int, name: str, secs: float, counter: str = "none", action: str = "none", on_screen: str = "", narration: str = "") -> str:
-    extra = (f"On screen: {on_screen}\n" if on_screen else "") + (f"Narration: {narration}\n" if narration else "")
+def scene(n: int, name: str, secs: float, counter: str = "none", action: str = "none", on_screen: str = "", narration: str = "", visual: str = "") -> str:
+    extra = (f"On screen: {on_screen}\n" if on_screen else "") + (f"Narration: {narration}\n" if narration else "") + (f"Visual: {visual}\n" if visual else "")
     return f"### Scene {n} - {name} - {secs}s\nCounter: {counter}\nAction: {action}\nResult: x\n{extra}\n"
 
 
@@ -72,6 +72,23 @@ def main() -> None:
     assert not ok and "scene 2" in msg and "1700" in msg, msg
     # Backwards compatibility: no On screen: field means nothing to check (existing plans above).
     assert "P-described" not in verdicts(good)
+
+    # explainer: one visual per voiced scene, no counters, a recap at the end, 180s limit.
+    def expl(secs: float = 18, **over) -> str:
+        sc = [("Outcome", "card"), ("Name the parts", "photo"), ("Air in", "flow"), ("Thrust", "chart"), ("Recap", "card")]
+        return plan("explainer", "".join(scene(i, n, secs, narration=over.get(n, f"Line {i}."), visual=over.get("v" + n, v))
+                                         for i, (n, v) in enumerate(sc, 1)) + over.get("tail", ""), preset="friendly")
+    good_e = expl()
+    assert all(verdicts(good_e).values()) and "P-steps" not in verdicts(good_e), check_plan(parse_plan(good_e))
+    assert not verdicts(expl(Thrust="It started in [NEED: launch year]."))["P-need"]
+    assert not verdicts(expl(vThrust=""))["P-visual"]
+    name, ok, msg = [r for r in check_plan(parse_plan(expl(vThrust="hologram"))) if r[0] == "P-visual"][0]
+    assert not ok and "hologram" in msg, msg
+    assert not verdicts(expl(38))["P-time"]
+    name, ok, msg = [r for r in check_plan(parse_plan(expl(30))) if r[0] == "P-time"][0]
+    assert ok and "outside 60-120s" in msg, msg
+    assert not verdicts(expl().replace("Recap", "Wrap-up"))["P-end"]
+    assert verdicts(expl() + scene(6, "Outro", 3))["P-end"]
 
     for broken in ("no mode here", "## Mode\nhowto\n\n## Storyboard\nnothing\n"):
         try:

@@ -13,16 +13,16 @@ Options (flags or plain language):
 
 | Option | Default |
 |---|---|
-| `--mode howto\|update\|general` | inferred: a task -> `howto`; a version, tag, PR, range or "what's new" -> `update`; a task this project's code can't show (a process, a third-party app, a physical task) or a topic -> `general` |
-| `--style <name>` (alias `--tone`; see Styles) or freeform | `clean` for howto and general, `release` for update |
+| `--mode howto\|update\|general\|explainer` | inferred: a task -> `howto`; a version, tag, PR, range or "what's new" -> `update`; a task this project's code can't show (a process, a third-party app, a physical task) -> `general`; a topic or concept ("how X works", "why Y") or a pasted script -> `explainer` |
+| `--style <name>` (alias `--tone`; see Styles) or freeform | `clean` for howto and general, `release` for update, `friendly` for explainer |
 | `--format landscape\|vertical\|square` | landscape (1920x1080; vertical 1080x1920, square 1080x1080), 30fps |
 | `--audience <who>` | inferred |
-| `--theme <frame preset>` (`../hyperframes/assets/frame-presets/`) | product theme; general: the preset that fits the topic |
+| `--theme <frame preset>` (`../hyperframes/assets/frame-presets/`) | product theme; general and explainer: the preset that fits the topic |
 | `--voice <Kokoro id>` (`npx hyperframes tts --list`) | `af_heart` |
 | `--title <text>` | inferred |
 | `--duration <seconds>` | none: the narration sets the length; a typed value is the target the script is written to, within the limits below |
 | `--no-voice`, `--no-captions`, `--no-sfx` | all on |
-| `--music` / `--no-music` | music bed off for `clean`, `friendly`, `quick-tip`, on for `release`; `--no-music` wins |
+| `--music` / `--no-music` | music bed off for `clean`, `friendly`, `quick-tip`, on for `release` and `explainer`; `--no-music` wins |
 
 **Other inputs.** `install`: on Windows run `powershell -NoProfile -ExecutionPolicy Bypass -File <skill-dir>/scripts/install.ps1`, report the result, tell the user to restart their agent app (a running session keeps its old PATH), and stop; elsewhere say the installer is Windows-only, list what README.md "Install" lists, and stop.
 `options`: list the styles, the themes (folder names in `../hyperframes/assets/frame-presets/`) and the voices, each with its flag, and stop.
@@ -54,6 +54,10 @@ In short:
 - A mechanism gets a schematic diagram; when the shape itself is the point (parts that fit together), one schematic 3D object in three.js via Hyperframes (`../hyperframes/references/types/3d.md`); never 3D for UI, screens or charts.
 - Physical tasks: ask for first-person, hands-visible photos.
 - Everything else (shape, laws, sound, deliverables) works as for howto; a topic without steps uses the points shape in `references/general.md`.
+
+**explainer:** a topic or a pasted script, not a task.
+Read `references/explainer.md` and follow it; it reuses `references/general.md` for sourcing, licensing, schematics, chart honesty and the design system, and replaces the step shape.
+In short: a pasted script is narrated word for word; a topic gets a drafted, sourced script and the run stops for approval; a fact you can't source is written `[NEED: <what>]`.
 
 **update:** pin the release range (tags, version-bump commits, CHANGELOG; state the range you chose).
 Read the team's own release notes first (CHANGELOG, release commit subjects, PR titles, features/status docs), then the commits in the range.
@@ -89,7 +93,11 @@ Target 45-120s, hard limit 180s (split into parts beyond that); `quick-tip` 20-4
 Target 30-90s, hard limit 120s.
 Every promise on a change card is pictured in its demo, and each change opens on a different screen or crop; a "Fixed" or redesigned screen may morph from the previous release's real screen into the new one (before/after, `references/tones.md`).
 
-**Gate:** `uv run --project <skill-dir>/scripts <skill-dir>/scripts/plan_gates.py showhow-plan.md` passes (including P-described: every number and bold label in a scene's `On screen:` line is also spoken in that scene's narration); fix the plan, never argue a FAIL.
+**Shape (explainer):** Outcome -> Name the parts -> one scene per voiced sentence, each with one `Visual:`, grouped in sections -> Recap (`references/explainer.md`).
+No step counter; chapters per section.
+Target 60-120s, hard limit 180s.
+
+**Gate:** `uv run --project <skill-dir>/scripts <skill-dir>/scripts/plan_gates.py showhow-plan.md` passes (explainer: P-need, P-visual, P-time, P-end; every mode: including P-described: every number and bold label in a scene's `On screen:` line is also spoken in that scene's narration); fix the plan, never argue a FAIL.
 
 ## Teaching laws
 
@@ -130,7 +138,7 @@ Generate it per scene straight into the composition: `npx hyperframes tts "<text
 Transcribe the clips to catch mispronounced product names; fix by respelling the TTS input only.
 `npx hyperframes transcribe` overwrites `transcript.json` on every run: copy it to `work/tx/words-NN.json` after each clip.
 Narration is English; if the user asks for another language, check `npx hyperframes tts --list` for a matching voice, and if there is none, offer English narration with captions in their language.
-Music: none by default in `clean`, `friendly` and `quick-tip` (it hurts retention in teaching videos); with `--music`, and always in `release`, a quiet bed ducked under the voice (about 0.1 under narration, 0.3 without), never cut off abruptly.
+Music: none by default in `clean`, `friendly` and `quick-tip` (it hurts retention in teaching videos); with `--music`, and by default in `release` and `explainer` (`--no-music` wins), a quiet bed ducked under the voice (about 0.1 under narration, 0.3 without), never cut off abruptly.
 Use a bundled track; when none fits the mood, an Incompetech track (CC BY); generate one with MusicGen only when the user asks or Incompetech has nothing (`references/audio.md`, Music).
 How-tos: SFX mainly confirm visible actions (a soft click per click, soft ticks on typing, one accent on the result).
 Updates: score it with high energy around the demos (a soft reveal hit, card sounds, tag ticks, a payoff (bells allowed), music up and beat-locked on the hook, cards and outro), clicks and typing inside the demos.
