@@ -40,9 +40,9 @@ from pathlib import Path
 
 from video_gates import video_duration
 
-MIN_STEP = {"howto": 6.0, "quick-tip": 5.0, "update": 10.0, "general": 6.0, "explainer": 0.0}
+MIN_STEP = {"howto": 6.0, "quick-tip": 5.0, "update": 10.0, "general": 6.0}  # explainer has no steps
 HARD_LIMIT = {"howto": 180.0, "quick-tip": 60.0, "update": 120.0, "general": 180.0, "explainer": 180.0}
-# The visual menu for explainer scenes; later tickets add their types here (references/explainer.md).
+# The visual menu for explainer scenes; a new type is one entry here and one row in references/explainer.md.
 VISUALS = ("flow", "chart", "map", "photo", "card", "stroke-reveal", "kinetic-type", "data-anim", "morph", "flat-scene", "parallax", "scene3d")
 FIRST_SCENE_ONLY = ("parallax",)  # intro motion; it never competes with an explanation
 # Params.kind values with a recipe in assets/scene3d (references/3d-scenes.md); Params.model replaces any kind.
@@ -54,7 +54,7 @@ MULTI_ACTION = re.compile(r"\bthen\b|;|->|→|\band\s+(?:click|press|select|type
 def parse_plan(text: str) -> dict:
     mode_line = re.search(r"^## Mode\s*\n+\s*\[?(\w[\w-]*)", text, re.M)
     if not mode_line:
-        raise SystemExit("no '## Mode' section with howto, update or general in the plan")
+        raise SystemExit("no '## Mode' section with howto, update, general or explainer in the plan")
     mode = mode_line.group(1).lower()
     if mode not in ("howto", "update", "general", "explainer"):
         raise SystemExit(f"unknown mode {mode!r} in the plan")
@@ -104,6 +104,11 @@ def described_gaps(scene: dict) -> list[str]:
     return sorted(numbers(shown) - numbers(said)) + [f"'{b}'" for b in labels if b.lower() not in spoken]
 
 
+def body_scenes(scenes: list[dict]) -> list[dict]:
+    """The scenes minus any credits, outro or end card: P-end judges the last of these."""
+    return [sc for sc in scenes if not re.search(r"outro|credit|end card", sc["name"], re.I)] or scenes
+
+
 def has_action(scene: dict) -> bool:
     return bool(scene["action"]) and scene["action"].strip("[]*` ").lower() not in ("none", "-", "n/a")
 
@@ -144,8 +149,7 @@ def check_plan(plan: dict) -> list[tuple[str, bool, str]]:
 
     topic = mode == "general" and not any(has_action(sc) for sc in scenes)
     if mode in ("howto", "general") and not topic:
-        # A credits or outro card may follow "Now try it"; judge the last scene before it.
-        body = [sc for sc in scenes if not re.search(r"outro|credit|end card", sc["name"], re.I)] or scenes
+        body = body_scenes(scenes)
         ok = "try" in body[-1]["name"].lower()
         results.append(("P-end", ok, f"last scene is {body[-1]['name']!r}" + ("" if ok else "; end on 'Now try it' with a concrete example, not a recap")))
 
@@ -184,7 +188,7 @@ def check_explainer(plan: dict) -> list[tuple[str, bool, str]]:
         msg += "; warning: outside 60-120s"
     results.append(("P-time", total <= HARD_LIMIT["explainer"], msg))
 
-    body = [sc for sc in scenes if not re.search(r"outro|credit|end card", sc["name"], re.I)] or scenes
+    body = body_scenes(scenes)
     ok = "recap" in body[-1]["name"].lower()
     results.append(("P-end", ok, f"last scene is {body[-1]['name']!r}" + ("" if ok else "; end on a recap")))
     return results + check_params(plan)
