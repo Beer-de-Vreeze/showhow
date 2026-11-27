@@ -200,8 +200,15 @@ def size_copy(composition: Path, copy: Path, fmt: str) -> None:
             return tag
         return re.sub(attr("height"), f'data-height="{height}"', re.sub(attr("width"), f'data-width="{width}"', tag))
 
-    shutil.rmtree(copy, ignore_errors=True)
-    shutil.copytree(composition, copy)
+    if copy.resolve().is_relative_to(composition.resolve()):
+        raise SystemExit(f"--work {copy.parent.parent} is inside the composition {composition}; copying it would recurse. Put work next to the composition.")
+    try:
+        # A stale copy that can't be removed (a preview or Explorer holding a file on Windows) fails this format by name.
+        if copy.exists():
+            shutil.rmtree(copy)
+        shutil.copytree(composition, copy)
+    except OSError as e:
+        raise SystemExit(f"could not rebuild the {fmt} copy at {copy}: {e}. Close anything using it and rerun.")
     for page in [copy / "index.html", *sorted((copy / "compositions").glob("*.html"))]:
         html = page.read_text(encoding="utf-8")
         if page == copy / "index.html":
@@ -237,10 +244,10 @@ def render_formats(
                 after(out, work / f)
             done.append(out)
         except SystemExit as e:
-            failed.append(f); why = str(e).splitlines()[0]
+            failed.append(f"{f} ({str(e).splitlines()[0]})")
             print(f"format {f} failed: {e}", file=sys.stderr)
     if failed:
-        raise SystemExit(f"render failed for format {', '.join(failed)} ({why}); kept: {', '.join(map(str, done)) or 'none'}")
+        raise SystemExit(f"render failed for format {'; '.join(failed)}; kept: {', '.join(map(str, done)) or 'none'}")
     return done
 
 

@@ -216,6 +216,26 @@ def main() -> None:
         # format_normalised_as_it_finishes: the kept landscape file is loudness-normalised even though vertical failed.
         assert normalised == [("video-landscape.mp4", root / "fwork" / "landscape")], normalised
         assert "chrome crashed" in (root / "fwork" / "vertical" / "render.log").read_text(encoding="utf-8")
+        # each_failure_keeps_its_reason: two failed formats are each named with their own cause.
+        both = PerOutputRunner(fail=("landscape", "vertical"))
+        try:
+            render_formats(fcomp, fdir / "two.mp4", root / "f2work", parse_formats("landscape,vertical"), run=both)
+            raise AssertionError("expected an exit")
+        except SystemExit as e:
+            assert "two-landscape.mp4" in str(e) and "two-vertical.mp4" in str(e), e
+
+        # copy_error_is_named: a format copy that can't be rebuilt (here a file in its place) fails that format with
+        # a message naming it; the next format still renders.
+        cwork = root / "cwork"
+        (cwork / "formats").mkdir(parents=True)
+        (cwork / "formats" / "landscape").write_text("locked", encoding="utf-8")
+        expect_exit(lambda: render_formats(fcomp, fdir / "copy.mp4", cwork, parse_formats("landscape,vertical"), run=PerOutputRunner()), "landscape")
+        assert (fdir / "copy-vertical.mp4").is_file()
+
+        # work_inside_composition_refused: copying the composition into its own work folder would recurse.
+        expect_exit(lambda: render_formats(fcomp, fdir / "in.mp4", fcomp / "work", ["vertical"], run=PerOutputRunner()), "inside")
+        assert not (fcomp / "work").exists()
+
         assert parse_formats("all") == ["landscape", "vertical", "square"]
         expect_exit(lambda: parse_formats("wide"), "unknown format")
 
