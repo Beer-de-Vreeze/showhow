@@ -92,3 +92,22 @@ A new kind is one row here, one entry in `SCENE3D_KINDS` in `scripts/plan_gates.
   The two 3s stills must match pixel for pixel; any difference is hidden state.
 - Do it with `--no-browser-gpu` (SwiftShader) and with `--browser-gpu`, and render one video on one path only: the two paths differ slightly from each other.
 - Look at a frame sheet across the scene: teeth interleaved at the mesh points, labels clear of the object.
+
+## Machine effects: cutaway, exploded view, slow motion, airflow
+
+These are options on `kind: machine`, not a new kind.
+`Params` switches them on with booleans (`"cut": true`, `"explode": true`, `"slowmo": true`, `"flow": true`), which the number gate ignores; when each plays is the scene's own timing.
+`scripts/fixtures/machine-effects/` shows each in its own scene.
+Every one is a pure function of `t`.
+
+- Cutaway: `sectionCut(stage, machine)` returns `set(level)`.
+  It clips every part under `machine` with one horizontal plane, writes the stencil (back faces +1, front faces -1) and draws a hatched cap where the count is not zero.
+  Parts must be closed solids.
+  Sweep the plane with `set(level)` from `render(t)`; a level of 50 or more means closed.
+  Shipped: the hatch (diagonal lines in world space, about 2 px wide at any zoom), not the flat-cap fallback.
+  It held up with rotating gears, a shaft in a bore and lifted parts; the cap does not outline parts that touch, so adjacent sections read as one hatched field.
+- Exploded view: give each part a vector and place it at `home + vector * explodeAmount(i, t, { at, stagger, dur })`; spin stays a function of `t`, so parts keep turning.
+- Slow motion: `timeMap`, as in the gear train; add a slow dive with `camera.zoom`.
+- Airflow: `flowParticles(stage, { count, seed, speed, length, spread })` and `points.update(t, amount)`.
+  Position is `flowPoint(i, t, seed, ...)`, a hash of the index and seed, so it is stateless and repeats every `1 / speed` seconds; take the seed from `seedOf(text)`.
+- three-bvh-csg is not used: no part needs real wall thickness yet.

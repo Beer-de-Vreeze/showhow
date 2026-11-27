@@ -11,6 +11,10 @@ skills/showhow/scripts/out/
 skills/showhow/scripts/fixtures/gear-train/assets/
 skills/showhow/scripts/fixtures/gear-train/.hyperframes/
 
+# machine-effects fixture: scene3d is copied in before each run
+skills/showhow/scripts/fixtures/machine-effects/assets/
+skills/showhow/scripts/fixtures/machine-effects/.hyperframes/
+
 # motion-2d fixture: kit and GSAP are copied in before each run
 skills/showhow/scripts/fixtures/motion-2d/assets/
 skills/showhow/scripts/fixtures/motion-2d/.hyperframes/
