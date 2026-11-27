@@ -98,6 +98,7 @@ On top of `references/step-2-plan.md`:
 
 - `## Mode` is `explainer`.
 - `## Script source` is `pasted` or `drafted`.
+- `## Narration script` has one `### <section>` heading per section; P-render counts them against `chapters.txt`.
 - `## Formats` lists the formats to render; the default is all three (`landscape, vertical, square`); one name renders only that format.
 - Each storyboard scene has `Visual:` and, when the type takes numbers or names, `Params:`; `Counter:` is `none`.
 - `## Sources` and `## Unverified` stay, as in `general` mode.
@@ -113,6 +114,7 @@ On top of `references/step-2-plan.md`:
 - **P-params:** a `scene3d` scene has a known `Params.kind` or a `Params.model`, and every number in its `Params:` (strings like `"40%"` included) is spoken in the narration.
   A globe needs a country code from the bundled map or a route of `{"name", "lat", "lon"}` places (`references/3d-scenes.md`).
 - **P-described:** as in every mode.
+- **P-render** (with `--chapters` and `--video`): one chapter per `### ` section heading in `## Narration script`, or 2-4 chapters when the script has no headings.
 - There is no P-steps or P-action: explainers have no counters.
 
 ## Deliverables

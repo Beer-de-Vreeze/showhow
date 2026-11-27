@@ -93,6 +93,16 @@ def main() -> None:
     silent = expl() + "### Scene 6 - Outro - 3s\nNarration:\nOn screen: The end\nAudio: music\n\n"
     assert parse_plan(silent)["scenes"][-1]["narration"] == "" and verdicts(silent)["P-visual"], check_plan(parse_plan(silent))
 
+    # P-render in explainer mode: one chapter per "### " section of the narration script (spec #14 "chapters per
+    # section"); with no sections in the script, 2-4 chapters (references/explainer.md).
+    sectioned = parse_plan(expl() + "## Narration script\n\n### Parts\nLine 1.\n\n### Ratio\nLine 2.\n\n### Trade\nLine 3.\n")
+    three = parse_chapters("00:00 Parts\n00:20 Ratio\n00:50 Trade\n", 90)
+    assert check_render(sectioned, three)[1], check_render(sectioned, three)
+    name, ok, msg = check_render(sectioned, three[:2])
+    assert not ok and "2 chapters" in msg and "3 sections" in msg, msg
+    assert not check_render(parse_plan(expl()), parse_chapters("00:00 All of it\n", 90))[1]
+    assert check_render(parse_plan(expl()), three)[1]
+
     # 2D motion styles: stroke-reveal is a known visual; parallax is for the first scene only.
     assert verdicts(expl(vThrust="stroke-reveal"))["P-visual"]
     for style in ("kinetic-type", "data-anim", "morph", "flat-scene"):

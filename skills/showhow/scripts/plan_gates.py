@@ -25,7 +25,8 @@ P-time:   total under 180s; a total outside 60-120s passes with a warning.
 P-end:    the last scene before the outro is a recap.
 P-params: a "Visual: scene3d" scene has a "Params:" JSON object with a known "kind" (SCENE3D_KINDS) or a
           "model"; a globe has a known "country" code or a "route" of 2+ {name, lat, lon} places; every number in it, strings included, appears in the narration ("stages": 12 and "value": "40%" need "12" and "40" spoken).
-P-render: with --chapters, the rendered steps match the plan's count and each lasts the minimum.
+P-render: with --chapters, the rendered steps match the plan's count and each lasts the minimum; in explainer
+          mode there is one chapter per "### " section of the narration script (2-4 when it has none).
 Exit code 1 when a gate fails.
 """
 
@@ -262,7 +263,10 @@ def parse_chapters(text: str, duration: float) -> list[tuple[str, float]]:
 def check_render(plan: dict, chapters: list[tuple[str, float]]) -> tuple[str, bool, str]:
     mode = plan["mode"]
     if mode == "explainer":
-        return ("P-render", True, f"{len(chapters)} chapters (one per section; no step count to match)")
+        # One chapter per "### " section of the narration script; a script without sections still needs 2-4.
+        sections = len(re.findall(r"^### ", plan["script"], re.M))
+        ok = len(chapters) == sections if sections else 2 <= len(chapters) <= 4
+        return ("P-render", ok, f"{len(chapters)} chapters vs " + (f"{sections} sections in the narration script" if sections else "2-4 sections expected"))
     word = {"update": r"^change\s*\d+", "general": r"^(?:step|point)\s*\d+"}.get(mode, r"^step\s*\d+")
     steps = [(t, d) for t, d in chapters if re.match(word, t, re.I)]
     planned = max((s["counter"][1] for s in step_scenes(plan)), default=0)
