@@ -4,7 +4,7 @@
 
 Copies into <composition-dir>/assets/: kit/, scene3d/ (with its data), gsap/ (GSAP and the DrawSVG, MorphSVG,
 SplitText and MotionPath plugins), three/ (build, examples/jsm addons, the helvetiker_bold typeface), fonts/
-(the theme's font files and licences), and writes theme.css: @font-face for each font file and one :root
+(the theme's font files and licences), brand/ (the FRAME.md `logo:` and `music:` files, when given), and writes theme.css: @font-face for each font file and one :root
 token set, --paper --ink --accent --muted --font-display --font-body, from the theme's FRAME.md.
 A stock Hyperframes preset (no fonts/ folder, other colour keys) is mapped by the ALIASES rule below and
 gets its font names with a system-font fallback stack instead of @font-face. A preset the table can't map, or
@@ -28,7 +28,7 @@ from pathlib import Path
 
 from PIL import ImageColor
 
-from brand_kit import check, font_faces, frontmatter, parse_colors, valid_color
+from brand_kit import check, file_problems, font_faces, frontmatter, parse_colors, scalar, valid_color
 
 # Every version pin for staged assets lives here.
 GSAP = "gsap@3.14.2"
@@ -157,6 +157,11 @@ def stage(comp: Path, theme: Path, fetch=npm_fetch) -> None:
             raise SystemExit(f"{index} has no <head>")
         html = html[: m.end()] + "\n    " + HEAD + html[m.end():]
     css = theme_css(theme)  # validates the theme before anything is copied
+    # A kit's logo and music bed go to assets/brand/ (brand-kits.md); a path outside the theme folder is refused.
+    head = frontmatter((theme / "FRAME.md").read_text(encoding="utf-8"))
+    extras = [(theme / name, file_problems(theme, name, key)) for key in ("logo", "music") if (name := scalar(head, key))]
+    if problems := [p for _, ps in extras for p in ps]:
+        raise SystemExit(f"theme {theme} cannot be staged:\n" + "\n".join(f"FAIL {p}" for p in problems))
 
     a = comp / "assets"
     for name in ("kit", "scene3d"):
@@ -171,6 +176,8 @@ def stage(comp: Path, theme: Path, fetch=npm_fetch) -> None:
             copy(three / f, a / "three" / f)
     if (theme / "fonts").is_dir():
         copy(theme / "fonts", a / "fonts")
+    for src, _ in extras:
+        copy(src, a / "brand" / src.name)
     (a / "theme.css").write_text(css, encoding="utf-8")
     shutil.copy2(theme / "FRAME.md", comp / "frame.md")
     index.write_text(html, encoding="utf-8")

@@ -26,7 +26,7 @@ Pick a kit with `--brand <name>`, or `brand: <name>` under `## Defaults` in `~/.
 1. Stage the composition with it: `stage.py composition --brand <name>` (`step-3-compose.md`).
    It runs the check below first; a failing kit stops the run: tell the user which lines failed and do not fall back to another theme.
    It writes the kit's colours and fonts as the one token set the kit, scene3d and `bake_highlights.py` read, so no hex goes into scene code.
-2. Use the logo on the title and outro cards, `outro` as the outro line, `voice` as the voice and `music` as the music bed unless the user typed their own flags.
+2. Use the logo on the title and outro cards (staging copies it and the music file to `composition/assets/brand/`; never copy them by hand), `outro` as the outro line, `voice` as the voice and `music` as the music bed unless the user typed their own flags.
 
 A kit works in every mode, and it styles the video's own chrome: title, cards, counters, caption plate, outro, 2D visuals and scene3d.
 In howto and update, rebuilt product and third-party screens keep their own look (`design-floor.md`); never repaint a product's UI in the kit's colours.

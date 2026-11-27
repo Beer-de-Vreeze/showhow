@@ -116,6 +116,15 @@ def main() -> None:
         for decl in ("--paper: #EEF3F5;", "--ink: #12263A;", "--accent: #B5651D;", "--muted: #4A5B6A;",
                      '--font-display: "Inter", serif;', '--font-body: "Inter", sans-serif;'):
             assert decl in css, f"missing {decl} in brand theme.css:\n{css}"
+        # The kit's logo and music are staged too, so the title and outro cards never point outside the served folder.
+        assert (comp / "assets" / "brand" / "logo.svg").read_bytes() == (BRAND / "logo.svg").read_bytes()
+        tuned = tmp / "tuned"
+        shutil.copytree(BRAND, tuned)
+        (tuned / "bed.mp3").write_bytes(b"mp3")
+        (tuned / "FRAME.md").write_text((tuned / "FRAME.md").read_text(encoding="utf-8").replace("logo: logo.svg\n", "logo: logo.svg\nmusic: bed.mp3\n"), encoding="utf-8")
+        comp = composition(tmp / "tuned-comp")
+        stage.stage(comp, tuned, fetch=fetch)
+        assert (comp / "assets" / "brand" / "bed.mp3").read_bytes() == b"mp3"
 
         # Stock Hyperframes presets map through the alias table (fixture mimics the key shape: accent named primary,
         # no font files).
