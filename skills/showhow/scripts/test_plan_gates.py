@@ -89,6 +89,9 @@ def main() -> None:
     assert ok and "outside 60-120s" in msg, msg
     assert not verdicts(expl().replace("Recap", "Wrap-up"))["P-end"]
     assert verdicts(expl() + scene(6, "Outro", 3))["P-end"]
+    # The template's empty "Narration:" on a silent outro must not swallow the next line as narration.
+    silent = expl() + "### Scene 6 - Outro - 3s\nNarration:\nOn screen: The end\nAudio: music\n\n"
+    assert parse_plan(silent)["scenes"][-1]["narration"] == "" and verdicts(silent)["P-visual"], check_plan(parse_plan(silent))
 
     # 2D motion styles: stroke-reveal is a known visual; parallax is for the first scene only.
     assert verdicts(expl(vThrust="stroke-reveal"))["P-visual"]
