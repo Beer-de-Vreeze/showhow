@@ -83,8 +83,7 @@ Action: [cursor click / typing "value" / select option / drag, or none]
 Result: [what visibly changes after the action]
 Narration: [the lines for this scene]
 Caption: [same as narration, one phrase at a time, max 2 lines of ~42 characters]
-On-screen text: [title cards or labels, if any]
-On screen: [optional: every number and **bold label** the viewer must read here; each one must also be spoken in this scene's Narration (P-described)]
+On screen: [title cards and labels, if any; every number and **bold label** written here must also be spoken in this scene's Narration (P-described)]
 Audio: [click / typing / none; music level]
 Transition: [cut / soft fade / slide / zoom-out] -> Scene 2
 

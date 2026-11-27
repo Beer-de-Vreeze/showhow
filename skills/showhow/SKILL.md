@@ -89,7 +89,7 @@ Target 45-120s, hard limit 180s (split into parts beyond that); `quick-tip` 20-4
 Target 30-90s, hard limit 120s.
 Every promise on a change card is pictured in its demo, and each change opens on a different screen or crop; a "Fixed" or redesigned screen may morph from the previous release's real screen into the new one (before/after, `references/tones.md`).
 
-**Gate:** `uv run --project <skill-dir>/scripts <skill-dir>/scripts/plan_gates.py showhow-plan.md` passes (including P-described: every number and bold label in a scene's optional `On screen:` line is also spoken in that scene's narration); fix the plan, never argue a FAIL.
+**Gate:** `uv run --project <skill-dir>/scripts <skill-dir>/scripts/plan_gates.py showhow-plan.md` passes (including P-described: every number and bold label in a scene's `On screen:` line is also spoken in that scene's narration); fix the plan, never argue a FAIL.
 
 ## Teaching laws
 
