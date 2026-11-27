@@ -111,6 +111,22 @@ def main() -> None:
     name, ok, msg = [r for r in check_plan(parse_plan(s3d('{"kind": "volcano"}'))) if r[0] == "P-params"][0]
     assert not ok and "volcano" in msg, msg
 
+    # Numbers written as strings are checked too ("40%" and "2,500" reach the screen through hero-number), signs and
+    # float spelling match the narration's, and a model file name's digits are not figures.
+    def said(narration: str, params: str) -> tuple[bool, str]:
+        text = expl(Thrust=narration, vThrust="scene3d").replace("Visual: scene3d\n", f"Visual: scene3d\nParams: {params}\n")
+        return [r for r in check_plan(parse_plan(text)) if r[0] == "P-params"][0][1:]
+    ok, msg = said("Most of it is lost.", '{"kind": "hero-number", "value": "40%"}')
+    assert not ok and "40" in msg, msg
+    assert not said("It is very old.", '{"kind": "hero-number", "value": "2,500"}')[0]
+    assert said("Over 2,500 years old.", '{"kind": "hero-number", "value": "2,500"}')[0]
+    assert said("It runs at -40 degrees.", '{"kind": "hero-number", "value": -40}')[0]
+    assert said("It runs at -40 degrees.", '{"kind": "hero-number", "value": "-40°C"}')[0]
+    assert said("It costs 2.5 euros.", '{"kind": "hero-number", "value": 2.50}')[0]
+    assert said("It costs 2.50 euros.", '{"kind": "hero-number", "value": 2.5}')[0]
+    assert said("A gap of 0.00001 metres.", '{"kind": "hero-number", "value": 1e-05}')[0]
+    assert said("A gearbox.", '{"model": "gear-v2.glb"}')[0]
+
     # globe kind needs a country or a route of 2+ places (spec #14); route coordinates are not narration numbers.
     def p_params(params: str) -> tuple[bool, str]:
         return [r for r in check_plan(parse_plan(s3d(params))) if r[0] == "P-params"][0][1:]

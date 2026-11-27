@@ -24,7 +24,7 @@ P-visual: every voiced scene has exactly one "Visual:" from VISUALS; parallax on
 P-time:   total under 180s; a total outside 60-120s passes with a warning.
 P-end:    the last scene before the outro is a recap.
 P-params: a "Visual: scene3d" scene has a "Params:" JSON object with a known "kind" (SCENE3D_KINDS) or a
-          "model"; a globe has a "country" or a "route" of 2+ places; every number in it appears in the narration ("stages": 12 needs "12" spoken).
+          "model"; a globe has a "country" or a "route" of 2+ places; every number in it, strings included, appears in the narration ("stages": 12 and "value": "40%" need "12" and "40" spoken).
 P-render: with --chapters, the rendered steps match the plan's count and each lasts the minimum.
 Exit code 1 when a gate fails.
 """
@@ -91,7 +91,9 @@ def parse_plan(text: str) -> dict:
 
 
 def numbers(text: str) -> set[str]:
-    return set(re.findall(r"\d+(?:\.\d+)?", re.sub(r"(?<=\d),(?=\d{3})", "", text)))
+    """Digits as spoken: no thousands commas, no sign, no trailing decimal zeros ("2.50" and "2.5" match)."""
+    found = re.findall(r"\d+(?:\.\d+)?", re.sub(r"(?<=\d),(?=\d{3})", "", text))
+    return {n.rstrip("0").rstrip(".") if "." in n else n for n in found}
 
 
 def described_gaps(scene: dict) -> list[str]:
@@ -188,13 +190,16 @@ def check_explainer(plan: dict) -> list[tuple[str, bool, str]]:
 
 
 def param_numbers(value) -> list[str]:
+    """Every figure in Params, normalised like numbers(): strings too ("40%" reaches the screen as text)."""
     if isinstance(value, dict):
-        # lat and lon are map coordinates the plan states, not figures the narration speaks.
-        return [n for k, v in value.items() if k not in ("lat", "lon") for n in param_numbers(v)]
+        # lat and lon are map coordinates the plan states, not figures; a model's file name is not a figure either.
+        return [n for k, v in value.items() if k not in ("lat", "lon", "model") for n in param_numbers(v)]
     if isinstance(value, list):
         return [n for v in value for n in param_numbers(v)]
     if isinstance(value, (int, float)) and not isinstance(value, bool):
-        return [str(int(value)) if float(value).is_integer() else repr(value)]
+        return sorted(numbers(format(value, "f")))  # "f": 1e-05 is spoken 0.00001
+    if isinstance(value, str):
+        return sorted(numbers(value))
     return []
 
 
