@@ -29,7 +29,8 @@ new Function(readFileSync(new URL("../assets/kit/showhow-kit.js", import.meta.ur
 
 const tweens = [];
 const calls = [];
-const kit = window.showhowKit({ fromTo: (target, from, to) => { tweens.push(target); calls.push(to); } }, { root: "#root" }); // no #sh-cursor: fine until used
+const froms = [];
+const kit = window.showhowKit({ fromTo: (target, from, to) => { tweens.push(target); calls.push(to); froms.push(from); } }, { root: "#root" }); // no #sh-cursor: fine until used
 
 function expectThrow(fn, text) {
   try {
@@ -71,4 +72,7 @@ for (const [name, run] of Object.entries(helpers)) {
 const n = tweens.length;
 kit.rise(1, ["#a", "#b"]);
 if (tweens.length - n !== 2) throw new Error("rise must tween each element on its own");
+// A second morph on one path starts from the first one's end shape, not the HTML d (call morphs in time order).
+kit.morph(3, "#path", "M1 1L2 2", 1);
+if (froms.at(-1).attr.d !== "M5 5L20 20") throw new Error(`chained morph started from ${froms.at(-1).attr.d}`);
 console.log("ok");
