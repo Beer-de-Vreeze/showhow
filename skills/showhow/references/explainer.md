@@ -42,8 +42,7 @@ Outcome -> Name the parts -> one scene per voiced sentence, grouped into section
 - Each scene's picture starts entering on the scene's first frame; later parts wait for their words.
   A visual that waits for its first word leaves the plain ground on screen for 6-12 frames between scenes, and G-blank fails it (seen on the first full render).
 - Group the sentence scenes into 2-4 sections; each section is a chapter in `chapters.txt`, named for what it explains.
-- Target 60-120s, hard limit 180s.
-  Over 120s is a warning; over 180s fails P-time: cut sentences or split the video.
+- Length: SKILL.md's explainer shape sets the target and the limit, and P-time checks them; over the target is a warning, over the limit fails: cut sentences or split the video.
 - Style `friendly` unless the user names another.
   Music is on by default, bundled and ducked under the voice (`references/audio.md`); `--no-music` wins.
 - Readability, one-picture-per-point and "works muted" from the teaching laws still apply.
@@ -85,7 +84,7 @@ Other modes keep "render without waiting".
   For every format in the plan's `## Formats` it writes the per-format copy in `work/formats/<format>/` (the copy the render will use) and snapshots it once per scene to `work/preview/<format>/scene-NN.png`; nothing renders.
 - **Moment:** each scene's settled moment, 0.1 s after the scene's last caption cue ends in `captions.srt` (at most 0.1 s before the scene ends; 0.3 s before the end for a scene without a cue).
   So the visual must have finished building by then.
-- **Captions and the still:** end each scene's last cue after the voice and its 0.3 s per word, and give the scene enough hold after it; a cue held to the scene's end leaves no caption-free moment, and its still shows the caption.
+- **Captions and the still:** end each scene's last cue after the voice and its G-captions reading time, and give the scene enough hold after it; a cue held to the scene's end leaves no caption-free moment, and its still shows the caption.
 - **Approval:** list the stills by scene and format, say what each shows in one sentence, and stop.
   A rejected still means fix the composition, re-run `check`, redo only the stills that changed and ask again.
   Render only after the user approves.
@@ -107,7 +106,7 @@ On top of `references/step-2-plan.md`:
 
 - **P-need:** no `[NEED` marker in the narration.
 - **P-visual:** every voiced scene has exactly one known `Visual:`; an unknown type is named in the failure.
-- **P-time:** under 180s; a total outside 60-120s passes with a warning.
+- **P-time:** the total stays under the explainer limit; a total outside the target passes with a warning.
 - **P-end:** the last scene before the outro is a recap.
 - **P-params:** a `scene3d` scene has a known `Params.kind` or a `Params.model`, and every number in its `Params:` (strings like `"40%"` included) is spoken in the narration.
   A globe needs a country code from the bundled map or a route of `{"name", "lat", "lon"}` places (`references/3d-scenes.md`).
