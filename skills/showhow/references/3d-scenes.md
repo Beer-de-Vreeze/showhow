@@ -107,8 +107,10 @@ A new kind is one row here, one entry in `SCENE3D_KINDS` in `scripts/plan_gates.
 ```
 
 - `country` is an ISO 3166-1 code, alpha-3 or alpha-2 (`BRA`, `BR`), from the Natural Earth `ADM0_A3` and `ISO_A2_EH` columns; it fills in the accent colour over the first second.
+  A code that is not in the bundled map fails P-params.
 - `route` lists places in order; each pair of neighbours becomes one great-circle arc that draws on over 2 s.
-  The plan states every coordinate; nothing is geocoded.
+  Each place is an object `{"name", "lat", "lon"}` with numeric `lat` and `lon`; the plan states every coordinate, nothing is geocoded.
+  Plain names (`["Seville", "Rio de Janeiro"]`, the shorthand spec #14 shows) fail P-params: look the coordinates up and write them in.
   `lat` and `lon` are exempt from the "numbers are spoken" half of P-params; any other number in `Params` still has to be narrated.
   `side` (`left` or `right`) is optional and picks the label column.
 - A globe needs a `country` or a `route` of 2 or more places; `plan_gates.py` fails it otherwise.

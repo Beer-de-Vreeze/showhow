@@ -24,7 +24,7 @@ P-visual: every voiced scene has exactly one "Visual:" from VISUALS; parallax on
 P-time:   total under 180s; a total outside 60-120s passes with a warning.
 P-end:    the last scene before the outro is a recap.
 P-params: a "Visual: scene3d" scene has a "Params:" JSON object with a known "kind" (SCENE3D_KINDS) or a
-          "model"; a globe has a "country" or a "route" of 2+ places; every number in it, strings included, appears in the narration ("stages": 12 and "value": "40%" need "12" and "40" spoken).
+          "model"; a globe has a known "country" code or a "route" of 2+ {name, lat, lon} places; every number in it, strings included, appears in the narration ("stages": 12 and "value": "40%" need "12" and "40" spoken).
 P-render: with --chapters, the rendered steps match the plan's count and each lasts the minimum.
 Exit code 1 when a gate fails.
 """
@@ -203,6 +203,15 @@ def param_numbers(value) -> list[str]:
     return []
 
 
+COUNTRIES = Path(__file__).resolve().parent.parent / "assets" / "scene3d" / "data" / "ne_110m_admin_0_countries.min.geojson"
+
+
+def country_codes() -> set[str]:
+    """The alpha-3 and alpha-2 codes globe.js can find in the bundled Natural Earth file."""
+    features = json.loads(COUNTRIES.read_text(encoding="utf-8"))["features"]
+    return {f["properties"][k] for f in features for k in ("a3", "a2") if f["properties"].get(k)}
+
+
 def check_params(plan: dict) -> list[tuple[str, bool, str]]:
     """P-params: a scene3d scene has a known Params.kind or a Params.model, and every number in Params is spoken."""
     scenes = [s for s in plan["scenes"] if s["visual"] == "scene3d"]
@@ -223,9 +232,14 @@ def check_params(plan: dict) -> list[tuple[str, bool, str]]:
         if not params.get("model") and kind not in SCENE3D_KINDS:
             bad.append(f"scene {s['n']} unknown kind {kind!r} and no model (kinds: {', '.join(SCENE3D_KINDS)})")
         if not params.get("model") and kind == "globe":
-            route = params.get("route")
-            if not params.get("country") and not (isinstance(route, list) and len(route) >= 2):
+            route, country = params.get("route"), params.get("country")
+            if not country and not (isinstance(route, list) and len(route) >= 2):
                 bad.append(f"scene {s['n']} globe needs Params.country or a Params.route of 2+ places")
+            if country and str(country).upper() not in country_codes():
+                bad.append(f"scene {s['n']} globe country {country!r} is not an ISO alpha-3 or alpha-2 code in the bundled map")
+            for p in route if isinstance(route, list) else []:
+                if not (isinstance(p, dict) and all(isinstance(p.get(k), (int, float)) and not isinstance(p.get(k), bool) for k in ("lat", "lon"))):
+                    bad.append(f"scene {s['n']} globe route place {p!r} needs {{\"name\", \"lat\", \"lon\"}} with numbers")
         missing = [n for n in param_numbers(params) if n not in spoken]
         if missing:
             bad.append(f"scene {s['n']} Params numbers not in the narration: {', '.join(missing)}")

@@ -57,6 +57,8 @@ export async function buildGlobe(stage, root, P, url) {
   OCEAN = tint(theme.paper, theme.ink, 0.1); LAND = tint(theme.paper, theme.ink, 0.28); BORDER = theme.ink; ACCENT = theme.accent;
   const features = await loadCountries(url);
   const route = P.route || [];
+  // A place without coordinates would draw at NaN and vanish; P-params catches it, this names it if a plan skipped the gate.
+  for (const p of route) if (!Number.isFinite(p?.lat) || !Number.isFinite(p?.lon)) throw new Error(`globe: route place ${JSON.stringify(p)} needs numeric lat and lon`);
   const country = P.country ? findCountry(features, P.country) : null;
   const centre = P.focus || (route.length > 1 ? centreOf(route) : centreOf(rings(country)[0].map(([lon, lat]) => ({ lat, lon }))));
   const timing = globeTiming(P);

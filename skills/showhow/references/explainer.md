@@ -110,7 +110,8 @@ On top of `references/step-2-plan.md`:
 - **P-visual:** every voiced scene has exactly one known `Visual:`; an unknown type is named in the failure.
 - **P-time:** under 180s; a total outside 60-120s passes with a warning.
 - **P-end:** the last scene before the outro is a recap.
-- **P-params:** a `scene3d` scene has a known `Params.kind` or a `Params.model`, and every number in its `Params:` is spoken in the narration.
+- **P-params:** a `scene3d` scene has a known `Params.kind` or a `Params.model`, and every number in its `Params:` (strings like `"40%"` included) is spoken in the narration.
+  A globe needs a country code from the bundled map or a route of `{"name", "lat", "lon"}` places (`references/3d-scenes.md`).
 - **P-described:** as in every mode.
 - There is no P-steps or P-action: explainers have no counters.
 

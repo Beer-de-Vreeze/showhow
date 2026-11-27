@@ -135,6 +135,14 @@ def main() -> None:
     assert p_params('{"kind": "globe", "country": "BRA"}')[0]
     assert p_params('{"kind": "globe", "route": [{"name": "A", "lat": 37.39, "lon": -5.98}, {"name": "B", "lat": -22.91, "lon": -43.17}]}')[0]
     assert not p_params('{"kind": "globe", "route": [{"name": "A", "lat": 1, "lon": 2}]}')[0]
+    # The spec's plain-name route shape can't be drawn (globe.js needs coordinates): it fails, naming the place.
+    ok, msg = p_params('{"kind": "globe", "route": ["Seville", "Rio de Janeiro"]}')
+    assert not ok and "Seville" in msg and "lat" in msg, msg
+    assert not p_params('{"kind": "globe", "route": [{"name": "A", "lat": "37", "lon": -5.98}, {"name": "B", "lat": -22.91, "lon": -43.17}]}')[0]
+    # An unknown country code fails at plan time, not as a broken render; alpha-2 codes and any case are fine.
+    ok, msg = p_params('{"kind": "globe", "country": "XYZ"}')
+    assert not ok and "XYZ" in msg, msg
+    assert p_params('{"kind": "globe", "country": "gr"}')[0]
 
     for broken in ("no mode here", "## Mode\nhowto\n\n## Storyboard\nnothing\n"):
         try:
