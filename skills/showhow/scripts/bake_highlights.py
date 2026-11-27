@@ -9,7 +9,6 @@ Spec (JSON, paths relative to the spec file):
 {
   "scale": 2,            # image pixels per box unit (2 for 2x captures of 1920-wide CSS boxes)
   "pad": 6,              # space between the target box and the ring, in box units
-  "color": "#0078d4",    # optional, ring color
   "stills": [
     {"src": "screens/board.png", "out": "screens/board+backlog.png",
      "rings": [{"x": 16, "y": 216, "w": 368, "h": 844}]}
@@ -31,8 +30,10 @@ It writes one still per span of identical active rings and <spec>.overlays.json 
 [{"id", "src", "in", "in_dur", "out", "out_dur"}] in seconds. Fade each "#img-<id>" in at "in" and
 out at "out". A ring still up when its screen is replaced ends with that cut: it fades with the screen, or vanishes on a hard cut. Times are compared in
 whole centiseconds, ids are checked as CSS-safe, and a ring that lands in no span is an error.
+The ring colour is the --accent of the staged theme (composition/assets/theme.css, written by stage.py),
+so rings match the kit and scene3d; a spec "color" is refused.
 Run:
-  uv run --project <skill-dir>/scripts <skill-dir>/scripts/bake_highlights.py work/rings.json
+  uv run --project <skill-dir>/scripts <skill-dir>/scripts/bake_highlights.py work/rings.json --theme composition/assets/theme.css
 """
 
 from __future__ import annotations
@@ -139,12 +140,21 @@ def ring_layer(size: tuple[int, int], rect: list[float], s: float, rgb: tuple[in
     return layer
 
 
-def bake(spec_path: Path) -> list[Path]:
+def accent(theme_css: Path) -> tuple[int, int, int]:
+    m = re.search(r"--accent:\s*([^;]+);", theme_css.read_text(encoding="utf-8"))
+    if not m:
+        raise SystemExit(f"{theme_css}: no --accent; pass the theme.css stage.py wrote")
+    return ImageColor.getrgb(m.group(1).strip())[:3]
+
+
+def bake(spec_path: Path, theme_css: Path) -> list[Path]:
     spec = json.loads(spec_path.read_text(encoding="utf-8"))
+    if "color" in spec:
+        raise SystemExit(f'{spec_path}: drop "color"; the ring colour is the theme accent (--theme)')
     base = spec_path.parent
     scale = float(spec.get("scale", 1))
     default_pad = float(spec.get("pad", 6))
-    rgb = ImageColor.getrgb(spec.get("color", "#0078d4"))[:3]
+    rgb = accent(theme_css)
     stills, overlays = spec.get("stills"), None
     if "rings" in spec:
         stills, overlays = plan(spec)
@@ -192,8 +202,9 @@ def bake(spec_path: Path) -> list[Path]:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("spec", type=Path)
+    parser.add_argument("--theme", type=Path, required=True, help="the staged composition/assets/theme.css")
     args = parser.parse_args()
-    for path in bake(args.spec):
+    for path in bake(args.spec, args.theme):
         print(f"wrote {path}")
 
 

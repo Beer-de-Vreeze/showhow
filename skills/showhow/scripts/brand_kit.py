@@ -11,7 +11,7 @@ import re
 import sys
 from pathlib import Path
 
-REQUIRED_COLORS = ("paper", "ink", "accent")
+REQUIRED_COLORS = ("paper", "ink", "accent", "muted")  # the token set stage.py writes
 NAMED = {  # shortcut: a small set of CSS names, add more when a real kit needs one
     "black", "white", "red", "green", "blue", "yellow", "orange", "purple", "pink", "gray", "grey",
     "teal", "navy", "maroon", "silver", "cyan", "magenta", "brown", "gold", "transparent",
@@ -54,6 +54,15 @@ def scalar(head: str, key: str) -> str | None:
     return m.group(1).strip().strip("\"'") if m else None
 
 
+def parse_colors(head: str) -> dict[str, str]:
+    colors = {}
+    for ln in block(head, "colors"):
+        m = re.match(r"([\w-]+):\s*[\"']?([^\"']+?)[\"']?\s*$", ln)
+        if m:
+            colors[m.group(1)] = m.group(2)
+    return colors
+
+
 def check(kit: Path) -> list[str]:
     frame = kit / "FRAME.md"
     if not frame.is_file():
@@ -63,11 +72,7 @@ def check(kit: Path) -> list[str]:
     if not head.strip():
         return ["FRAME.md has no frontmatter"]
 
-    colors = {}
-    for ln in block(head, "colors"):
-        m = re.match(r"([\w-]+):\s*[\"']?([^\"']+?)[\"']?\s*$", ln)
-        if m:
-            colors[m.group(1)] = m.group(2)
+    colors = parse_colors(head)
     for key in REQUIRED_COLORS:
         if key not in colors:
             problems.append(f"FRAME.md colors: missing key '{key}'")

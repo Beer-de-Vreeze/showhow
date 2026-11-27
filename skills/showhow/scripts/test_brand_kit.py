@@ -48,6 +48,14 @@ def main() -> None:
         code, out = broken(tmp / "d", bad_accent)
         assert code == 1 and "accent" in out, f"bad accent: {code} {out}"
 
+        # muted is part of the token set stage.py writes, so a kit without it fails here, not at staging.
+        def no_muted(k: Path) -> None:
+            f = k / "FRAME.md"
+            f.write_text(f.read_text(encoding="utf-8").replace('  muted: "#4A5B6A"\n', ""), encoding="utf-8")
+
+        code, out = broken(tmp / "m", no_muted)
+        assert code == 1 and "muted" in out, f"missing muted: {code} {out}"
+
         # A third-party kit's paths stay inside the kit: a relative escape or an absolute path to a file that
         # exists elsewhere fails, even though the file is there.
         def escape(k: Path) -> None:
