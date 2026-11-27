@@ -3,7 +3,7 @@
 A `scene3d` visual is one 3D stage per video, built in three.js and reused across scenes, so viewers see one consistent object.
 Use it only when the shape is the point (`general.md`, "3D when the shape is the point"); never for UI, screens or charts.
 The code lives in `assets/scene3d/`; `stage.py` (`step-3-compose.md`) puts it in the composition with three.js.
-The recipe below is the one that held up in the gear-train fixture (`scripts/fixtures/gear-train/`); the research behind it is `docs/research/3d-machine-cutaways.md` in the repo.
+The recipe below is the one that held up in the gear-train fixture (`scripts/fixtures/gear-train/`); the research behind it is `docs/research/3d-machine-cutaways.md` in the showhow repo (it does not ship with the installed skill).
 
 ## Plan
 

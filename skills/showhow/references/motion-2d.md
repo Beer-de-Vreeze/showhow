@@ -1,7 +1,7 @@
 # 2D motion styles
 
 Recipes for the explainer visual types `stroke-reveal`, `kinetic-type`, `data-anim`, `morph`, `flat-scene` and `parallax`.
-Each one is a kit helper (`assets/kit/showhow-kit.js`) over a GSAP plugin; the evidence and sources are in `docs/research/2d-motion-graphics.md`.
+Each one is a kit helper (`assets/kit/showhow-kit.js`) over a GSAP plugin; the evidence and sources are in `docs/research/2d-motion-graphics.md` in the showhow repo (it does not ship with the installed skill).
 `scripts/fixtures/motion-2d/` renders all five; copy its structure.
 
 ## Setup
