@@ -15,13 +15,21 @@ node("#ring", nodes["#root"]);
 node("#sh-count-1", nodes["#root"]);
 node("#sh-count-2", nodes["#root"]);
 
+node("#path", nodes["#root"]).getAttribute = () => "M0 0L10 10";
+node("#words", nodes["#root"]);
+node("#num", nodes["#root"]);
+node("#a", nodes["#root"]);
+node("#b", nodes["#root"]);
+
 globalThis.document = { querySelector: (s) => nodes[s] || null };
 globalThis.gsap = { set: () => {} };
+globalThis.SplitText = { create: () => ({ words: ["w1", "w2"] }) };
 globalThis.window = globalThis;
 new Function(readFileSync(new URL("../assets/kit/showhow-kit.js", import.meta.url), "utf8"))();
 
 const tweens = [];
-const kit = window.showhowKit({ fromTo: (target) => tweens.push(target) }, { root: "#root" }); // no #sh-cursor: fine until used
+const calls = [];
+const kit = window.showhowKit({ fromTo: (target, from, to) => { tweens.push(target); calls.push(to); } }, { root: "#root" }); // no #sh-cursor: fine until used
 
 function expectThrow(fn, text) {
   try {
@@ -42,4 +50,25 @@ expectThrow(() => kit.counter(1, 1), "must be 2 or more");
 expectThrow(() => kit.move(1, "#btn"), "no element #sh-cursor");
 kit.counter(2, 2);
 if (tweens.length !== 4) throw new Error(`expected 4 tweens, got ${tweens.length}`);
+
+// 2D motion helpers: each writes fromTo tweens with immediateRender:false and throws on a missing element.
+const helpers = {
+  draw: (sel) => kit.draw(1, sel, 1),
+  words: (sel) => kit.words(1, sel),
+  count: (sel) => kit.count(1, sel, 0, 40, 1),
+  morph: (sel) => kit.morph(1, sel, "M5 5L20 20", 1),
+  along: (sel) => kit.along(1, sel, "#path", 1),
+  rise: (sel) => kit.rise(1, [sel, "#b"]),
+};
+for (const [name, run] of Object.entries(helpers)) {
+  const sel = name === "morph" ? "#path" : name === "words" ? "#words" : name === "count" ? "#num" : "#a";
+  const before = calls.length;
+  run(sel);
+  if (calls.length === before || !calls.slice(before).every((c) => c.immediateRender === false)) throw new Error(`${name} needs fromTo with immediateRender:false`);
+  expectThrow(() => run("#missing"), "no element #missing");
+}
+// rise is one fromTo per element, not one tween for the list.
+const n = tweens.length;
+kit.rise(1, ["#a", "#b"]);
+if (tweens.length - n !== 2) throw new Error("rise must tween each element on its own");
 console.log("ok");

@@ -8,6 +8,13 @@
 //   kit.move(1.2, "#btn-save");                      // cursor tip to the target centre; call in time order
 //   kit.ripple(1.9, "#btn-save", "#ripple-01");      // click ripple at the target centre
 //   kit.counter(4.0, 2);                             // "#sh-count-1" out, "#sh-count-2" in
+// 2D motion styles (references/motion-2d.md); the GSAP plugins come from the page's local gsap, never a CDN:
+//   kit.draw(1.0, "#line-1", 0.8);                   // DrawSVG: the path draws itself (hide it in CSS first)
+//   kit.words(1.0, "#quote");                        // SplitText: whole words rise out of a mask, 5 frames apart
+//   kit.count(1.0, "#num", 0, 1700, 1.2);            // the number ticks from 0 to 1700
+//   kit.morph(1.0, "#shape", "M0 0L9 9", 0.8);       // MorphSVG: the path becomes the given path
+//   kit.along(1.0, "#dot", "#route", 2);             // MotionPath: the element travels along the path
+//   kit.rise(1.0, ["#a", "#b", "#c"]);               // flat scenes: each element settles up 24px, 0.15s apart
 (function () {
   window.showhowKit = function (tl, opts) {
     // tip: offset from the cursor element's top-left to its arrow tip, shared by move and the press.
@@ -82,6 +89,47 @@
       tl.fromTo(o.countPrefix + n, { opacity: 0 }, { opacity: 1, duration: fade, immediateRender: false }, t);
     }
 
-    return { R, ring, move, ripple, counter };
+    // 2D motion styles. Starting states (hidden paths, offset words) belong in CSS; these tweens only run the entrance.
+    function draw(t, sel, d, { ease = "none" } = {}) {
+      const e = el(sel);
+      tl.fromTo(e, { drawSVG: "0%", opacity: 1 }, { drawSVG: "100%", opacity: 1, duration: d, ease, immediateRender: false }, t);
+    }
+
+    // Call after document.fonts.ready: SplitText measures the lines. gap 0.15s = 5 frames at 30fps.
+    function words(t, sel, { gap = 0.15, duration = 0.33 } = {}) {
+      const e = el(sel);
+      if (typeof SplitText === "undefined") throw new Error("showhowKit: words needs the SplitText plugin loaded and registered");
+      const s = SplitText.create(e, { type: "words", mask: "words" });
+      tl.fromTo(s.words, { yPercent: 110 }, { yPercent: 0, duration, ease: "power3.out", stagger: gap, immediateRender: false }, t);
+    }
+
+    // The element's own text is the from value; write it in the HTML so frame 0 shows it.
+    function count(t, sel, from, to, d, { decimals = 0 } = {}) {
+      const e = el(sel);
+      const fmt = (v) => Number(v).toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+      tl.fromTo(e, { textContent: from }, { textContent: to, duration: d, ease: "power1.out", modifiers: { textContent: fmt }, immediateRender: false }, t);
+    }
+
+    // The path's current d is the from shape, read once at build time.
+    function morph(t, sel, toShape, d, { ease = "power2.inOut" } = {}) {
+      const e = el(sel);
+      tl.fromTo(e, { attr: { d: e.getAttribute("d") } }, { morphSVG: toShape, duration: d, ease, immediateRender: false }, t);
+    }
+
+    function along(t, sel, path, d, { ease = "power1.inOut", autoRotate = false } = {}) {
+      const e = el(sel);
+      el(path);
+      const mp = { path, align: path, alignOrigin: [0.5, 0.5], autoRotate };
+      tl.fromTo(e, { motionPath: { ...mp, start: 0, end: 0 } }, { motionPath: { ...mp, start: 0, end: 1 }, duration: d, ease, immediateRender: false }, t);
+    }
+
+    // One fromTo per element, not a stagger, so each element keeps its own tween.
+    function rise(t, sels, { gap = 0.15, dy = 24, duration = 0.33 } = {}) {
+      sels.forEach((sel, i) => {
+        tl.fromTo(el(sel), { y: dy, opacity: 0 }, { y: 0, opacity: 1, duration, ease: "power3.out", immediateRender: false }, t + i * gap);
+      });
+    }
+
+    return { R, ring, move, ripple, counter, draw, words, count, morph, along, rise };
   };
 })();
