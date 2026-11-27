@@ -83,7 +83,7 @@ Action: [cursor click / typing "value" / select option / drag, or none]
 Result: [what visibly changes after the action]
 Narration: [the lines for this scene]
 Caption: [same as narration, one phrase at a time, at most 37 characters per line, 2 lines (3 on vertical), 0.3s per word on screen]
-On-screen text: [title cards or labels, if any]
+On screen: [title cards and labels, if any; every number and **bold label** written here must also be spoken in this scene's Narration (P-described)]
 Audio: [click / typing / none; music level]
 Transition: [cut / soft fade / slide / zoom-out] -> Scene 2
 
