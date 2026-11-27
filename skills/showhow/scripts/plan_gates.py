@@ -16,8 +16,8 @@ only changes the step limits of a howto or general video.
 parse_plan(text) returns a dict other scripts may use (render.py reads formats and scene starts):
   mode     howto | update | general | explainer
   style    clean | friendly | release | quick-tip (clean when the plan names none)
-  formats  format names in FORMATS order, from "## Formats", else "## Format: <name> - WxH",
-           else all three for an explainer and ["landscape"] otherwise
+  formats  format names in FORMATS order: an explainer's "## Formats", else the one "## Format: <name> - WxH"
+           (other modes ignore "## Formats"), else all three for an explainer and ["landscape"] otherwise
   scenes   in plan order, each {n, name, secs, start, line, counter, action, on_screen, narration, visual, params};
            start is the sum of the durations before it (seconds), line is the heading's line number,
            counter is (k, of) or None (a quick-tip numbers its action scenes itself)
@@ -148,14 +148,21 @@ def parse_plan(text: str) -> dict:
             sc["counter"] = (k, len(acts))
 
     formats = list(FORMATS) if mode == "explainer" else ["landscape"]
-    # "## Formats" (explainer) wins over the single "## Format: <name> - WxH" line.
-    source = re.search(r"^## Formats\b[^\n]*\n?(.*?)(?=^#|\Z)", text, re.M | re.S) or re.search(r"^## Format:(.*)$", text, re.M)
+    # An explainer's "## Formats" wins over the single "## Format: <name> - WxH" line; other modes read only that line,
+    # so a howto that keeps the template's "## Formats" section (filled, empty or n/a) still renders one format.
+    many = mode == "explainer" and re.search(r"^## Formats\b[^\n]*\n?(.*?)(?=^#|\Z)", text, re.M | re.S)
+    source = many or re.search(r"^## Format:(.*)$", text, re.M)
     if source:
+        where = f"line {text.count(chr(10), 0, source.start()) + 1}"
         found = [f for f in FORMATS if re.search(rf"\b{f}\b", source.group(1))]
-        if found:
+        if not many and "[" in source.group(1):
+            errors.append(f"{where}: the '## Format:' line is still the template placeholder; write one format, e.g. '## Format: landscape - 1920x1080'")
+        elif not many and len(found) > 1:
+            errors.append(f"{where}: '## Format:' names {', '.join(found)}; write one format (an explainer lists several under '## Formats')")
+        elif found:
             formats = found
         else:
-            errors.append(f"line {text.count(chr(10), 0, source.start()) + 1}: no format name ({', '.join(FORMATS)}) in {source.group(1).strip()!r}")
+            errors.append(f"{where}: no format name ({', '.join(FORMATS)}) in {source.group(1).strip()!r}")
 
     script = re.search(r"^## Narration script\s*\n(.*?)(?=^## |\Z)", text, re.M | re.S)
     return {"mode": mode, "style": style, "formats": formats, "scenes": scenes, "errors": errors,

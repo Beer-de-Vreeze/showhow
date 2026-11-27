@@ -208,13 +208,26 @@ def main() -> None:
     assert parse_plan(good_e + "## Formats\nvertical, square\n")["formats"] == ["vertical", "square"]
     assert parse_plan(good.replace("## Storyboard", "## Format: vertical - 1080x1920\n\n## Storyboard"))["formats"] == ["vertical"]
     assert check_plan(parse_plan(good_e + "## Formats\nportrait\n"))[0][0] == "P-parse"
+    # "## Formats" counts only in explainer mode: a howto that keeps the template's section, filled, empty or n/a,
+    # renders its own "## Format:" line (review finding 1).
+    def howto_with(section: str, line: str = "## Format: vertical - 1080x1920") -> dict:
+        return parse_plan(good.replace("## Storyboard", f"{section}\n{line}\n\n## Storyboard"))
+    for kept in ("## Formats (explainer only)\n[landscape, vertical, square]\n", "## Formats (explainer only)\nn/a\n", "## Formats\n\n"):
+        p = howto_with(kept)
+        assert (p["formats"], p["errors"]) == (["vertical"], []), (kept, p["formats"], p["errors"])
+    # An unedited "## Format:" placeholder, or a line naming two formats, is a named P-parse failure, not three renders.
+    p = howto_with("", "## Format: [landscape / vertical / square] - [width]x[height]")
+    assert len(p["errors"]) == 1 and "placeholder" in p["errors"][0], p["errors"]
+    p = howto_with("", "## Format: landscape, vertical - 1920x1080")
+    assert len(p["errors"]) == 1 and "one format" in p["errors"][0], p["errors"]
 
-    # The template agents copy parses as shipped, and uses exactly the fields the parser knows.
+    # The template agents copy parses as shipped (its one error: the format placeholder still to fill in), and uses
+    # exactly the fields the parser knows.
     doc = (SKILL / "references" / "step-2-plan.md").read_text(encoding="utf-8")
     template = re.search(r"```markdown\n(.*?)```", doc, re.S).group(1)
     t = parse_plan(template)
-    assert not t["errors"] and len(t["scenes"]) == 2 and t["scenes"][0]["counter"] == (1, 4), t
-    assert t["formats"] == ["landscape", "vertical", "square"] and [s["start"] for s in t["scenes"]] == [0.0, 4.0], t
+    assert len(t["errors"]) == 1 and "placeholder" in t["errors"][0] and len(t["scenes"]) == 2 and t["scenes"][0]["counter"] == (1, 4), t
+    assert [s["start"] for s in t["scenes"]] == [0.0, 4.0], t
     used = set(re.findall(r"^([A-Z][A-Za-z ]*):", template.split("## Storyboard")[1].split("## Chapters")[0], re.M))
     assert used == set(FIELDS), used ^ set(FIELDS)
 
