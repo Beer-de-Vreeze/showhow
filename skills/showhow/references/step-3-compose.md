@@ -154,8 +154,15 @@ If you render the project's own components or screenshot the running app:
 - Hide dev-only chrome (devtools, debug banners, browser UI) unless showing the browser is the point.
 - Keep one screenshot per step state, named `step-NN-<state>.png` in `composition/assets/screens/`.
 
-Put the video's own chrome colors (backgrounds, title and card fills, tags, counters, rings, ripples, fades) in one `:root` block of CSS variables taken from the product theme, and use only `var(--...)` below it, so a retheme is one edit.
-Pass the same accent to `bake_highlights.py` as `color`.
+Stage the composition before building it, and again after any theme change:
+
+`uv run --project <skill-dir>/scripts python <skill-dir>/scripts/stage.py composition (--theme <name or folder> | --brand <name>)`
+
+It copies every asset the composition may use (the kit, `scene3d` with its data, GSAP and its plugins, three.js and the hero-number typeface, the theme's fonts), writes `assets/theme.css` with `@font-face` and one `:root` token set (`--paper`, `--ink`, `--accent`, `--muted`, `--font-display`, `--font-body`) from the theme's `FRAME.md`, and puts the three.js import map and the theme link in `index.html`'s head.
+Everything is local at render time and every version pin lives in `stage.py`; never copy these by hand or load them from a CDN.
+For the product's own theme (howto, update), write a `FRAME.md` with those colours and a `title` and `label` font family, and the font files as `fonts/<Family>-<weight>.woff2`, into `work/theme/`, and pass `--theme work/theme`.
+Use only `var(--...)` for the chrome colors and fonts (backgrounds, title and card fills, tags, counters, rings, ripples, fades), so a retheme is one re-run.
+`bake_highlights.py` takes the ring colour from the same file: pass `--theme composition/assets/theme.css`.
 
 For a desktop app whose frontend is a web SPA, render the frontend in a browser with its API calls mocked.
 If the app needs a backend you cannot run, rebuild the screens from its components and styles instead.
@@ -165,9 +172,9 @@ If the app needs a backend you cannot run, rebuild the screens from its componen
 Hand-computed ring and cursor coordinates drift once fonts load and layouts settle, and put rings in the wrong place.
 Use the showhow kit for rings, the cursor, click ripples and the step counter: it measures each target by element and writes every tween as a `fromTo`.
 
-1. Copy `<skill-dir>/assets/kit/showhow-kit.js` and `showhow-kit.css` into `composition/assets/kit/`.
+1. `stage.py` (above) has put the kit in `composition/assets/kit/`.
 2. In each scene that uses it, inside `<template>`: `<link rel="stylesheet" href="assets/kit/showhow-kit.css" />` and `<script src="assets/kit/showhow-kit.js"></script>` before the scene's own script.
-3. Set `--sh-accent` in the theme `:root` block to the same accent you pass to `bake_highlights.py` as `color` (optional: `--sh-ring-width`, `--sh-ring-radius`, `--sh-ripple-size`, `--sh-ripple-fill`).
+3. Rings and ripples take `--accent` from the staged theme (optional overrides: `--sh-ring-width`, `--sh-ring-radius`, `--sh-ripple-size`, `--sh-ripple-fill`).
 4. Write every kit element in the HTML with a stable id, as direct children of the scene root (or of a `#world` camera layer at 0,0): one `.sh-ring` per ring, one `.sh-ripple` per click, one `.sh-cursor`, and a `.sh-counter` with one span per step.
    Give rings, ripples and the cursor `data-layout-ignore`.
    Ids must be unique across the whole video, so with more than one scene prefix them per scene (`#s2-cursor`, `#s2-count-1`) and pass `cursor: "#s2-cursor"` and `countPrefix: "#s2-count-"` to `showhowKit`.
@@ -210,7 +217,7 @@ Hyperframes has dropped such overlays from the rendered mp4 deterministically (a
 Image swaps always rendered, so draw the ring into a copy of the still and fade that copy in over the clean one:
 
 1. Record each ring as `{ t, d, screen, x, y, w, h, pad, zoom }` instead of emitting tweens, and each screen change as `{ t, name, fade }`; `zoom` is the camera's on-screen scale at `t`, so the stroke looks the same at any zoom.
-2. Write them as a timeline spec (`rings` + `shows`, format in the script's docstring) and run `uv run --project <skill-dir>/scripts <skill-dir>/scripts/bake_highlights.py work/rings.json`.
+2. Write them as a timeline spec (`rings` + `shows`, format in the script's docstring) and run `uv run --project <skill-dir>/scripts <skill-dir>/scripts/bake_highlights.py work/rings.json --theme composition/assets/theme.css`.
    The script cuts each screen's time at every ring start and end, bakes one still per span (overlapping rings share a still), clamps a ring that outlives its screen to that cut, compares times in whole centiseconds, and fails on a ring that lands in no span, a ring on the wrong screen, or an id that isn't a CSS-safe selector.
    Don't re-implement the span cutting in the build script.
 3. Read `work/rings.overlays.json` and put one `<img id="img-<id>">` per entry above the clean screens in `#world`.

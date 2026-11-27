@@ -164,7 +164,7 @@ Before building any chrome (title, cards, counters, caption plate, outro), read 
 Make every frame a pure function of time and wait for fonts and images to load before capturing each one.
 `references/step-3-compose.md` has the composition brief, the kit setup and the outro credit line.
 
-- **Place rings and the cursor by element, never by hand-computed pixels.** Use the showhow kit (`assets/kit/`, copied into `composition/assets/kit/`): `showhowKit(tl)` gives `ring`, `move`, `ripple`, `counter` and `R`, measures by element and writes `fromTo` tweens on elements you write in the HTML; a working example is in `scripts/fixtures/kit-demo/`.
+- **Place rings and the cursor by element, never by hand-computed pixels.** Use the showhow kit (`assets/kit/`, staged into `composition/assets/kit/` by `scripts/stage.py`): `showhowKit(tl)` gives `ring`, `move`, `ripple`, `counter` and `R`, measures by element and writes `fromTo` tweens on elements you write in the HTML; a working example is in `scripts/fixtures/kit-demo/`.
   No function-valued tweens.
   Add a known offset for targets below something that grows later.
 - **Screenshot videos: bake rings into the stills.** DOM ring overlays on top of screenshots can vanish from the rendered mp4.

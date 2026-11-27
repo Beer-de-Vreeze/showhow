@@ -2,21 +2,12 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <script type="importmap">
-      {
-        "imports": {
-          "three": "https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js",
-          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"
-        }
-      }
-    </script>
     <style>
-      /* The theme: scene3d reads --paper, --ink, --accent (the showhow frame preset) and tints everything from them. */
-      :root, #root { --paper: #F3ECDD; --ink: #23201B; --accent: #0F6E6A; --muted: #5B5547; }
+      /* The theme (assets/theme.css) comes from stage.py; this sheet only lays the fixture out. */
       html, body { margin: 0; background: var(--paper); }
-      #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: var(--paper); font-family: "Segoe UI", system-ui, sans-serif; }
+      #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: var(--paper); font-family: var(--font-body); }
       #stage { position: absolute; inset: 0; width: 1920px; height: 1080px; }
-      #title { position: absolute; left: 150px; top: 64px; font-size: 44px; font-weight: 700; color: var(--ink); }
+      #title { position: absolute; left: 150px; top: 64px; font-family: var(--font-display); font-size: 48px; font-weight: 700; color: var(--ink); }
     </style>
   </head>
   <body>
@@ -24,7 +15,7 @@
       <canvas id="stage" width="1920" height="1080"></canvas>
       <div id="title">Kilometres of canal in the network</div>
     </div>
-    <script src="assets/gsap/gsap.min.js"></script><!-- local GSAP (README), never a CDN at render time -->
+    <script src="assets/gsap/gsap.min.js"></script><!-- local GSAP, staged by stage.py -->
     <script>
       window.__timelines = window.__timelines || {};
       window.__timelines["main"] = gsap.timeline({ paused: true });
