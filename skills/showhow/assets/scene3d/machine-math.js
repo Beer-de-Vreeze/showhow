@@ -1,4 +1,6 @@
 // Pure kinematics for the machine kind: closed forms of a time value, no three.js, no DOM.
+import { hash, ease } from "./scene3d-math.js";
+
 const TAU = Math.PI * 2;
 const inv = (a) => Math.tan(a) - a;
 
@@ -38,4 +40,19 @@ export function meshAngle(parentAngle, parentTeeth, teeth, dir) {
 export function crankSlider(a, r, l) {
   const s = r * Math.sin(a);
   return { x: r * Math.cos(a) + Math.sqrt(l * l - s * s), rod: Math.asin(s / l) };
+}
+
+// Exploded view: 0 (home) to 1 (fully out) for part i, each part starting `stagger` seconds after the last.
+// The part sits at home + vector * explodeAmount(...); its spin stays a function of t, so it keeps turning.
+export function explodeAmount(i, t, { at = 0, stagger = 0.15, dur = 1 }) {
+  return ease((t - at - i * stagger) / dur);
+}
+
+// Airflow particle i at time t: a stream along x, y and z fixed by the hash plus a gentle swirl.
+// Stateless: it depends on (i, t, seed) only, and repeats every 1 / speed seconds. Never Math.random().
+export function flowPoint(i, t, seed, { speed = 0.25, length = 40, spread = 6 }) {
+  const u = (((hash(i, seed) + speed * t) % 1) + 1) % 1;
+  const y = (hash(i + 0x10000, seed) - 0.5) * spread, z0 = (hash(i + 0x20000, seed) - 0.5) * spread;
+  const swirl = (spread / 6) * Math.sin(TAU * (u * 3 + hash(i + 0x30000, seed)));
+  return [(u - 0.5) * length, y, Math.max(-spread, Math.min(spread, z0 + swirl))];
 }

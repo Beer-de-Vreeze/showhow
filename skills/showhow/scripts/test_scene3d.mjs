@@ -1,7 +1,7 @@
 // Self-check for the scene3d pure maths. Run: node <skill-dir>/scripts/test_scene3d.mjs
 import assert from "node:assert/strict";
 import { hash, timeMap, layoutLabels } from "../assets/scene3d/scene3d-math.js";
-import { gearOutline, meshAngle, crankSlider } from "../assets/scene3d/machine-math.js";
+import { gearOutline, meshAngle, crankSlider, explodeAmount, flowPoint } from "../assets/scene3d/machine-math.js";
 
 // hash: same input, same value, inside [0, 1), and spread out.
 assert.equal(hash(7, 42), hash(7, 42));
@@ -67,5 +67,30 @@ for (let k = 0; k < 16; k++) {
   assert.ok(Math.abs(Math.sin(rod) * 3.5 - Math.sin(a)) < 1e-9);
 }
 assert.ok(Math.abs(crankSlider(0, 1, 3.5).x - 4.5) < 1e-9 && Math.abs(crankSlider(Math.PI, 1, 3.5).x - 2.5) < 1e-9);
+
+// Exploded view: staggered ease per part index; worked values from at 8, stagger 0.2, dur 1.
+const ex = { at: 8, stagger: 0.2, dur: 1 };
+assert.equal(explodeAmount(0, 7, ex), 0);
+assert.equal(explodeAmount(0, 8.5, ex), 0.5);
+assert.ok(explodeAmount(2, 8.4, ex) < 1e-9);
+assert.equal(explodeAmount(2, 9.4, ex), 1);
+assert.equal(explodeAmount(1, 100, ex), 1);
+
+// Flow particles: a pure function of (i, t, seed). Order of calls never matters, one lap takes 1 / speed
+// seconds, the stream stays inside its box, and a different seed gives a different stream.
+const fl = { speed: 0.25, length: 40, spread: 6 };
+const lap = 1 / fl.speed;
+const before = flowPoint(5, 2.3, 9, fl);
+for (let i = 0; i < 50; i++) flowPoint(i, i * 7.1, 9, fl); // other frames in between
+assert.deepEqual(flowPoint(5, 2.3, 9, fl), before);
+const later = flowPoint(5, 2.3 + lap, 9, fl);
+before.forEach((v, k) => assert.ok(Math.abs(v - later[k]) < 1e-9, `lap axis ${k}`));
+for (let i = 0; i < 200; i++) {
+  const [x, y, z] = flowPoint(i, -3.7 + i * 0.13, 9, fl);
+  assert.ok(Math.abs(x) <= 20 && Math.abs(z) <= 6 && Math.abs(y) <= 6);
+}
+assert.notDeepEqual(flowPoint(5, 2.3, 10, fl), before);
+// The stream moves: a particle is further along +x a moment later (until it wraps).
+assert.ok(flowPoint(3, 0.1, 1, fl)[0] > flowPoint(3, 0, 1, fl)[0] || flowPoint(3, 0, 1, fl)[0] > 19);
 
 console.log("ok");
