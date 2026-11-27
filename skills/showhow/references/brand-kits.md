@@ -26,6 +26,9 @@ Pick a kit with `--brand <name>`, or `brand: <name>` under `## Defaults` in `~/.
    It writes the kit's colours and fonts as the one token set the kit, scene3d and `bake_highlights.py` read, so no hex goes into scene code.
 2. Use the logo on the title and outro cards, `outro` as the outro line, `voice` as the voice and `music` as the music bed unless the user typed their own flags.
 
+A kit works in every mode, and it styles the video's own chrome: title, cards, counters, caption plate, outro, 2D visuals and scene3d.
+In howto and update, rebuilt product and third-party screens keep their own look (`design-floor.md`); never repaint a product's UI in the kit's colours.
+
 ## Checking a kit
 
 `uv run --project <skill-dir>/scripts python <skill-dir>/scripts/brand_kit.py check <kit-dir>`
