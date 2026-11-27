@@ -56,8 +56,15 @@ Parallax or other decorative motion is for the intro only; it never competes wit
 | `map` | Where something is | Static map with a labelled locator for each place named |
 | `photo` | The real thing | A licensed photo (`general.md`), cropped or slowly zoomed to the part being discussed |
 | `card` | One number, name or quote | Big text, one idea, held until the sentence ends |
+| `stroke-reveal` | A diagram or route built line by line | DrawSVG on paths, constant speed, connector before label (`motion-2d.md`) |
+| `kinetic-type` | A definition, rule or phrase to remember | SplitText whole words out of a mask, 5 frames apart (`motion-2d.md`) |
+| `data-anim` | A quantity changing | Counter tween with `onUpdate`/`textContent`, bars grown from their baseline (`motion-2d.md`) |
+| `morph` | "A becomes B", or a match cut between scenes | MorphSVG between two paths, same position and size either side (`motion-2d.md`) |
+| `flat-scene` | An abstract process as a concrete picture | Flat or isometric SVG from primitives, timeline stagger, MotionPath for travellers (`motion-2d.md`) |
+| `parallax` | The intro scene only | Layers pushed at depth-scaled speeds (`motion-2d.md`); the gate rejects it anywhere but scene 1 |
 
-Later releases add rows here (2D motion styles, cutaway, globe, hero number); `VISUALS` in `scripts/plan_gates.py` is the single list the gate checks against, so a new type is one row here and one entry there.
+The 2D motion rows have a recipe each in `references/motion-2d.md`.
+Later releases add rows here (cutaway, globe, hero number); `VISUALS` in `scripts/plan_gates.py` is the single list the gate checks against, so a new type is one row here and one entry there.
 A scene with no voice (a title, a hold) needs no `Visual:`.
 Every fact shown in a visual is also spoken in that scene (P-described).
 

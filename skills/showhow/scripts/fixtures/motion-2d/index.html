@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <!-- GSAP and its plugins are local files (see README), never a CDN at render time. -->
+    <script src="assets/gsap/gsap.min.js"></script>
+    <script src="assets/gsap/DrawSVGPlugin.min.js"></script>
+    <script src="assets/gsap/MorphSVGPlugin.min.js"></script>
+    <script src="assets/gsap/SplitText.min.js"></script>
+    <script src="assets/gsap/MotionPathPlugin.min.js"></script>
+    <script>
+      gsap.registerPlugin(DrawSVGPlugin, MorphSVGPlugin, SplitText, MotionPathPlugin);
+    </script>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="10" data-width="1920" data-height="1080">
+      <div
+        id="demo"
+        data-composition-id="demo"
+        data-composition-src="compositions/demo.html"
+        data-start="0"
+        data-duration="10"
+        data-track-index="1"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+    </div>
+    <script>
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+    </script>
+  </body>
+</html>
