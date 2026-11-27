@@ -24,7 +24,7 @@ P-visual: every voiced scene has exactly one "Visual:" from VISUALS; parallax on
 P-time:   total under 180s; a total outside 60-120s passes with a warning.
 P-end:    the last scene before the outro is a recap.
 P-params: a "Visual: scene3d" scene has a "Params:" JSON object with a known "kind" (SCENE3D_KINDS) or a
-          "model"; every number in it appears in the narration ("stages": 12 needs "12" spoken).
+          "model"; a globe has a "country" or a "route" of 2+ places; every number in it appears in the narration ("stages": 12 needs "12" spoken).
 P-render: with --chapters, the rendered steps match the plan's count and each lasts the minimum.
 Exit code 1 when a gate fails.
 """
@@ -188,7 +188,8 @@ def check_explainer(plan: dict) -> list[tuple[str, bool, str]]:
 
 def param_numbers(value) -> list[str]:
     if isinstance(value, dict):
-        return [n for v in value.values() for n in param_numbers(v)]
+        # lat and lon are map coordinates the plan states, not figures the narration speaks.
+        return [n for k, v in value.items() if k not in ("lat", "lon") for n in param_numbers(v)]
     if isinstance(value, list):
         return [n for v in value for n in param_numbers(v)]
     if isinstance(value, (int, float)) and not isinstance(value, bool):
@@ -215,6 +216,10 @@ def check_params(plan: dict) -> list[tuple[str, bool, str]]:
         kind = params.get("kind")
         if not params.get("model") and kind not in SCENE3D_KINDS:
             bad.append(f"scene {s['n']} unknown kind {kind!r} and no model (kinds: {', '.join(SCENE3D_KINDS)})")
+        if not params.get("model") and kind == "globe":
+            route = params.get("route")
+            if not params.get("country") and not (isinstance(route, list) and len(route) >= 2):
+                bad.append(f"scene {s['n']} globe needs Params.country or a Params.route of 2+ places")
         missing = [n for n in param_numbers(params) if n not in spoken]
         if missing:
             bad.append(f"scene {s['n']} Params numbers not in the narration: {', '.join(missing)}")

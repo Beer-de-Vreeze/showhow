@@ -108,6 +108,15 @@ def main() -> None:
     name, ok, msg = [r for r in check_plan(parse_plan(s3d('{"kind": "volcano"}'))) if r[0] == "P-params"][0]
     assert not ok and "volcano" in msg, msg
 
+    # globe kind needs a country or a route of 2+ places (spec #14); route coordinates are not narration numbers.
+    def p_params(params: str) -> tuple[bool, str]:
+        return [r for r in check_plan(parse_plan(s3d(params))) if r[0] == "P-params"][0][1:]
+    ok, msg = p_params('{"kind": "globe", "route": []}')
+    assert not ok and "globe" in msg, msg
+    assert p_params('{"kind": "globe", "country": "BRA"}')[0]
+    assert p_params('{"kind": "globe", "route": [{"name": "A", "lat": 37.39, "lon": -5.98}, {"name": "B", "lat": -22.91, "lon": -43.17}]}')[0]
+    assert not p_params('{"kind": "globe", "route": [{"name": "A", "lat": 1, "lon": 2}]}')[0]
+
     for broken in ("no mode here", "## Mode\nhowto\n\n## Storyboard\nnothing\n"):
         try:
             parse_plan(broken)
