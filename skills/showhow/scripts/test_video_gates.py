@@ -54,6 +54,10 @@ def caption_units() -> None:
     five = "one two three four five"
     assert any("1.2s" in p for p in caption_problems(cue(five, "00:00:01,200"), False))
     assert caption_problems(cue(five, "00:00:01,500"), False) == []
+    # A malformed timing line is a G-captions problem naming the cue, not a traceback; the next cue is still checked.
+    broken = "1\n00:00:01 --> 00:00:02\nhello\n\n" + cue("x" * 38)
+    problems = caption_problems(broken, False)
+    assert any("timing" in p and "00:00:01 --> 00:00:02" in p for p in problems) and any("38 characters" in p for p in problems), problems
 
 
 def gates(video: Path, srt: Path, *extra: str) -> subprocess.CompletedProcess:
