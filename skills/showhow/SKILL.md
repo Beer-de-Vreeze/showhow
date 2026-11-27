@@ -146,72 +146,35 @@ All four work in every mode; freeform direction ("calm like Apple support videos
 
 ## Sound
 
-The voice leads.
-Generate it per scene straight into the composition: `npx hyperframes tts "<text>" --voice <voice> --output composition/assets/voice/scene-NN.wav` (`<voice>` = `--voice`, default `af_heart`; or any local TTS if that's unavailable); measure each clip and let the clips set the scene lengths.
-Transcribe the clips to catch mispronounced product names; fix by respelling the TTS input only.
-Kokoro inline IPA markup (`[word](/ipa/)`) does not work here: `npx hyperframes tts` feeds the text to kokoro-onnx, which reads the markup aloud as symbols (checked 2026-11-27 on the kokoro-onnx phonemizer, not through the CLI itself), so respell; revisit if Hyperframes moves to misaki.
-`npx hyperframes transcribe` overwrites `transcript.json` on every run: copy it to `work/tx/words-NN.json` after each clip.
-Narration is English; if the user asks for another language, check `npx hyperframes tts --list` for a matching voice, and if there is none, offer English narration with captions in their language.
-Music: none by default in `clean`, `friendly` and `quick-tip`, to keep background audio at least 20 dB below the voice (WCAG 1.4.7) and the voice clear; with `--music`, and by default in `release` and `explainer` (`--no-music` wins), a quiet bed ducked under the voice (about 0.035 under narration, 20 dB below the voice per `references/audio.md`; 0.3 without), never cut off abruptly.
-Use a bundled track; when none fits the mood, an Incompetech track (CC BY); no generated music (`references/audio.md`, Music).
-How-tos: SFX mainly confirm visible actions (a soft click per click, soft ticks on typing, one accent on the result).
-Updates: score it with high energy around the demos (a soft reveal hit, card sounds, tag ticks, a payoff (bells allowed), music up and beat-locked on the hook, cards and outro), clicks and typing inside the demos.
-The full sound effect library is fair game in both; never mask a narrated word.
+The voice leads: one narration clip per scene, and each clip sets its scene's length (`references/step-3-compose.md`, "Generate the narration first").
+A music bed stays at least 20 dB below the voice (WCAG 1.4.7): ducked under every narration clip to the level `references/audio.md` measures, and never cut off abruptly.
+Music is a bundled track, then an Incompetech track (CC BY), never generated (`references/audio.md`, Music).
+SFX confirm visible actions in how-tos and score the hook, cards and outro in updates (`references/step-2-plan.md`, "Audio planning"); none masks a narrated word.
 
 ## 3. Build, check, render
 
 Before building any chrome (title, cards, counters, caption plate, outro), read `references/design-floor.md` and follow it; it covers the chrome only, rebuilt screens keep the product's look, and a `--theme` preset overrides its Refuse list.
-Make every frame a pure function of time and wait for fonts and images to load before capturing each one.
-`references/step-3-compose.md` has the composition brief, the kit setup and the outro credit line.
+Build by `references/step-3-compose.md`: narration and caption timing, the composition brief, staging, the kit (rings and the cursor placed by element), baked rings for screenshot videos, `fromTo` tweens, overlays and the outro credit line.
+Check and render by `references/step-4-deliver.md`, in this order:
 
-- **Place rings and the cursor by element, never by hand-computed pixels.** Use the showhow kit (`assets/kit/`, staged into `composition/assets/kit/` by `scripts/stage.py`): `showhowKit(tl)` gives `ring`, `move`, `ripple`, `counter` and `R`, measures by element and writes `fromTo` tweens on elements you write in the HTML; a working example is in `scripts/fixtures/kit-demo/`.
-  No function-valued tweens.
-  Add a known offset for targets below something that grows later.
-- **Screenshot videos: bake rings into the stills.** DOM ring overlays on top of screenshots can vanish from the rendered mp4.
-  Record rings and screen changes, give them to `scripts/bake_highlights.py` in timeline mode, and fade in the ringed copies it lists in `rings.overlays.json`; don't hand-write the span cutting.
-- **Every tween is a `fromTo` with `immediateRender:false`, one element per highlight or ripple.** Starting states live in CSS: a `tl.set` at time 0 does not show on frame 0.
-- **Write big files with a file tool**, not a shell heredoc; long heredocs fail on Windows (`ENAMETOOLONG`).
-- **Overlays open below the app header**, so the step counter stays visible; for `content_overlap` from `hyperframes check`, see `references/step-4-deliver.md`, "Intentional overlaps".
+1. `npx hyperframes check` in `composition/` passes with zero errors, contrast included.
+2. `npx hyperframes snapshot` at every highlight, result and mid-transition; describe each still in one sentence before judging it.
+3. `npx hyperframes preview`: give the user the URL and ask them to watch for wrong labels or order; render without waiting, and redo it if they find one.
+   In `explainer` mode, write the preview stills first (the render command plus `--stills`) and wait for approval (`references/explainer.md`, "Stop 2: preview stills").
+4. Write `captions.srt`, then render with the wrapper, never `npx hyperframes render` directly:
+   `uv run --project <skill-dir>/scripts <skill-dir>/scripts/render.py composition <video-name>.mp4 --work work --plan showhow-plan.md [-- --docker]`.
+5. Pull frames from every mp4 at each ring and result moment; snapshots alone don't prove the render:
+   `uv run --project <skill-dir>/scripts <skill-dir>/scripts/frame_sheet.py <mp4> --overlays work/rings.overlays.json -o work/check.jpg`.
 
-Run `npx hyperframes check` in `composition/` and fix every error, including contrast; it passes with zero errors before you render.
-Look at stills from every step at the highlight and at the result, and from mid-transition (`npx hyperframes snapshot`).
-A plain crossfade between two busy layouts makes a muddy double exposure; stagger it (old content out, then new content in) or dip through the background for 3 frames at most.
-Describe each still in one sentence (what is on screen, what the viewer should look at) before judging it; a frame you can't describe, or that reads as an empty slide, is a finding.
-Check: the ring sits exactly on the control the voice names (zoom in on a crop when unsure), its label is legible, captions, the cursor or a dragged item don't cover it, the counter is right and uncovered, no text is clipped inside a fixed-width pill or callout (`check` misses these), no bullet or icon shows before its text, a typing caret follows the typed text, no flash frames, and the opening and every card read with the sound off.
-Motion follows `references/design-floor.md`: entrances do most of their travel in the first 4-8 frames (typical move 0.33s), no bounce, nothing scales up from zero, exits shorter than entrances; the cursor rests 0.2-0.3s on the target before it presses (the kit's `ripple`), and the target answers a frame later.
-On the title, one step and the outro, also check the design floor's Refuse list and type rules.
-SFX clips get `data-duration` equal to the file's real length, or `check` warns about the slot.
-
-Start `npx hyperframes preview`, give the user the URL and ask them to watch for wrong labels or order; render without waiting for an answer, and redo it if they find one.
-Write `captions.srt` before the render (format in step 4): the wrapper takes each scene's settled moment from it.
-In `explainer` mode do not render yet: write the preview stills with the same command plus `--stills` and wait for approval (`references/explainer.md`, "Stop 2: preview stills").
-Render with the wrapper, never `npx hyperframes render` directly (a quiet render can exit non-zero with no message and no file):
-`uv run --project <skill-dir>/scripts <skill-dir>/scripts/render.py composition <video-name>.mp4 --work work --plan showhow-plan.md [-- --docker]`.
-It renders every format the plan lists (several: `<video-name>-<format>.mp4`; one: `<video-name>.mp4`), logs to `work/<format>/render.log`, succeeds only when this run wrote a non-empty mp4, retries once, normalises the soundtrack to -16 LUFS, -1 dBTP and prints the measured input, then writes each file's poster and bakes it in as frame 0; if it still fails, check free disk space and report the log tail.
-If the composition tweens layout (`height`, `width`, position, padding), add `--no-fast-capture`: fast capture drops those changes while snapshots still show them.
-Then pull frames from the mp4 itself at every ring and result moment; snapshots alone don't prove the render:
-`uv run --project <skill-dir>/scripts <skill-dir>/scripts/frame_sheet.py <video-name>.mp4 --overlays work/rings.overlays.json -o work/check.jpg` (add `--at <t1,t2,...>` for other moments, `--crop x,y,w,h` for small rings).
-A ring missing from the mp4 but present in snapshots is a render bug: bake it into the still instead of trying other flags.
 Keep creation and rendering local; publishing or uploading needs a separate explicit request.
 
 ## 4. Deliver
 
-`references/step-4-deliver.md` has the commands and templates for each file.
+Deliver by `references/step-4-deliver.md`: the poster (the wrapper writes it), `captions.srt`, `chapters.txt`, the gates, `showhow.md`, `credits.txt`, `share-copy.md` and the report to the user.
 
-- **Poster:** the render wrapper writes one per mp4 (`<same name>.jpg`), that file's own frame at scene 1's settled moment (the title card after its caption ends), baked in as frame 0 so duration and audio sync stay the same; `--poster-at <s>` picks another caption-free moment.
-  Teams, SharePoint and Slack show frame 0; YouTube doesn't, so the poster is also the upload thumbnail there.
-- **`captions.srt`:** the script phrases with their absolute times, even when captions are burned in.
-- **`chapters.txt`:** `00:00 Title` style, one line per step (`Step N: ...`) or change (`Change N: ...`), from the real scene start times.
 - **Gates:** run both on every mp4 the wrapper wrote; fix any FAIL and re-render, never argue it, and quote every line in the report:
-  `uv run --project <skill-dir>/scripts <skill-dir>/scripts/video_gates.py <mp4> --srt captions.srt` (no run of more than 3 blank frames; caption lines of at most 37 characters, 2 lines or 3 in a vertical video, 0.3s per word; the video ends at most 1.4s after the last caption, 3.5s with `credits.txt`) and
-  `uv run --project <skill-dir>/scripts <skill-dir>/scripts/plan_gates.py showhow-plan.md --chapters chapters.txt --video <mp4>` (the rendered steps match the plan and each lasts its minimum).
-- **`showhow.md`:** the written companion. howto: "How to [task]", prerequisites, numbered steps with labels in bold, result, tip. update: "What's new in [version]", one short section per change with where to find it, then how to get it.
-- **`credits.txt`:** only when a bundled or Incompetech music track is used, an image or sound license asks for attribution (title, author, license, URL, one line each), or a third-party app's screens are rebuilt (its trademark line).
-  The same credits appear on the outro credit line.
-- **`share-copy.md`:** a business post to send with the video ("Post", 3-8 short lines: what it is, what it helps the reader do in their work, the prerequisites or 2-4 changes, one concrete action) and a "One-liner", then a "Title" (under 70 characters) and a "Description" for the upload page (what the viewer can do, prerequisites, the chapters from `chapters.txt`, any limit, the credits lines; no emojis).
-  If `~/VOICE.md` exists, write as its owner following its business sections; otherwise direct and plain.
-  Audience's language, no hype or invented claims, no em dashes, `[link]` for anything you don't have.
-- **Tell the user** where everything is, the share post ready to paste (for LinkedIn: turn off its auto-captions, the captions are burned in), the loudness line and the gate lines, the goal line and the step or change list (so they can spot a wrong step without watching), the fictional substitutions, any label you couldn't verify, and offer to redo a scene, change the voice, or make a vertical or quick-tip cut.
+  `uv run --project <skill-dir>/scripts <skill-dir>/scripts/video_gates.py <mp4> --srt captions.srt` (G-blank, G-captions, G-end) and
+  `uv run --project <skill-dir>/scripts <skill-dir>/scripts/plan_gates.py showhow-plan.md --chapters chapters.txt --video <mp4>` (P-render).
 - **Offer a brand kit.**
   A howto or update run on a repo, with no `--brand` kit in play and no kit of that name in `~/.showhow/brands/`, ends by offering once to save the theme it read as a kit (`references/brand-kits.md`); one question, and a no is final for that run.
-- **Learn from the feedback.** When the user asks for changes, sort each into a one-off fix (this video only) or a lasting preference ("always", "never", the same correction twice); fix both, write the lasting ones to `~/.showhow/verdicts.md` and `edits.md`, and show the added lines as a diff (`references/house-style.md`).
+- **Learn from the feedback.** When the user asks for changes, fix them and record the lasting preferences by `references/house-style.md`, showing the added lines as a diff.

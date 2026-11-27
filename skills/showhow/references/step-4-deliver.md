@@ -51,6 +51,7 @@ Then check every frame:
 - **Nothing shows ahead of its content**: `::before` bullets, list dots, icons or borders of a line whose words are still hidden. Hide the whole line, not only its words.
 - **A typing caret follows the typed text.** Per-character spans hidden with `opacity` still take up width, so move the caret to the last shown character instead of leaving it inline after the full text.
 - **What a step creates stays visible later**: an attached file appears in the sent message, a chosen model in the reply header, a picked workspace in the header.
+- **No muddy crossfades.** A plain crossfade between two busy layouts makes a double exposure; stagger it (old content out, then new content in) or dip through the background for 3 frames at most.
 
 Fix, re-run `check`, and re-snapshot only the frames you changed.
 
@@ -174,7 +175,7 @@ uv run --project <skill-dir>/scripts <skill-dir>/scripts/video_gates.py <mp4> --
 - **G-blank:** no run of more than 3 blank frames (one flat colour: an empty ground between scenes, a black or white flash).
   A dip through the background lasts 3 frames at most; a longer empty gap reads as a broken video.
   A designed cut to black at the very end may run 15 frames.
-- **G-captions:** every cue in `captions.srt` has lines of at most 37 characters (BBC), at most 2 lines (3 in a vertical video; the gate reads the frame size from the mp4), and stays on screen at least 0.3s per word.
+- **G-captions:** every cue in `captions.srt` keeps the "Captions match the voice" law in SKILL.md (line length, line count, reading time); the gate reads the frame size from the mp4 for the vertical line count.
 - **G-end:** the video ends at most 1.4s after the last caption, or 3.5s when `credits.txt` exists (the outro credit line needs 2.5s).
   Under 0.5s is a note: the result may be cut off.
 
@@ -194,6 +195,12 @@ One line per scene group, starting at `00:00`, in the YouTube chapter format (al
 ```
 
 Use the measured scene start times from the render.
+
+## Write credits.txt
+
+Write it only when a bundled or Incompetech music track is used, an image or sound license asks for attribution, or a third-party app's screens are rebuilt (its trademark line).
+One line per source (title, author, license, URL); `audio.md` and `general.md` give the exact lines.
+The same credits appear on the outro credit line (step-3-compose.md, "Credit line").
 
 ## Write showhow.md
 

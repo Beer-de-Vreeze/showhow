@@ -35,15 +35,17 @@ for n in 01 02 03; do
 done
 ```
 Fix by respelling in the TTS input only (e.g. "Azure" -> "Azhure"); captions keep the correct spelling.
-Kokoro IPA markup (`[word](/ipa/)`) is not passed through by `npx hyperframes tts`, so respelling is the only fix.
+Kokoro inline IPA markup (`[word](/ipa/)`) does not work here: `npx hyperframes tts` feeds the text to kokoro-onnx, which reads the markup aloud as symbols (checked 2026-11-27 on the kokoro-onnx phonemizer, not through the CLI itself), so respelling is the only fix; revisit if Hyperframes moves to misaki.
+
+Narration is English; if the user asks for another language, check `npx hyperframes tts --list` for a matching voice, and if there is none, offer English narration with captions in their language.
 
 ## Caption timing
 
 Captions show the script text, not the transcription.
 Get word timings by transcribing each narration clip (`npx hyperframes transcribe`, see `media-use`) and align the script's phrases to them.
 If transcription is unavailable, spread each scene's phrases evenly across its clip duration.
-Split phrases so each cue has lines of at most 37 characters, 2 lines (3 on vertical), and stays on screen at least 0.3s per word; Step 4's G-captions gate checks it.
-Kokoro speaks about 3 words a second, faster than 0.3s per word, so one-line cues that follow the voice phrase by phrase come out too short: put two phrases in one two-line cue, and let a scene's last cue run on into the hold.
+Split phrases so every cue keeps the "Captions match the voice" law in SKILL.md (line length, line count, reading time); Step 4's G-captions gate checks it.
+Kokoro speaks about 3 words a second, faster than that reading time, so one-line cues that follow the voice phrase by phrase come out too short: put two phrases in one two-line cue, and let a scene's last cue run on into the hold.
 Keep the phrase list with timings; Step 4 writes it to `captions.srt`.
 
 With `--no-voice`, time the captions by reading speed (about 0.35s per word, min 1.5s per phrase) and let that set scene durations.
@@ -56,7 +58,7 @@ Write `<output-dir>/composition-brief.md` before creating the composition.
 # Hyperframes Composition Brief: [Title]
 
 ## Objective
-[howto: Teach [audience] how to [task] in [product]. / update: Show [audience] what's new in [product] [version].]
+[howto: Teach [audience] how to [task] in [product]. / update: Show [audience] what's new in [product] [version]. / general: Teach [audience] how to [task or process], or explain [topic] point by point. / explainer: Explain [topic] to [audience].]
 
 ## Output
 - Composition directory: `<output-dir>/composition/`
@@ -66,17 +68,18 @@ Write `<output-dir>/composition-brief.md` before creating the composition.
 - Duration: [sum of measured scene durations]
 
 ## Source Material
-- Project root: [path]
-- Files the screens come from: [components, routes, style files]
+- Project root: [path, or none for general and explainer]
+- Files the screens come from: [components, routes, style files; general: the screenshots of the real pages; explainer: none]
 - Product name and version: [...]
 - Exact UI labels used in the steps: [list]
 - Fictional data to show: [list from the plan]
+- Sources (general, explainer): `work/sources.md`, with each picture's license
 
 ## Teaching Direction
-- Mode: [howto / update]
+- Mode: [howto / update / general / explainer]
 - Style preset and direction: [...]
 - Goal line: [...]
-- Step or change list: [numbered, one line each]
+- Step or change list: [numbered, one line each; general topic: the points; explainer: the sections, each with its sentence scenes and their `Visual:`]
 - Avoid:
   - Marketing language and invented claims
   - Abstract filler visuals where a real screen exists
@@ -98,10 +101,10 @@ Scene summary:
 2. [...]
 
 ## Teaching elements
-- Step counter: [position, format "Step 2 of 4" / "2 of 3"], same place in every step scene
-- Highlight: [ring / spotlight / zoom], accent color [value], one target at a time
-- Cursor: [system-like arrow], smooth 0.5-0.8s moves, rests 0.2-0.3s on the target before it clicks, a quick press (the kit's `ripple`: a 2-frame squash, a 3-frame spring back), and the target answers (pressed state, menu opening) a frame after the press
-- Captions: [band position], max 2 lines (3 on vertical) x 37 chars, 0.3s per word, high contrast plate, never over the highlight
+- Step counter: [position, format "Step 2 of 4" / "Change 2 of 3" / "Point 2 of 5"], same place in every step scene; none in a quick-tip or an explainer
+- Highlight: [ring / spotlight / zoom], accent color [value], one target at a time; explainer: none, the scene's `Visual:` carries it
+- Cursor: [system-like arrow], smooth 0.5-0.8s moves, rests 0.2-0.3s on the target before it clicks, a quick press (the kit's `ripple`: a 2-frame squash, a 3-frame spring back), and the target answers (pressed state, menu opening) a frame after the press; explainer: none
+- Captions: [band position], within the "Captions match the voice" law in SKILL.md, high contrast plate, never over the highlight
 - Title and outro cards: [text]
 - Credit line: [the short credits from `credits.txt`, or none]
 
@@ -117,8 +120,9 @@ Load `hyperframes` (the contract, `references/motion.md`, `references/format.md`
 Prefer native Hyperframes conventions over anything in `/showhow`.
 
 Requirements:
-- Every step is shown on the real product UI (rendered components, screenshots of the running app, or a faithful rebuild from the project's styles and copy).
+- Every step is shown on the real product UI (rendered components, screenshots of the running app, or a faithful rebuild from the project's styles and copy); a general video uses the rebuilt screens and pictures from `work/sources.md`.
 - For every step: orient -> point (highlight + narration names the label) -> act (cursor/typing) -> result held until the narration ends.
+- Explainer: each sentence scene plays its one `Visual:` from the plan (`references/explainer.md`, Visual menu), its picture entering on the scene's first frame.
 - Within one screen, move between steps with camera moves (zoom/pan), not fades.
 - Captions match the script verbatim and are timed to the voice.
 - Keep all text readable in the final render; UI text that the narration names must be legible at the chosen zoom.
@@ -231,6 +235,8 @@ Cursor and click ripples can stay DOM elements from the kit; give each ripple it
 
 Write every tween as `tl.fromTo(sel, from, { ..., immediateRender: false }, t)` and give every highlight or ripple its own element.
 A pooled element re-tweened with `tl.to` picks up whatever state the last seek left, and render workers seek out of order.
+Make every frame a pure function of time, and wait for fonts and images to load before any frame is captured.
+Write big files (the composition, long scripts) with a file tool, not a shell heredoc; long heredocs fail on Windows (`ENAMETOOLONG`).
 
 ## Overlays keep the viewer oriented
 
@@ -286,7 +292,7 @@ Before moving to delivery, verify:
 - [ ] Every step shows the real UI with the named control highlighted before it is used.
 - [ ] Every label spoken or captioned matches the UI text exactly.
 - [ ] Every claim about what the product does, its names and numbers, appears in the project; fictional demo data is listed in the plan.
-- [ ] The step or change counter is present and consistent.
+- [ ] The step or change counter is present and consistent (none in a quick-tip or an explainer).
 - [ ] Captions are timed and never cover the highlighted target.
 - [ ] Design floor, judged on `npx hyperframes snapshot` frames of the title, one step and the outro: no BANNED item in the chrome, contrast passes on every card and caption plate, at most two type families with tracking no tighter than -0.04em, nested radii are concentric, and every card enters and leaves with the same motion.
 - [ ] When `credits.txt` has lines, the outro shows the credit line for at least 2.5s with no caption over it.

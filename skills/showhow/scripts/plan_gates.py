@@ -32,7 +32,7 @@ P-steps: the step (or change) counters run 1..N with one N, and N fits the mode
 P-action: each step does one thing; catches the usual joins in its Action line: "then", ";",
           arrows, and "and click/press/select/type/open/choose/drag".
 P-time:   each step lasts at least 6s (quick-tip 5s, update changes 10s); the whole video stays
-          under the hard limit (howto 180s, quick-tip 60s, update 120s).
+          under the hard limit (HARD_LIMIT: howto and general 180s, quick-tip 60s, update 120s).
 P-end:    a howto (and a general task) ends on a "Now try it" scene, not a recap; a credits outro
           after it is fine; quick-tip ends on the result and a general topic video on its recap.
 P-described: every number and **bold label** in a scene's optional "On screen:" line is also in that
