@@ -67,7 +67,7 @@ On top of `references/step-2-plan.md`:
 
 - `## Mode` is `explainer`.
 - `## Script source` is `pasted` or `drafted`.
-- `## Formats` lists the formats to render; write `landscape` until multi-format output lands.
+- `## Formats` lists the formats to render; the default is all three (`landscape, vertical, square`); one name renders only that format.
 - Each storyboard scene has `Visual:` and, when the type takes numbers or names, `Params:`; `Counter:` is `none`.
 - `## Sources` and `## Unverified` stay, as in `general` mode.
 
