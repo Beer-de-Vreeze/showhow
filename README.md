@@ -80,7 +80,7 @@ On Windows, let the skill do it:
 /showhow install
 ```
 
-This installs Node.js LTS, ffmpeg, Python 3.12, uv, whisper-cpp (checked against a SHA256), a Python venv for Kokoro voices and MusicGen music, the helper scripts' Python packages, and the Hyperframes browser, all at pinned versions.
+This installs Node.js LTS, ffmpeg, Python 3.12, uv, whisper-cpp (checked against a SHA256), a Python venv for Kokoro voices, the helper scripts' Python packages, and the Hyperframes browser, all at pinned versions.
 Docker Desktop is optional: run `install.ps1 -Docker` for reproducible `render --docker` renders (it asks for admin).
 It also tries to install [earshot](https://github.com/Leonxlnx/earshot) for an optional audio check of the finished video; if that fails, showhow works without it.
 Restart your agent app afterwards so it picks up the new `PATH` and `HYPERFRAMES_PYTHON`.
@@ -92,7 +92,7 @@ On macOS and Linux, install these yourself:
 | Node.js 20+ | `npx hyperframes` |
 | ffmpeg | Rendering and audio |
 | Python 3.12 + [uv](https://docs.astral.sh/uv/) | Helper scripts |
-| A venv with `kokoro-onnx==0.6.1 soundfile==0.14.0 transformers==5.18.0 torch==2.14.1 numpy==2.5.3`, exported as `HYPERFRAMES_PYTHON` | Voice-over and generated music |
+| A venv with `kokoro-onnx==0.6.1 soundfile==0.14.0 numpy==2.5.3`, exported as `HYPERFRAMES_PYTHON` | Voice-over |
 | [whisper.cpp](https://github.com/ggml-org/whisper.cpp) (`whisper-cli` on `PATH`) | Caption timing |
 | Optional: [earshot](https://github.com/Leonxlnx/earshot) v0.2.0 (`earshot` on `PATH`) | Listening to the finished video |
 
