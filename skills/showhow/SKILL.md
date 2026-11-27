@@ -15,17 +15,26 @@ Options (flags or plain language):
 |---|---|
 | `--mode howto\|update\|general\|explainer` | inferred: a task -> `howto`; a version, tag, PR, range or "what's new" -> `update`; a task this project's code can't show (a process, a third-party app, a physical task) -> `general`; a topic or concept ("how X works", "why Y") or a pasted script -> `explainer` |
 | `--style <name>` (alias `--tone`; see Styles) or freeform | `clean` for howto and general, `release` for update, `friendly` for explainer |
-| `--format landscape\|vertical\|square` | landscape (1920x1080; vertical 1080x1920, square 1080x1080), 30fps |
+| `--format landscape\|vertical\|square` | landscape (1920x1080; vertical 1080x1920, square 1080x1080), 30fps; `--format all` or a comma list (`landscape,vertical`) renders several; explainer defaults to all three |
 | `--audience <who>` | inferred |
-| `--theme <frame preset>` (`../hyperframes/assets/frame-presets/`) | product theme; general and explainer: the preset that fits the topic |
+| `--theme <frame preset>` (`assets/frame-presets/` here, then `../hyperframes/assets/frame-presets/`) | product theme; general: the preset that fits the topic; explainer: `showhow` |
 | `--voice <Kokoro id>` (`npx hyperframes tts --list`) | `af_heart` |
 | `--title <text>` | inferred |
 | `--duration <seconds>` | none: the narration sets the length; a typed value is the target the script is written to, within the limits below |
 | `--no-voice`, `--no-captions`, `--no-sfx` | all on |
 | `--music` / `--no-music` | music bed off for `clean`, `friendly`, `quick-tip`, on for `release` and `explainer`; `--no-music` wins |
 
+**Theme lookup order.**
+This is the one place the video's theme is resolved; the other files point here.
+The first line that applies wins.
+
+1. A brand kit (`--brand`, a separate ticket; not built yet).
+2. `--theme <name>`: the folder `<name>` in `assets/frame-presets/` here, else in `../hyperframes/assets/frame-presets/`.
+3. The product's own theme (howto and update).
+4. The mode default: `showhow` for explainer; for general, the preset that fits the topic.
+
 **Other inputs.** `install`: on Windows run `powershell -NoProfile -ExecutionPolicy Bypass -File <skill-dir>/scripts/install.ps1`, report the result, tell the user to restart their agent app (a running session keeps its old PATH), and stop; elsewhere say the installer is Windows-only, list what README.md "Install" lists, and stop.
-`options`: list the styles, the themes (folder names in `../hyperframes/assets/frame-presets/`) and the voices, each with its flag, and stop.
+`options`: list the styles, the themes (folder names in `assets/frame-presets/` here, `showhow` first, then those in `../hyperframes/assets/frame-presets/`) and the voices, each with its flag, and stop.
 `learn <output-dir>`: make no video; record lessons from that run (`references/house-style.md`, "`/showhow learn`") and stop.
 
 `<skill-dir>` is the folder holding this file (Claude Code prints it as "Base directory for this skill"); bundled files are in `assets/` and `scripts/`.
@@ -170,6 +179,7 @@ On the title, one step and the outro, also check the design floor's Refuse list 
 SFX clips get `data-duration` equal to the file's real length, or `check` warns about the slot.
 
 Start `npx hyperframes preview`, give the user the URL and ask them to watch for wrong labels or order; render without waiting for an answer, and redo it if they find one.
+In `explainer` mode do not render yet: write the preview stills and wait for approval (`references/explainer.md`, "Stop 2: preview stills").
 Render with the wrapper, never `npx hyperframes render` directly (a quiet render can exit non-zero with no message and no file):
 `uv run --project <skill-dir>/scripts <skill-dir>/scripts/render.py composition <video-name>.mp4 --work work [-- --docker]`.
 It logs to `work/render.log`, succeeds only when this run wrote a non-empty mp4, retries once, then normalises the soundtrack to -16 LUFS, -1 dBTP and prints the measured input; if it still fails, check free disk space and report the log tail.

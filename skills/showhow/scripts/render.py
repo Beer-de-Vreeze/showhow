@@ -9,6 +9,15 @@ tail on failure.
   uv run --project <skill-dir>/scripts <skill-dir>/scripts/render.py \
       <output-dir>/composition <output-dir>/<video-name>.mp4 --work <output-dir>/work [--no-fast-capture] [--no-loudnorm] [-- --docker --quality high]
 
+--format: one render per format, each to <video-name>-<format>.mp4 (landscape 1920x1080,
+vertical 1080x1920, square 1080x1080); a single format keeps <video-name>.mp4. Each format renders
+a copy of the composition in <work>/formats/<format>/ whose root data-width, data-height and
+data-format are rewritten; the original is never edited, and CSS keys layout off
+[data-format="vertical"]. The root needs data-width and data-height. A failing format is named and
+exits non-zero; formats that rendered are kept. Without --format the composition renders as is.
+
+--prepare-only (with --format): write the per-format copies and stop; no render, no loudnorm.
+
 --no-fast-capture: for compositions that tween layout (height, width, position,
 padding); fast drawelement capture drops those changes.
 
@@ -150,6 +159,65 @@ def normalize_loudness(
     print(f"loudnorm: {i} LUFS, {tp} dBTP -> {TARGET} ({output})")
 
 
+FORMATS = {"landscape": (1920, 1080), "vertical": (1080, 1920), "square": (1080, 1080)}
+
+
+def parse_formats(spec: str) -> list[str]:
+    names = list(FORMATS) if spec == "all" else [n.strip() for n in spec.split(",") if n.strip()]
+    bad = [n for n in names if n not in FORMATS]
+    if bad or not names:
+        raise SystemExit(f"unknown format {', '.join(bad) or repr(spec)}; use all or a comma list of {', '.join(FORMATS)}")
+    return list(dict.fromkeys(names))
+
+
+def size_copy(composition: Path, copy: Path, fmt: str) -> None:
+    """Copy the composition and set the copy's root data-width, data-height and data-format; the original is untouched."""
+    index = composition / "index.html"
+    if not index.is_file():
+        raise SystemExit(f"no index.html in {composition}; pass the composition folder")
+    html = index.read_text(encoding="utf-8")
+    m = re.search(r"<[^<>]*data-composition-id[^<>]*>", html)
+    root = m.group(0) if m else ""
+    if not all(re.search(rf"data-{k}=", root) for k in ("width", "height")):
+        raise SystemExit(f"{index}: the root element (data-composition-id) needs data-width and data-height to render several formats")
+    width, height = FORMATS[fmt]
+    new = re.sub(r'data-width="[^"]*"', f'data-width="{width}"', root)
+    new = re.sub(r'data-height="[^"]*"', f'data-height="{height}"', new)
+    new = re.sub(r'\s*data-format="[^"]*"', "", new)
+    new = new[:-1].rstrip("/").rstrip() + f' data-format="{fmt}"' + ("/>" if root.endswith("/>") else ">")
+    shutil.rmtree(copy, ignore_errors=True)
+    shutil.copytree(composition, copy)
+    (copy / "index.html").write_text(html.replace(root, new, 1), encoding="utf-8")
+
+
+def render_formats(
+    composition: Path,
+    output: Path,
+    work: Path,
+    formats: list[str],
+    fast_capture: bool = True,
+    extra: list[str] | None = None,
+    run: Callable[[list[str]], tuple[int, str]] = run_cli,
+) -> list[Path]:
+    """One render per format; a failed format is named at the end and never deletes the ones that worked."""
+    done: list[Path] = []
+    failed: list[str] = []
+    for f in formats:
+        out = output if len(formats) == 1 else output.with_name(f"{output.stem}-{f}{output.suffix}")
+        try:
+            copy = work / "formats" / f
+            size_copy(composition, copy, f)
+            render(copy, out, work if len(formats) == 1 else work / f,
+                   fast_capture=fast_capture, extra=extra, run=run)
+            done.append(out)
+        except SystemExit as e:
+            failed.append(f); why = str(e).splitlines()[0]
+            print(f"format {f} failed: {e}", file=sys.stderr)
+    if failed:
+        raise SystemExit(f"render failed for format {', '.join(failed)} ({why}); kept: {', '.join(map(str, done)) or 'none'}")
+    return done
+
+
 def parse(argv: list[str]) -> tuple[argparse.Namespace, list[str]]:
     # Everything after "--" goes to hyperframes render; argparse.REMAINDER would also swallow --work.
     ours, extra = (argv[: argv.index("--")], argv[argv.index("--") + 1 :]) if "--" in argv else (argv, [])
@@ -157,6 +225,8 @@ def parse(argv: list[str]) -> tuple[argparse.Namespace, list[str]]:
     p.add_argument("composition", type=Path)
     p.add_argument("output", type=Path)
     p.add_argument("--work", type=Path, required=True, help="folder for render.log")
+    p.add_argument("--format", default=None, help="all, or a comma list of landscape,vertical,square; several formats write <name>-<format>.mp4")
+    p.add_argument("--prepare-only", action="store_true", help="with --format: write the per-format copies in <work>/formats/ and stop, for preview stills")
     p.add_argument("--no-fast-capture", action="store_true")
     p.add_argument("--no-loudnorm", action="store_true", help="skip loudness normalisation")
     return p.parse_args(ours), extra
@@ -164,9 +234,24 @@ def parse(argv: list[str]) -> tuple[argparse.Namespace, list[str]]:
 
 def main() -> None:
     a, extra = parse(sys.argv[1:])
-    render(a.composition, a.output, a.work, fast_capture=not a.no_fast_capture, extra=extra)
+    if a.prepare_only:
+        if a.format is None:
+            raise SystemExit("--prepare-only needs --format")
+        for f in parse_formats(a.format):
+            size_copy(a.composition, a.work / "formats" / f, f)
+            print(f"prepared {a.work / 'formats' / f}")
+        return
+    if a.format is None:  # today's behaviour: the composition's own size, no format flags
+        render(a.composition, a.output, a.work, fast_capture=not a.no_fast_capture, extra=extra)
+        outs = [(a.output, a.work)]
+    else:
+        formats = parse_formats(a.format)
+        # A failed format exits here; the ones that worked stay on disk as rendered, un-normalised.
+        done = render_formats(a.composition, a.output, a.work, formats, fast_capture=not a.no_fast_capture, extra=extra)
+        outs = [(o, a.work if len(done) == 1 else a.work / f) for o, f in zip(done, formats)]
     if not a.no_loudnorm:
-        normalize_loudness(a.output, a.work)
+        for o, w in outs:
+            normalize_loudness(o, w)
 
 
 if __name__ == "__main__":

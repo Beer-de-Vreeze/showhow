@@ -1,0 +1,85 @@
+<template>
+  <style>
+    #root {
+      --bg: #f4f6fa;
+      --ink: #1f2937;
+      --accent: #2563eb;
+      --warm: #e5484d;
+      position: absolute;
+      inset: 0;
+      background: var(--bg);
+      font-family: Inter, sans-serif;
+      color: var(--ink);
+    }
+    /* Starting states live in CSS: frame 0 of each style is its hidden state. */
+    .stage { position: absolute; inset: 0; opacity: 0; }
+    .stage svg { position: absolute; left: 360px; top: 240px; }
+    .sh-draw { opacity: 0; fill: none; stroke: var(--ink); stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; }
+    #quote { position: absolute; left: 240px; top: 400px; width: 1440px; font-size: 120px; font-weight: 700; line-height: 1.1; letter-spacing: -0.03em; }
+    #num { position: absolute; left: 240px; top: 340px; font-size: 260px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    #unit { position: absolute; left: 240px; top: 650px; font-size: 48px; }
+    #bar { position: absolute; left: 1100px; top: 300px; width: 360px; height: 560px; background: var(--accent); transform-origin: 50% 100%; transform: scaleY(0); }
+    #morph-shape { fill: var(--accent); }
+    .cube { fill: var(--accent); opacity: 0; }
+    #dot { fill: var(--warm); }
+    #route { fill: none; stroke: var(--ink); stroke-width: 3; stroke-dasharray: 2 14; stroke-linecap: round; }
+  </style>
+  <div id="root" data-composition-id="demo" data-width="1920" data-height="1080">
+    <div id="st-1" class="stage">
+      <svg width="1200" height="600" viewBox="0 0 1200 600" aria-hidden="true">
+        <rect id="draw-box" class="sh-draw" x="40" y="160" width="300" height="280" rx="16" />
+        <path id="draw-arrow" class="sh-draw" d="M340 300 H820 M780 260 L820 300 L780 340" />
+        <circle id="draw-ring" class="sh-draw" cx="980" cy="300" r="140" />
+      </svg>
+    </div>
+    <div id="st-2" class="stage"><div id="quote">Heat moves, pressure follows</div></div>
+    <div id="st-3" class="stage">
+      <div id="num">0</div>
+      <div id="unit">°C inside the combustor</div>
+      <div id="bar"></div>
+    </div>
+    <div id="st-4" class="stage">
+      <svg width="1200" height="600" viewBox="0 0 1200 600" aria-hidden="true">
+        <path id="morph-shape" d="M600 100 A200 200 0 1 1 599.9 100 Z" />
+      </svg>
+    </div>
+    <div id="st-5" class="stage">
+      <svg width="1400" height="700" viewBox="0 0 1400 700" style="left: 260px; top: 200px" aria-hidden="true">
+        <path id="route" d="M120 560 C 400 560, 400 140, 700 140 S 1000 560, 1280 560" />
+        <polygon id="cube-1" class="cube" points="200,420 260,390 320,420 260,450" />
+        <polygon id="cube-2" class="cube" points="620,320 680,290 740,320 680,350" />
+        <polygon id="cube-3" class="cube" points="1040,420 1100,390 1160,420 1100,450" />
+        <circle id="dot" cx="0" cy="0" r="22" />
+      </svg>
+    </div>
+  </div>
+  <script src="assets/kit/showhow-kit.js"></script>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    document.fonts.ready.then(() => {
+      const kit = showhowKit(tl, { root: "#root" });
+      const stage = (n, t) => {
+        tl.fromTo("#st-" + n, { opacity: 0 }, { opacity: 1, duration: 0.2, immediateRender: false }, t);
+        if (n < 5) tl.fromTo("#st-" + n, { opacity: 1 }, { opacity: 0, duration: 0.2, immediateRender: false }, t + 1.8);
+      };
+      [0, 2, 4, 6, 8].forEach((t, i) => stage(i + 1, t));
+
+      // stroke-reveal: box, then the arrow, then the ring
+      kit.draw(0.3, "#draw-box", 0.5);
+      kit.draw(0.8, "#draw-arrow", 0.6);
+      kit.draw(1.4, "#draw-ring", 0.5);
+      // kinetic-type
+      kit.words(2.3, "#quote");
+      // data-anim: the number ticks while the bar grows from its baseline
+      kit.count(4.3, "#num", 0, 1700, 1.2);
+      tl.fromTo("#bar", { scaleY: 0 }, { scaleY: 1, duration: 1.2, ease: "power1.out", immediateRender: false }, 4.3);
+      // morph: circle becomes a square
+      kit.morph(6.4, "#morph-shape", "M400 100 H800 V500 H400 Z", 1.0);
+      // flat-scene: cubes settle in, then a dot travels the route
+      kit.rise(8.3, ["#cube-1", "#cube-2", "#cube-3"]);
+      kit.along(8.9, "#dot", "#route", 0.9);
+
+      window.__timelines["demo"] = tl;
+    });
+  </script>
+</template>

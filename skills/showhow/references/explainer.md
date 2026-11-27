@@ -8,7 +8,7 @@ Reused from `general.md` as they are:
 - Sources, in order of trust, and "Never invent a label" (Step 1: Gather the facts).
 - Topic image order and licensing, credits, and the "Shown as of" note for rebuilt third-party screens.
 - Schematics for mechanisms, the 3D rule (never for UI, screens or charts), and honest charts in motion.
-- The design system: pick a frame preset that fits the topic and copy its `FRAME.md` into `composition/frame.md`.
+- The design system: the theme comes from the lookup order in `SKILL.md`, which defaults to the bundled `showhow` preset; copy its `FRAME.md` into `composition/frame.md`.
 
 What this file replaces: the step shape, the counters and the "Now try it" ending.
 
@@ -56,11 +56,36 @@ Parallax or other decorative motion is for the intro only; it never competes wit
 | `map` | Where something is | Static map with a labelled locator for each place named |
 | `photo` | The real thing | A licensed photo (`general.md`), cropped or slowly zoomed to the part being discussed |
 | `card` | One number, name or quote | Big text, one idea, held until the sentence ends |
+| `stroke-reveal` | A diagram or route built line by line | DrawSVG on paths, constant speed, connector before label (`motion-2d.md`) |
+| `kinetic-type` | A definition, rule or phrase to remember | SplitText whole words out of a mask, 5 frames apart (`motion-2d.md`) |
+| `data-anim` | A quantity changing | Counter tween with `onUpdate`/`textContent`, bars grown from their baseline (`motion-2d.md`) |
+| `morph` | "A becomes B", or a match cut between scenes | MorphSVG between two paths, same position and size either side (`motion-2d.md`) |
+| `flat-scene` | An abstract process as a concrete picture | Flat or isometric SVG from primitives, timeline stagger, MotionPath for travellers (`motion-2d.md`) |
+| `parallax` | The intro scene only | Layers pushed at depth-scaled speeds (`motion-2d.md`); the gate rejects it anywhere but scene 1 |
 | `scene3d` | Something whose shape is the point: a working machine, a globe, a hero number | One 3D stage per video, reused across scenes; `Params:` names the `kind` and its numbers, or a `model` (`references/3d-scenes.md`) |
 
-Later releases add rows here (2D motion styles); `VISUALS` in `scripts/plan_gates.py` is the single list the gate checks against, so a new type is one row here and one entry there.
+The 2D motion rows have a recipe each in `references/motion-2d.md`.
+Later releases add rows here; `VISUALS` in `scripts/plan_gates.py` is the single list the gate checks against, so a new type is one row here and one entry there.
 A scene with no voice (a title, a hold) needs no `Visual:`.
 Every fact shown in a visual is also spoken in that scene (P-described).
+
+## Stop 2: preview stills
+
+Explainer only.
+After `npx hyperframes check` passes and before the render, write one still per scene in each chosen format to `work/preview/<format>/scene-NN.png`, show them, and wait for the user's approval.
+Other modes keep "render without waiting".
+
+- **Moment:** each scene's settled moment, when its visual has finished building and the scene's last caption cue has ended (the hold after the narration).
+  Captions are in the composition, so a scene with no gap after its last cue gets a longer hold, not a still with a caption over it.
+- **Which copy:** every format is snapshotted from its per-format copy in `work/formats/<format>/`, the copy the render will use.
+  `render.py` makes those copies during a render, so write them first without rendering:
+  `uv run --project <skill-dir>/scripts <skill-dir>/scripts/render.py composition <video-name>.mp4 --work work --format <formats> --prepare-only`.
+- **Command,** once per format, with the settled time of each scene in order (seconds):
+  `npx -y hyperframes@0.9.85 snapshot work/formats/<format> --no-end --describe false --at <t1>,<t2>,... -o work/preview/<format>`.
+  It writes `frame-00-at-<t1>s.png`, `frame-01-at-<t2>s.png` and so on; rename them in order to `scene-01.png`, `scene-02.png`, then delete `contact-sheet.jpg`.
+- **Approval:** list the stills by scene and format, say what each shows in one sentence, and stop.
+  A rejected still means fix the composition, re-run `check`, redo only the stills that changed and ask again.
+  Render only after the user approves.
 
 ## Plan template additions
 
@@ -68,7 +93,7 @@ On top of `references/step-2-plan.md`:
 
 - `## Mode` is `explainer`.
 - `## Script source` is `pasted` or `drafted`.
-- `## Formats` lists the formats to render; write `landscape` until multi-format output lands.
+- `## Formats` lists the formats to render; the default is all three (`landscape, vertical, square`); one name renders only that format.
 - Each storyboard scene has `Visual:` and, when the type takes numbers or names, `Params:`; `Counter:` is `none`.
 - `## Sources` and `## Unverified` stay, as in `general` mode.
 
