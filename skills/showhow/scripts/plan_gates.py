@@ -23,6 +23,8 @@ P-need:   no "[NEED" marker left in the narration (scenes or the "## Narration s
 P-visual: every voiced scene has exactly one "Visual:" from VISUALS.
 P-time:   total under 180s; a total outside 60-120s passes with a warning.
 P-end:    the last scene before the outro is a recap.
+P-params: a "Visual: scene3d" scene has a "Params:" JSON object with a known "kind" (SCENE3D_KINDS) or a
+          "model"; every number in it appears in the narration ("stages": 12 needs "12" spoken).
 P-render: with --chapters, the rendered steps match the plan's count and each lasts the minimum.
 Exit code 1 when a gate fails.
 """
@@ -30,6 +32,7 @@ Exit code 1 when a gate fails.
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from pathlib import Path
@@ -39,7 +42,9 @@ from video_gates import video_duration
 MIN_STEP = {"howto": 6.0, "quick-tip": 5.0, "update": 10.0, "general": 6.0, "explainer": 0.0}
 HARD_LIMIT = {"howto": 180.0, "quick-tip": 60.0, "update": 120.0, "general": 180.0, "explainer": 180.0}
 # The visual menu for explainer scenes; later tickets add their types here (references/explainer.md).
-VISUALS = ("flow", "chart", "map", "photo", "card")
+VISUALS = ("flow", "chart", "map", "photo", "card", "scene3d")
+# Params.kind values with a recipe in assets/scene3d (references/3d-scenes.md); Params.model replaces any kind.
+SCENE3D_KINDS = ("machine", "globe", "hero-number")
 MAX_STEPS = {"howto": 8, "quick-tip": 3, "update": 5, "general": 8}
 MULTI_ACTION = re.compile(r"\bthen\b|;|->|→|\band\s+(?:click|press|select|type|open|choose|drag)\b", re.I)
 
@@ -62,6 +67,7 @@ def parse_plan(text: str) -> dict:
         on_screen = re.search(r"^On screen:\s*(.+)$", body, re.M)
         narration = re.search(r"^Narration:\s*(.+)$", body, re.M)
         visual = re.search(r"^Visual:\s*(.+)$", body, re.M)
+        params = re.search(r"^Params:\s*(.+)$", body, re.M)
         scenes.append({
             "n": int(m.group(1)), "name": m.group(2).strip(), "secs": float(m.group(3)),
             "counter": (int(counter.group(1)), int(counter.group(2))) if counter else None,
@@ -69,6 +75,7 @@ def parse_plan(text: str) -> dict:
             "on_screen": on_screen.group(1).strip() if on_screen else "",
             "narration": narration.group(1).strip() if narration else "",
             "visual": visual.group(1).strip("[]*` ").lower() if visual else "",
+            "params": params.group(1).strip().strip("`") if params else "",
         })
     if not scenes:
         raise SystemExit("no '### Scene N - name - Ns' blocks in the plan's storyboard")
@@ -172,7 +179,42 @@ def check_explainer(plan: dict) -> list[tuple[str, bool, str]]:
     body = [sc for sc in scenes if not re.search(r"outro|credit|end card", sc["name"], re.I)] or scenes
     ok = "recap" in body[-1]["name"].lower()
     results.append(("P-end", ok, f"last scene is {body[-1]['name']!r}" + ("" if ok else "; end on a recap")))
-    return results
+    return results + check_params(plan)
+
+
+def param_numbers(value) -> list[str]:
+    if isinstance(value, dict):
+        return [n for v in value.values() for n in param_numbers(v)]
+    if isinstance(value, list):
+        return [n for v in value for n in param_numbers(v)]
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return [str(int(value)) if float(value).is_integer() else repr(value)]
+    return []
+
+
+def check_params(plan: dict) -> list[tuple[str, bool, str]]:
+    """P-params: a scene3d scene has a known Params.kind or a Params.model, and every number in Params is spoken."""
+    scenes = [s for s in plan["scenes"] if s["visual"] == "scene3d"]
+    if not scenes:
+        return []
+    spoken = numbers(plan["script"] + " " + " ".join(s["narration"] for s in plan["scenes"]))
+    bad = []
+    for s in scenes:
+        try:
+            params = json.loads(s["params"] or "{}")
+        except json.JSONDecodeError as e:
+            bad.append(f"scene {s['n']} Params is not JSON ({e.msg})")
+            continue
+        if not isinstance(params, dict):
+            bad.append(f"scene {s['n']} Params is not a JSON object")
+            continue
+        kind = params.get("kind")
+        if not params.get("model") and kind not in SCENE3D_KINDS:
+            bad.append(f"scene {s['n']} unknown kind {kind!r} and no model (kinds: {', '.join(SCENE3D_KINDS)})")
+        missing = [n for n in param_numbers(params) if n not in spoken]
+        if missing:
+            bad.append(f"scene {s['n']} Params numbers not in the narration: {', '.join(missing)}")
+    return [("P-params", not bad, "Params match the narration" if not bad else "; ".join(bad))]
 
 
 def parse_chapters(text: str, duration: float) -> list[tuple[str, float]]:
