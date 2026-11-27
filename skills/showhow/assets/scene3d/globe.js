@@ -4,7 +4,7 @@
 import { THREE, hull, labels, ease, lerp, theme, tint } from "./scene3d.js";
 import { toVec, fromVec, arcPoints, faceRotation, orthoProject, centreOf } from "./globe-math.js";
 
-export const R = 4; // globe radius in world units; the stage's viewHeight is 10, so R_px = 0.4 * height * zoom
+export const R = 4; // globe radius in world units; R_px = R * (pixels per unit) * zoom, so any viewHeight works
 let OCEAN, LAND, BORDER, ACCENT; // set from the theme in buildGlobe: paper and ink tints, the accent for the highlight and route
 const ZOOM_END = 1.5;
 
@@ -98,9 +98,15 @@ export async function buildGlobe(stage, root, P, url) {
   await stage.renderer.compileAsync(stage.scene, stage.camera);
 
   const lon0 = centre.lon - 50; // starts turned away, settles on the region by the end of the zoom
+  // Pixels per world unit from the camera, not an assumed viewHeight of 10: a portrait or square stage widens
+  // viewHeight (10 * height / width) so the globe fits the narrow side.
+  const unit = stage.height / (stage.camera.top - stage.camera.bottom);
+  const Rpx = unit * R * ZOOM_END;
+  // A place's pixel position on the flat map (the globe's final frame), for the map and for labels placed over it.
+  const flatAt = (p) => { const [x, y, f] = orthoProject(p, centre); const k = f < 0 ? 1 / Math.hypot(x, y) : 1; return [stage.width / 2 + x * k * Rpx, stage.height / 2 - y * k * Rpx]; };
   const SEG = 64, RADIAL = 6;
   return {
-    centre, timing,
+    centre, timing, flatAt,
     pose(t) {
       const z = ease((t - timing.zoomStart) / (timing.zoomEnd - timing.zoomStart));
       const spin = ease(t / timing.zoomEnd);
@@ -108,7 +114,7 @@ export async function buildGlobe(stage, root, P, url) {
       globe.rotation.set(rot.x, rot.y, 0);
       stage.camera.zoom = lerp(1, ZOOM_END, z);
       stage.camera.updateProjectionMatrix();
-      const px = 1 / (stage.height * 0.1 * stage.camera.zoom); // world units per pixel at this zoom
+      const px = 1 / (unit * stage.camera.zoom); // world units per pixel at this zoom
       if (glow) glow.material.opacity = ease(t);
       markers.forEach((m, i) => m.scale.setScalar(Math.max(0.0001, ease((t - (i ? timing.legAt(i - 1)[1] - 0.2 : 0.2)) / 0.4)) * 9 * px));
       const lift = 0.25 * (1 - z); // arcs settle onto the surface so the flat map matches
@@ -130,8 +136,7 @@ export async function buildGlobe(stage, root, P, url) {
     // Flat locator map: the globe's front view at its final zoom, drawn with the same projection and radius.
     flatMap(canvas) {
       const g = canvas.getContext("2d");
-      const Rpx = stage.height * 0.4 * ZOOM_END, cx = canvas.width / 2, cy = canvas.height / 2;
-      const at = (p) => { const [x, y, f] = orthoProject(p, centre); const k = f < 0 ? 1 / Math.hypot(x, y) : 1; return [cx + x * k * Rpx, cy - y * k * Rpx]; };
+      const cx = stage.width / 2, cy = stage.height / 2, at = flatAt; // the canvas matches the stage size
       g.fillStyle = OCEAN; g.beginPath(); g.arc(cx, cy, Rpx, 0, 2 * Math.PI); g.fill();
       g.save(); g.clip();
       g.strokeStyle = BORDER; g.lineWidth = (2.5 * 2 * Math.PI * Rpx) / 6144; g.lineJoin = "round"; // line width: the texture line (2.5 texels) as it lands on screen
