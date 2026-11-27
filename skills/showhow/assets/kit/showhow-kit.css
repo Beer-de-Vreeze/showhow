@@ -3,7 +3,7 @@
 .sh-ring {
   position: absolute;
   box-sizing: border-box;
-  border: var(--sh-ring-width, 4px) solid var(--sh-accent, #2f80ed);
+  border: var(--sh-ring-width, 4px) solid var(--sh-accent, var(--accent, #2f80ed));
   border-radius: var(--sh-ring-radius, 10px);
   opacity: 0;
   pointer-events: none;
@@ -17,7 +17,7 @@
   border-radius: 50%;
   /* Light fill plus accent stroke reads on both dark buttons and light backgrounds. */
   background: var(--sh-ripple-fill, rgba(255, 255, 255, 0.75));
-  border: 3px solid var(--sh-accent, #2f80ed);
+  border: 3px solid var(--sh-accent, var(--accent, #2f80ed));
   opacity: 0;
   pointer-events: none;
   z-index: 51;

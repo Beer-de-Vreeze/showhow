@@ -155,6 +155,7 @@ When you ask for changes, it keeps the lasting ones there and shows you the diff
 | `--duration` | Seconds | Set by the narration |
 | `--audience` | Freeform, for example "new users" | Inferred |
 | `--theme` | A frame preset name | The product's theme |
+| `--brand` | A local brand kit name (`~/.showhow/brands/<name>/`, never committed) | None |
 | `--voice` | A Kokoro voice id | `af_heart` |
 | `--title` | Text | Inferred |
 | `--no-voice` | Flag | Narration on |
