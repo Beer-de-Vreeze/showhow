@@ -47,3 +47,11 @@ export function layoutLabels(anchors, { width, top, bottom, pitch }) {
   }
   return out;
 }
+
+// Where the label columns sit so plates stay `gap` px clear of the object's screen bounds {min, max} (x, px).
+// left / right: the widest plate in each column. Returns the left column's left edge and the right column's right
+// edge: the usual margin when there is room, pulled outward when not, never closer than `pad` to the frame edge.
+export function labelEdges({ width, margin, left, right, bounds, gap, pad }) {
+  const clamp = (x) => Math.min(width - pad, Math.max(pad, x));
+  return { left: clamp(Math.min(margin, bounds.min - gap - left)), right: clamp(Math.max(width - margin, bounds.max + gap + right)) };
+}
