@@ -39,6 +39,8 @@ Outcome -> Name the parts -> one scene per voiced sentence, grouped into section
 | Recap | The main idea again in one picture and one or two sentences. | 4-8s |
 
 - No step counter anywhere ("2 of 5" turns an explainer into a checklist).
+- Each scene's picture starts entering on the scene's first frame; later parts wait for their words.
+  A visual that waits for its first word leaves the plain ground on screen for 6-12 frames between scenes, and G-blank fails it (seen on the first full render).
 - Group the sentence scenes into 2-4 sections; each section is a chapter in `chapters.txt`, named for what it explains.
 - Target 60-120s, hard limit 180s.
   Over 120s is a warning; over 180s fails P-time: cut sentences or split the video.
