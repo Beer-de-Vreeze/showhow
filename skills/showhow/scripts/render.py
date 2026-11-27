@@ -11,8 +11,9 @@ tail on failure.
 
 --format: one render per format, each to <video-name>-<format>.mp4 (landscape 1920x1080,
 vertical 1080x1920, square 1080x1080), also when only one is given. Each format renders
-a copy of the composition in <work>/formats/<format>/ whose root data-width, data-height and
-data-format are rewritten; the original is never edited, and CSS keys layout off
+a copy of the composition in <work>/formats/<format>/ whose root gets data-format and whose
+composition elements sized like the root (root, sub-composition hosts, compositions/*.html roots)
+get the format's data-width and data-height; the original is never edited, and CSS keys layout off
 [data-format="vertical"]. The root needs data-width and data-height. A failing format is named and
 exits non-zero; formats that rendered are kept, each normalised as it finished. Without --format
 the composition renders as is.
@@ -171,24 +172,44 @@ def parse_formats(spec: str) -> list[str]:
     return list(dict.fromkeys(names))
 
 
+COMPOSITION_TAG = re.compile(r"<[^<>]*data-composition-id[^<>]*>")
+
+
+def attr(k: str) -> str:
+    """data-<k>="..." in either quote style; group 2 is the value."""
+    return rf"""data-{k}=(["'])(.*?)\1"""
+
+
 def size_copy(composition: Path, copy: Path, fmt: str) -> None:
-    """Copy the composition and set the copy's root data-width, data-height and data-format; the original is untouched."""
+    """Copy the composition; in the copy, every composition element (root, sub-composition hosts and the roots in
+    compositions/*.html) sized like the root gets the format's size, and the root gets data-format.
+    Elements at another size (an inset) keep theirs. The original is untouched."""
     index = composition / "index.html"
     if not index.is_file():
         raise SystemExit(f"no index.html in {composition}; pass the composition folder")
-    html = index.read_text(encoding="utf-8")
-    m = re.search(r"<[^<>]*data-composition-id[^<>]*>", html)
-    root = m.group(0) if m else ""
-    if not all(re.search(rf"data-{k}=", root) for k in ("width", "height")):
+    m = COMPOSITION_TAG.search(index.read_text(encoding="utf-8"))
+    sizes = [re.search(attr(k), m.group(0)) if m else None for k in ("width", "height")]
+    if not all(sizes):
         raise SystemExit(f"{index}: the root element (data-composition-id) needs data-width and data-height to render several formats")
+    landscape = tuple(s.group(2) for s in sizes)
     width, height = FORMATS[fmt]
-    new = re.sub(r'data-width="[^"]*"', f'data-width="{width}"', root)
-    new = re.sub(r'data-height="[^"]*"', f'data-height="{height}"', new)
-    new = re.sub(r'\s*data-format="[^"]*"', "", new)
-    new = new[:-1].rstrip("/").rstrip() + f' data-format="{fmt}"' + ("/>" if root.endswith("/>") else ">")
+
+    def resize(tag: str) -> str:
+        own = [re.search(attr(k), tag) for k in ("width", "height")]
+        if not all(own) or tuple(s.group(2) for s in own) != landscape:
+            return tag
+        return re.sub(attr("height"), f'data-height="{height}"', re.sub(attr("width"), f'data-width="{width}"', tag))
+
     shutil.rmtree(copy, ignore_errors=True)
     shutil.copytree(composition, copy)
-    (copy / "index.html").write_text(html.replace(root, new, 1), encoding="utf-8")
+    for page in [copy / "index.html", *sorted((copy / "compositions").glob("*.html"))]:
+        html = page.read_text(encoding="utf-8")
+        if page == copy / "index.html":
+            root = COMPOSITION_TAG.search(html).group(0)
+            new = re.sub(r"\s*" + attr("format"), "", root)
+            new = new[:-1].rstrip("/").rstrip() + f' data-format="{fmt}"' + ("/>" if root.endswith("/>") else ">")
+            html = html.replace(root, new, 1)
+        page.write_text(COMPOSITION_TAG.sub(lambda t: resize(t.group(0)), html), encoding="utf-8")
 
 
 def render_formats(

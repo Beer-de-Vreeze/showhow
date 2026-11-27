@@ -181,6 +181,22 @@ def main() -> None:
         assert (root / "swork" / "square" / "render.log").is_file()
         assert one.roots[0] == ('data-width="1080"', 'data-height="1080"', 'data-format="square"'), one.roots
 
+        # single_quotes_and_sub_compositions_resize: a single-quoted root, a host div and a sub-composition file at the
+        # root's size all become 1080x1920 in the vertical copy; an inset at its own size keeps it.
+        sub = root / "sub"
+        (sub / "compositions").mkdir(parents=True)
+        (sub / "index.html").write_text(
+            "<div id='root' data-composition-id='main' data-width='1920' data-height='1080'>\n"
+            '  <div id="host"\n    data-composition-id="demo" data-composition-src="compositions/demo.html"\n    data-width="1920" data-height="1080"></div>\n'
+            '  <div id="inset" data-composition-id="inset" data-width="640" data-height="360"></div></div>', encoding="utf-8")
+        (sub / "compositions" / "demo.html").write_text('<template><div id="root" data-composition-id="demo" data-width="1920" data-height="1080"></div></template>', encoding="utf-8")
+        render_formats(sub, root / "sub.mp4", root / "subwork", ["vertical"], run=PerOutputRunner())
+        vcopy = root / "subwork" / "formats" / "vertical"
+        tags = re.findall(r"<[^<>]*data-composition-id[^<>]*>", (vcopy / "index.html").read_text(encoding="utf-8") + (vcopy / "compositions" / "demo.html").read_text(encoding="utf-8"))
+        sizes = [tuple(re.search(rf"data-{k}=[\"']([^\"']*)", t).group(1) for k in ("width", "height")) for t in tags]
+        assert sizes == [("1080", "1920"), ("1080", "1920"), ("640", "360"), ("1080", "1920")], sizes
+        assert 'data-format="vertical"' in tags[0] and "data-format" not in tags[1], tags
+
         # root_without_size_fails: nothing to rewrite means a clear error and no render.
         nosize = root / "nosize"
         nosize.mkdir()
