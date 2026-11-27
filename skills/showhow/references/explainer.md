@@ -62,9 +62,10 @@ Parallax or other decorative motion is for the intro only; it never competes wit
 | `morph` | "A becomes B", or a match cut between scenes | MorphSVG between two paths, same position and size either side (`motion-2d.md`) |
 | `flat-scene` | An abstract process as a concrete picture | Flat or isometric SVG from primitives, timeline stagger, MotionPath for travellers (`motion-2d.md`) |
 | `parallax` | The intro scene only | Layers pushed at depth-scaled speeds (`motion-2d.md`); the gate rejects it anywhere but scene 1 |
+| `scene3d` | Something whose shape is the point: a working machine, a globe, a hero number | One 3D stage per video, reused across scenes; `Params:` names the `kind` and its numbers, or a `model` (`references/3d-scenes.md`) |
 
 The 2D motion rows have a recipe each in `references/motion-2d.md`.
-Later releases add rows here (cutaway, globe, hero number); `VISUALS` in `scripts/plan_gates.py` is the single list the gate checks against, so a new type is one row here and one entry there.
+Later releases add rows here; `VISUALS` in `scripts/plan_gates.py` is the single list the gate checks against, so a new type is one row here and one entry there.
 A scene with no voice (a title, a hold) needs no `Visual:`.
 Every fact shown in a visual is also spoken in that scene (P-described).
 
@@ -104,6 +105,7 @@ On top of `references/step-2-plan.md`:
 - **P-visual:** every voiced scene has exactly one known `Visual:`; an unknown type is named in the failure.
 - **P-time:** under 180s; a total outside 60-120s passes with a warning.
 - **P-end:** the last scene before the outro is a recap.
+- **P-params:** a `scene3d` scene has a known `Params.kind` or a `Params.model`, and every number in its `Params:` is spoken in the narration.
 - **P-described:** as in every mode.
 - There is no P-steps or P-action: explainers have no counters.
 

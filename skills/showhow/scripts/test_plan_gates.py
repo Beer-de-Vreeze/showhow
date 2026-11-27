@@ -5,8 +5,8 @@
 from plan_gates import check_plan, check_render, parse_chapters, parse_plan
 
 
-def scene(n: int, name: str, secs: float, counter: str = "none", action: str = "none", on_screen: str = "", narration: str = "", visual: str = "") -> str:
-    extra = (f"On screen: {on_screen}\n" if on_screen else "") + (f"Narration: {narration}\n" if narration else "") + (f"Visual: {visual}\n" if visual else "")
+def scene(n: int, name: str, secs: float, counter: str = "none", action: str = "none", on_screen: str = "", narration: str = "", visual: str = "", params: str = "") -> str:
+    extra = (f"On screen: {on_screen}\n" if on_screen else "") + (f"Narration: {narration}\n" if narration else "") + (f"Visual: {visual}\n" if visual else "") + (f"Params: {params}\n" if params else "")
     return f"### Scene {n} - {name} - {secs}s\nCounter: {counter}\nAction: {action}\nResult: x\n{extra}\n"
 
 
@@ -97,6 +97,16 @@ def main() -> None:
     name, ok, msg = [r for r in check_plan(parse_plan(expl(vThrust="parallax"))) if r[0] == "P-visual"][0]
     assert not ok and "scene 4" in msg and "parallax" in msg, msg
     assert verdicts(expl(vOutcome="parallax"))["P-visual"]
+
+    # scene3d: every number in Params is spoken (spec #14); Params.kind is known or a model replaces it.
+    def s3d(params: str) -> str:
+        return expl(Thrust="The compressor has 12 stages.", vThrust="scene3d").replace(
+            "Visual: scene3d\n", f"Visual: scene3d\nParams: {params}\n")
+    assert all(verdicts(s3d('{"kind": "machine", "stages": 12}')).values()), check_plan(parse_plan(s3d('{"kind": "machine", "stages": 12}')))
+    name, ok, msg = [r for r in check_plan(parse_plan(s3d('{"kind": "machine", "stages": 14}'))) if r[0] == "P-params"][0]
+    assert not ok and "14" in msg, msg
+    name, ok, msg = [r for r in check_plan(parse_plan(s3d('{"kind": "volcano"}'))) if r[0] == "P-params"][0]
+    assert not ok and "volcano" in msg, msg
 
     for broken in ("no mode here", "## Mode\nhowto\n\n## Storyboard\nnothing\n"):
         try:
