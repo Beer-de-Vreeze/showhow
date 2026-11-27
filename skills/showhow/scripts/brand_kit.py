@@ -77,19 +77,26 @@ def check(kit: Path) -> list[str]:
     if not fonts:
         problems.append("FRAME.md fonts: no font files listed")
     for f in fonts:
-        if not (kit / f).is_file():
-            problems.append(f"missing font file {f}")
+        problems += file_problems(kit, f, "font")
 
     logo = scalar(head, "logo")
     if not logo:
         problems.append("FRAME.md: no 'logo:' line")
-    elif not (kit / logo).is_file():
-        problems.append(f"missing logo file {logo}")
+    else:
+        problems += file_problems(kit, logo, "logo")
 
     music = scalar(head, "music")
-    if music and not (kit / music).is_file():
-        problems.append(f"missing music file {music}")
+    if music:
+        problems += file_problems(kit, music, "music")
     return problems
+
+
+def file_problems(kit: Path, name: str, what: str) -> list[str]:
+    """A kit file must exist and sit inside the kit, so a third-party FRAME.md can't point the copy step elsewhere."""
+    path = (kit / name).resolve()
+    if not path.is_relative_to(kit.resolve()):
+        return [f"{what} file {name} is outside the kit folder"]
+    return [] if path.is_file() else [f"missing {what} file {name}"]
 
 
 def main(argv: list[str]) -> int:
