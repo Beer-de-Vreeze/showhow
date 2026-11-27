@@ -82,6 +82,10 @@ def main() -> None:
     assert all(verdicts(good_e).values()) and "P-steps" not in verdicts(good_e), check_plan(parse_plan(good_e))
     assert not verdicts(expl(Thrust="It started in [NEED: launch year]."))["P-need"]
     assert not verdicts(expl(vThrust=""))["P-visual"]
+    # Two visuals in one voiced scene (spec #14 Testing Decisions), in each spelling the splitter accepts.
+    for two in ("flow, chart", "flow / chart", "flow and chart"):
+        name, ok, msg = [r for r in check_plan(parse_plan(expl(vThrust=two))) if r[0] == "P-visual"][0]
+        assert not ok and "scene 4 has 2 Visual" in msg, (two, msg)
     name, ok, msg = [r for r in check_plan(parse_plan(expl(vThrust="hologram"))) if r[0] == "P-visual"][0]
     assert not ok and "hologram" in msg, msg
     assert not verdicts(expl(38))["P-time"]
