@@ -6,6 +6,8 @@ Copies into <composition-dir>/assets/: kit/, scene3d/ (with its data), gsap/ (GS
 SplitText and MotionPath plugins), three/ (build, examples/jsm addons, the helvetiker_bold typeface), fonts/
 (the theme's font files and licences), and writes theme.css: @font-face for each font file and one :root
 token set, --paper --ink --accent --muted --font-display --font-body, from the theme's FRAME.md.
+A stock Hyperframes preset (no fonts/ folder, other colour keys) is mapped by the ALIASES rule below and
+gets its font names with a system-font fallback stack instead of @font-face.
 Copies FRAME.md to <composition-dir>/frame.md and writes a block into index.html's <head> (between
 BEGIN and END, replaced on every run) with the three.js import map and the theme.css link.
 Everything is local at render time; npm packages come from `npm pack` into a cache folder, never a CDN.
@@ -63,25 +65,59 @@ def resolve(theme: str | None = None, brand: str | None = None, brands: Path = B
     raise SystemExit(f"no theme {theme!r} in " + " or ".join(str(r) for r in PRESETS))
 
 
+# Stock Hyperframes presets name colours and fonts differently from showhow's FRAME.md. The rule, deterministic:
+# each token takes the first alias present in `colors:`; with no accent alias, accent is the first #hex colour in
+# file order with saturation over 0.25; muted falls back to ink. Title and label fonts take the first alias in `typography:`.
+ALIASES = {
+    "paper": ("paper", "bg", "background", "canvas", "cream", "surface"),
+    "ink": ("ink", "text", "black", "fg", "foreground"),
+    "accent": ("accent", "primary", "brand"),
+    "muted": ("muted", "text-muted", "gray", "grey", "text-light"),
+}
+FONT_ALIASES = {"title": ("title", "h1", "headline", "hero-title", "display"), "label": ("label", "body")}
+
+
+def map_colors(colors: dict[str, str]) -> tuple[dict[str, str | None], list[str]]:
+    """The four tokens from a FRAME.md colour map, and a problem naming each token that cannot be mapped."""
+    out = {k: next((colors[n] for n in names if n in colors), None) for k, names in ALIASES.items()}
+    if out["accent"] is None:
+        for v in colors.values():
+            m = re.fullmatch(r"#([0-9a-fA-F]{6})", v)
+            if m:
+                r, g, b = (int(m[1][i:i + 2], 16) / 255 for i in (0, 2, 4))
+                if (max(r, g, b) - min(r, g, b)) / max(r, g, b, 1e-9) > 0.25:
+                    out["accent"] = v
+                    break
+    out["muted"] = out["muted"] or out["ink"]
+    problems = [f"FRAME.md colors: missing '{k}' (or an alias: {', '.join(ALIASES[k][1:]) or 'none'})" for k in TOKENS if out[k] is None]
+    problems += [f"FRAME.md colors: '{k}' is not a CSS colour: {out[k]}" for k in TOKENS if out[k] and not valid_color(out[k])]
+    return out, problems
+
+
 def theme_css(theme: Path) -> str:
     """@font-face rules and the :root token set, from theme/FRAME.md and the files in theme/fonts/."""
     head = frontmatter((theme / "FRAME.md").read_text(encoding="utf-8"))
-    colors = parse_colors(head)
-    problems = [f"FRAME.md colors: missing '{k}'" for k in TOKENS if k not in colors]
-    problems += [f"FRAME.md colors: '{k}' is not a CSS colour: {colors[k]}" for k in TOKENS if k in colors and not valid_color(colors[k])]
-    families = {}
+    colors, problems = map_colors(parse_colors(head))
+    ramp = {}
     for ln in block(head, "typography"):
         m = re.match(r"([\w-]+):\s*\{.*fontFamily:\s*[\"']([^\"']+)[\"']", ln)
         if m:
-            families[m.group(1)] = m.group(2)
-    for role in ("title", "label"):
-        if role not in families:
-            problems.append(f"FRAME.md typography: no fontFamily for '{role}'")
+            ramp[m.group(1)] = m.group(2)
+    families = {}
+    for role, names in FONT_ALIASES.items():
+        found = next((ramp[n] for n in names if n in ramp), None)
+        if found:
+            families[role] = found
+        else:
+            problems.append(f"FRAME.md typography: no fontFamily for '{role}' (or an alias: {', '.join(names[1:]) or 'none'})")
 
     # Font files are named <Family without spaces>-<weight>.<ext>, e.g. EBGaramond-700.woff2.
+    # shortcut: a theme with no fonts/ folder (every stock Hyperframes preset) gets the family names plus a system
+    # font stack and no @font-face, so the render uses whatever is installed; ship fonts/ to pin the faces.
+    stock = not (theme / "fonts").is_dir()
     faces = []
     files = sorted(p for p in (theme / "fonts").glob("*") if p.suffix.lower() in FONT_TYPES)
-    for family in dict.fromkeys(families.values()):
+    for family in [] if stock else dict.fromkeys(families.values()):
         mine = [(p, w) for p in files for f, _, w in [p.stem.rpartition("-")] if f == family.replace(" ", "") and w.isdigit()]
         if not mine:
             problems.append(f"no font file for '{family}' in {theme / 'fonts'} (name it {family.replace(' ', '')}-<weight>.woff2)")
@@ -90,7 +126,8 @@ def theme_css(theme: Path) -> str:
         raise SystemExit(f"theme {theme} cannot be staged:\n" + "\n".join(f"FAIL {p}" for p in problems))
 
     tokens = [f"  --{k}: {colors[k]};" for k in TOKENS]
-    tokens += [f'  --font-display: "{families["title"]}", serif;', f'  --font-body: "{families["label"]}", sans-serif;']
+    tokens += [f'  --font-display: "{families["title"]}", {"system-ui, sans-serif" if stock else "serif"};',
+               f'  --font-body: "{families["label"]}", {"system-ui, sans-serif" if stock else "sans-serif"};']
     return f"/* Written by stage.py from {theme.name}/FRAME.md; edit the theme and re-run stage.py. */\n" + "\n".join(faces) + "\n:root {\n" + "\n".join(tokens) + "\n}\n"
 
 
