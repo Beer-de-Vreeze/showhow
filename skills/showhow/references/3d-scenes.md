@@ -84,6 +84,7 @@ A new kind is one row here, one entry in `SCENE3D_KINDS` in `scripts/plan_gates.
   Define the variables on the composition root and use `var(--ink)` for the label plates and leaders (the fixtures show it).
 - Labels at least 40 px, at most 5 to 7 on screen, inside the title-safe band; check that no plate covers the object at the most zoomed frame.
 - Pass `avoid: machine` to `labels` and the plate columns step outward to stay 70 px clear of the object's screen bounds, whatever the zoom or exploded height (`labelEdges`).
+- In a 1080 px wide frame (vertical, square) the columns run out of room and are clamped to the edge, over the object: widen `viewHeight` (about `110 * height / width` for the gear train), keep plates to a word or two, and pass a smaller `margin` and `gap`.
 
 ### Params.model
 
@@ -124,7 +125,9 @@ A new kind is one row here, one entry in `SCENE3D_KINDS` in `scripts/plan_gates.
 
 - `globeTiming(P)` gives the beats: legs from 1.2 s, then a 2.5 s zoom to `ZOOM_END` while the globe settles on the centre, then the cut at `zoomEnd + 0.3 s` with a 0.4 s dissolve.
 - The camera is orthographic and looks at the globe straight on, so the globe's final frame is an azimuthal orthographic map: `orthoProject(place, centre)` in `globe-math.js` is `d3.geoOrthographic().rotate([-centre.lon, -centre.lat])`.
-- The 2D locator map lines up when it uses that projection with the same centre and radius `R_px = 0.4 * frameHeight * ZOOM_END`, and the arcs have settled onto the surface (their lift reaches 0 by the end of the zoom).
+- The 2D locator map lines up when it uses that projection with the same centre and radius `R_px = R * (pixels per world unit) * ZOOM_END` (`0.4 * frameHeight * ZOOM_END` at `viewHeight: 10`), and the arcs have settled onto the surface (their lift reaches 0 by the end of the zoom).
+- `globe.flatAt(place)` gives a place's pixel position on that map, for a label or marker placed over it (a country-only globe has no route plates).
+- Portrait and square: pass `viewHeight: 10 * height / min(width, height)` so the globe fits the narrow side; the scale follows the camera.
 - `flatMap(canvas)` draws exactly that map, route, markers and names; the fixture stacks it above the 3D canvas and fades it in over the cut.
   A different `map` visual (an SVG or an image) has to use the same projection, centre and radius, or the cut jumps; overlay the last 3D frame and the first 2D frame to check.
 - Measured on the fixture: the frames at 6.5 s (3D) and 7.2 s (flat) differ in the labels, the title plate edge and the anti-aliasing of the lines.

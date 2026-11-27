@@ -37,7 +37,7 @@ The first line that applies wins.
 
 **Other inputs.** `brand <name> <repo path or URL>`: make no video; create a brand kit (`references/brand-kits.md`) and stop.
 `install`: on Windows run `powershell -NoProfile -ExecutionPolicy Bypass -File <skill-dir>/scripts/install.ps1`, report the result, tell the user to restart their agent app (a running session keeps its old PATH), and stop; elsewhere say the installer is Windows-only, list what README.md "Install" lists, and stop.
-`options`: list the styles, the themes (folder names in `assets/frame-presets/` here, `showhow` first, then those in `../hyperframes/assets/frame-presets/`) and the voices, each with its flag, and stop.
+`options`: list the modes (`howto`, `update`, `general`, `explainer`), the styles, the explainer visual types (the Visual menu in `references/explainer.md`, with the `scene3d` kinds `machine`, `globe` and `hero-number`), the themes (folder names in `assets/frame-presets/` here, `showhow` first, then those in `../hyperframes/assets/frame-presets/`), the brand kits in `~/.showhow/brands/` and the voices, each with its flag, and stop.
 `learn <output-dir>`: make no video; record lessons from that run (`references/house-style.md`, "`/showhow learn`") and stop.
 
 `<skill-dir>` is the folder holding this file (Claude Code prints it as "Base directory for this skill"); bundled files are in `assets/` and `scripts/`.

@@ -63,12 +63,13 @@ def parse_plan(text: str) -> dict:
     scenes = []
     for m in re.finditer(r"^### Scene (\d+) - (.+?) - ([\d.]+)\s*s\b(.*?)(?=^### Scene |\Z|^## )", text, re.M | re.S):
         body = m.group(4)
-        counter = re.search(r"^Counter:\s*\"?(?:(?:Step|Change|Point)\s+)?(\d+)\s+of\s+(\d+)", body, re.M | re.I)
-        action = re.search(r"^Action:\s*(.+)$", body, re.M)
-        on_screen = re.search(r"^On screen:\s*(.+)$", body, re.M)
-        narration = re.search(r"^Narration:\s*(.+)$", body, re.M)
-        visual = re.search(r"^Visual:\s*(.+)$", body, re.M)
-        params = re.search(r"^Params:\s*(.+)$", body, re.M)
+        # [ \t]*, not \s*: an empty field (a silent outro's Narration:) must not take the next line.
+        counter = re.search(r"^Counter:[ \t]*\"?(?:(?:Step|Change|Point)\s+)?(\d+)\s+of\s+(\d+)", body, re.M | re.I)
+        action = re.search(r"^Action:[ \t]*(.+)$", body, re.M)
+        on_screen = re.search(r"^On screen:[ \t]*(.+)$", body, re.M)
+        narration = re.search(r"^Narration:[ \t]*(.+)$", body, re.M)
+        visual = re.search(r"^Visual:[ \t]*(.+)$", body, re.M)
+        params = re.search(r"^Params:[ \t]*(.+)$", body, re.M)
         scenes.append({
             "n": int(m.group(1)), "name": m.group(2).strip(), "secs": float(m.group(3)),
             "counter": (int(counter.group(1)), int(counter.group(2))) if counter else None,

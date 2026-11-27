@@ -41,6 +41,8 @@ For a quantity that changes: a counter, bars, a before and after.
 - `kit.count(t, "#num", from, to, d, { decimals })` ticks the number; write the from value in the HTML.
 - Use `font-variant-numeric: tabular-nums` on anything that ticks.
 - Bars grow from their baseline with a plain `fromTo` on `scaleY` (`transform-origin: 50% 100%`), axes before values, scale starting at zero.
+  An SVG `<rect>` bar ignores the CSS origin: give every tween on it `svgOrigin: "0 <baseline y>"`, or the bar grows from its top and floats off the axis.
+  Never put a label inside a bar you scale; it scales with it.
 - Highlight one series at a time; one format for numbers across the video.
 
 ## morph
@@ -48,6 +50,7 @@ For a quantity that changes: a counter, bars, a before and after.
 For "A becomes B", or a match cut into the next scene.
 
 - `kit.morph(t, "#shape", "M... Z", d)` morphs the path's current `d` into the given path.
+  A second `morph` on the same path starts from the first one's end shape, so call them in time order.
 - Pick start and end shapes at the same position and size so the cut is a match; no blur during the morph.
 - Both ends are plain paths; convert rects and circles to a path first.
 

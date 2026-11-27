@@ -113,10 +113,11 @@ export function edgeLines(geometry, stage, { color = theme.ink, linewidth = 2.5,
 }
 
 // Silhouette for curved parts with few creases: back faces pushed out along their normals.
+// The normal attribute, not objectNormal: MeshBasicMaterial's shader has no objectNormal, so the hull failed to compile.
 export function hull(geometry, { color = theme.ink, thickness = 0.05 } = {}) {
   const mat = new THREE.MeshBasicMaterial({ color, side: THREE.BackSide });
   mat.onBeforeCompile = (shader) => {
-    shader.vertexShader = shader.vertexShader.replace("#include <begin_vertex>", `#include <begin_vertex>\ntransformed += normalize(objectNormal) * ${thickness.toFixed(4)};`);
+    shader.vertexShader = shader.vertexShader.replace("#include <begin_vertex>", `#include <begin_vertex>\ntransformed += normalize(normal) * ${thickness.toFixed(4)};`);
   };
   return new THREE.Mesh(geometry, mat);
 }
