@@ -70,27 +70,38 @@ const cut = new Evaluator().evaluate(a, b, SUBTRACTION)
 
 - README constraints: geometry must be two-manifold (watertight, no interpenetrating triangles); do not modify a brush's geometry after creating it.
 - LatheGeometry is only watertight if the profile is a closed ring section (inner wall, outer wall, end caps joined); an open profile gives bad CSG (from knowledge).
-- Run CSG at load time, once per cut, never per frame. A fixed quarter-wedge removed from the casing is the cheap deterministic default.
+- Run CSG at load time, once per cut, never per frame.
+  A fixed quarter-wedge removed from the casing is the cheap deterministic default.
 - Register the heavy step in `window.__hf.buildReady` (3d.md, runtimes.md).
 
 ### Section planes and cut faces without CSG
 
 - `material.clippingPlanes = [plane]` with `renderer.localClippingEnabled = true` clips in world space; points with negative signed distance are clipped (Material docs).
-- Capping the hole: the official `webgl_clipping_stencil` example draws back and front faces into the stencil buffer, then a plane mesh draws the cap where the stencil is set. The renderer is created with `stencil: true`, and `renderOrder` controls pass order.
+- Capping the hole: the official `webgl_clipping_stencil` example draws back and front faces into the stencil buffer, then a plane mesh draws the cap where the stencil is set.
+  The renderer is created with `stencil: true`, and `renderOrder` controls pass order.
 - Animating the plane constant is a pure function of t: `plane.constant = lerp(a, b, ease(u))`.
 - Choice: clipping planes for animated section sweeps (cheap, no CSG); CSG for a fixed cutaway where wall thickness must be real geometry.
 
 ## 2. Technical-illustration look
 
-- Camera: `OrthographicCamera`. Isometric = position `(d, d, d)` looking at the origin, or dimetric (about 35.264 degrees elevation, 45 azimuth). Parallel lines stay parallel, which is the whole look. Animate `zoom` plus `updateProjectionMatrix()` for a dive, not camera distance.
-- Fill: `MeshToonMaterial` with a 2 or 3 step `gradientMap` (`DataTexture`, `NearestFilter`), or flat `MeshBasicMaterial` colours. No PBR, no environment lighting. One directional light plus ambient.
+- Camera: `OrthographicCamera`.
+  Isometric = position `(d, d, d)` looking at the origin, or dimetric (about 35.264 degrees elevation, 45 azimuth).
+  Parallel lines stay parallel, which is the whole look.
+  Animate `zoom` plus `updateProjectionMatrix()` for a dive, not camera distance.
+- Fill: `MeshToonMaterial` with a 2 or 3 step `gradientMap` (`DataTexture`, `NearestFilter`), or flat `MeshBasicMaterial` colours.
+  No PBR, no environment lighting.
+  One directional light plus ambient.
 - Edges, by increasing cost:
   1. `EdgesGeometry(geo, thresholdAngle)` (default 1 degree) drawn with `LineSegments`; 1 px lines are too thin at 1080x1920, so:
-  2. `LineSegments2` + `LineMaterial({ linewidth, resolution })` from `three/addons/lines/`; convert with `LineSegmentsGeometry.fromEdgesGeometry()` (secondary); `linewidth` is in pixels and `resolution` must match the render size. Fat lines are the practical default for video.
+  2. `LineSegments2` + `LineMaterial({ linewidth, resolution })` from `three/addons/lines/`; convert with `LineSegmentsGeometry.fromEdgesGeometry()` (secondary); `linewidth` is in pixels and `resolution` must match the render size.
+     Fat lines are the practical default for video.
   3. Inverted hull: duplicate mesh with `side: BackSide`, vertices pushed along normals in the vertex shader; gives silhouettes of curved surfaces, which EdgesGeometry does not (threejsdemos toon demo, secondary).
   4. Post-process outline (`OutlinePass` or a depth/normal Sobel): silhouettes and creases in one pass but a full-screen cost and resolution-dependent width.
-- v1 combination: EdgesGeometry fat lines for creases + inverted hull for silhouettes on lathe parts. Give fills `polygonOffset` (factor 1, units 1) against z-fighting; polygon offset can change at runtime without `needsUpdate` (manual).
-- Conditional lines: the LDraw example (`webgl_loader_ldraw`, `LDrawConditionalLineMaterial`) draws a segment only when its control points lie on the same side of the line in screen space, giving clean edges on smooth surfaces without tessellation lines. Garrett Johnson's `threejs-sandbox/conditional-lines` generalises it to any geometry (MIT). Worth a v2 spike; v1 does fine with the hull.
+- v1 combination: EdgesGeometry fat lines for creases + inverted hull for silhouettes on lathe parts.
+  Give fills `polygonOffset` (factor 1, units 1) against z-fighting; polygon offset can change at runtime without `needsUpdate` (manual).
+- Conditional lines: the LDraw example (`webgl_loader_ldraw`, `LDrawConditionalLineMaterial`) draws a segment only when its control points lie on the same side of the line in screen space, giving clean edges on smooth surfaces without tessellation lines.
+  Garrett Johnson's `threejs-sandbox/conditional-lines` generalises it to any geometry (MIT).
+  Worth a v2 spike; v1 does fine with the hull.
 - Hidden lines (see-through behind a cutaway): second pass with low alpha and `depthFunc: GreaterDepth` (from knowledge).
 - Cross-hatched cut faces: cap plane (stencil cap or CSG cut face) with a `ShaderMaterial` that computes hatch from object-space or world-space coordinates, never screen-space or noise:
 
@@ -99,15 +110,22 @@ float h = step(0.5, fract((p.x + p.y) * density));   // 45 degree lines
 // smooth the step with fwidth to anti-alias
 ```
 
-  World-space or object-space keeps the hatch glued to the part during camera moves. Rotate the hatch angle per part so adjacent parts read as separate (drawing convention).
+  World-space or object-space keeps the hatch glued to the part during camera moves.
+  Rotate the hatch angle per part so adjacent parts read as separate (drawing convention).
 - Colour discipline: neutral grey-blue parts, one accent for the part under discussion, one hatch colour for cut faces.
 
 ## 3. Labels
 
-- `CSS2DRenderer` + `CSS2DObject` (official addon): each DOM element is wrapped in an object in the scene graph; each render projects its 3D position and applies a CSS translate; overlay needs `pointer-events: none`; supports only 100% browser and display zoom (docs). It updates every element every render and cost climbs at 200+ elements (secondary). It cannot occlude behind geometry (secondary).
-- Recommended for showhow: project ourselves inside the same `render(t)` call (`v.clone().project(camera)`, NDC to pixels) and set `transform` on absolutely positioned elements. Same result as CSS2DRenderer, but explicit in the seek path. If using CSS2DRenderer, call `labelRenderer.render` in the same `hf-seek` handler.
-- Leader lines: one SVG line per label from anchor pixel to label box edge, plus an anchor dot. Occlusion: have the script mark which anchors are visible per camera keyframe, or fade a label when its anchor is behind a part (ray test or comparing depth).
-- Overlap avoidance, deterministic and cheap, no physics solver: fixed label columns at left and right (portrait: top and bottom bands), sort labels by anchor y, assign slots in order one row pitch apart; leaders then cannot cross. For label sets that change with time, compute the layout from `t` only.
+- `CSS2DRenderer` + `CSS2DObject` (official addon): each DOM element is wrapped in an object in the scene graph; each render projects its 3D position and applies a CSS translate; overlay needs `pointer-events: none`; supports only 100% browser and display zoom (docs).
+  It updates every element every render and cost climbs at 200+ elements (secondary).
+  It cannot occlude behind geometry (secondary).
+- Recommended for showhow: project ourselves inside the same `render(t)` call (`v.clone().project(camera)`, NDC to pixels) and set `transform` on absolutely positioned elements.
+  Same result as CSS2DRenderer, but explicit in the seek path.
+  If using CSS2DRenderer, call `labelRenderer.render` in the same `hf-seek` handler.
+- Leader lines: one SVG line per label from anchor pixel to label box edge, plus an anchor dot.
+  Occlusion: have the script mark which anchors are visible per camera keyframe, or fade a label when its anchor is behind a part (ray test or comparing depth).
+- Overlap avoidance, deterministic and cheap, no physics solver: fixed label columns at left and right (portrait: top and bottom bands), sort labels by anchor y, assign slots in order one row pitch apart; leaders then cannot cross.
+  For label sets that change with time, compute the layout from `t` only.
 - Legibility at 1080x1920 (my judgement, not from a source): text at least 40 px, 2 px leaders, solid or semi-opaque plate behind text, at most 5 to 7 labels visible, label width at most about 40 percent of frame width, keep out of platform UI zones (top about 10 percent, bottom about 20 percent).
 - Numbers in labels come from script parameters, so editing the script changes the label (the site's `stages = ratio / 3.5` pattern).
 
@@ -128,33 +146,50 @@ function render(t) {
 }
 ```
 
-- Gear trains: ratios chained from the driver. Slow motion multiplies time through `timeMap`, so it is still a pure function; never change `omega` and also integrate.
-- Crank-slider: crank angle `a = phase*2*pi`, crank radius `r`, rod length `l`: piston position `x = r*cos(a) + sqrt(l^2 - (r*sin(a))^2)`; rod angle `asin(r*sin(a)/l)`. Valve lifts are tables over crank angle.
-- Escapement (Swiss lever): tabulate pallet fork angle over one beat (lock, impulse, drop, lock) and step the escape wheel one tooth per beat: `wheelAngle = (floor(beats) + ease(frac(beats))) * 2*pi/N`. 4 Hz = 28,800 beats per hour (matches the site). Balance oscillation `A*sin(2*pi*f*t)` with f = 2 Hz for a 4 Hz beat (two beats per oscillation).
-- Mechanisms solved iteratively (four-bar): fixed iteration count from a fixed start pose each frame, never from the previous frame. Closed forms where they exist.
-- Particles (air, fuel, flame): stateless `p_i(t) = path(fract(u_i + speed*t))` with `u_i = hash(i)` and lateral offset `hash(i+1)`, using an integer hash (mulberry32 style), not `Math.random()` and not `fract(sin())` (GPU-dependent). `Points` or `InstancedMesh` with a few thousand points is cheap. Compressor squeeze: density up and spacing down per stage index.
-- Fluids beyond that (swirl, flame): bake once at load into typed arrays and look up by `t` ("simulate once at load", 3d.md). Trails: draw N past samples `p_i(t - k*dt)`, no stored history.
-- Exploded view: per part `home` and `explodeVector` (usually along the main axis); position `home + explodeVector * e_i(t)` with `e_i = ease(clamp01((x - i*stagger) / dur))`. Moving parts keep running while exploded (their rotation stays a function of `t`).
+- Gear trains: ratios chained from the driver.
+  Slow motion multiplies time through `timeMap`, so it is still a pure function; never change `omega` and also integrate.
+- Crank-slider: crank angle `a = phase*2*pi`, crank radius `r`, rod length `l`: piston position `x = r*cos(a) + sqrt(l^2 - (r*sin(a))^2)`; rod angle `asin(r*sin(a)/l)`.
+  Valve lifts are tables over crank angle.
+- Escapement (Swiss lever): tabulate pallet fork angle over one beat (lock, impulse, drop, lock) and step the escape wheel one tooth per beat: `wheelAngle = (floor(beats) + ease(frac(beats))) * 2*pi/N`.
+  4 Hz = 28,800 beats per hour (matches the site).
+  Balance oscillation `A*sin(2*pi*f*t)` with f = 2 Hz for a 4 Hz beat (two beats per oscillation).
+- Mechanisms solved iteratively (four-bar): fixed iteration count from a fixed start pose each frame, never from the previous frame.
+  Closed forms where they exist.
+- Particles (air, fuel, flame): stateless `p_i(t) = path(fract(u_i + speed*t))` with `u_i = hash(i)` and lateral offset `hash(i+1)`, using an integer hash (mulberry32 style), not `Math.random()` and not `fract(sin())` (GPU-dependent).
+  `Points` or `InstancedMesh` with a few thousand points is cheap.
+  Compressor squeeze: density up and spacing down per stage index.
+- Fluids beyond that (swirl, flame): bake once at load into typed arrays and look up by `t` ("simulate once at load", 3d.md).
+  Trails: draw N past samples `p_i(t - k*dt)`, no stored history.
+- Exploded view: per part `home` and `explodeVector` (usually along the main axis); position `home + explodeVector * e_i(t)` with `e_i = ease(clamp01((x - i*stagger) / dur))`.
+  Moving parts keep running while exploded (their rotation stays a function of `t`).
 - Camera paths: `CatmullRomCurve3.getPoint(u)` or keyframed lerp of position, zoom and target with `u = ease((t - t0)/dur)`. showhow general.md: dive or exploded view, not an orbit; moves of 0.8 s or slower.
 - RNG: seed from a hash of the script; never `Math.random()`, `Date.now()` or `performance.now()`.
 
 ## 5. Headless capture: performance and determinism
 
 What Hyperframes does (heygen-com/hyperframes repo, issues and DeepWiki; all secondary):
-- Prefers chrome-headless-shell. Two capture modes: BeginFrame (virtual time) and a Puppeteer screenshot fallback after seeking.
+- Prefers chrome-headless-shell.
+  Two capture modes: BeginFrame (virtual time) and a Puppeteer screenshot fallback after seeking.
 - It probes for hardware WebGL; with no GPU it launches with `--use-gl=angle --use-angle=swiftshader`, so WebGL runs on CPU.
 - An issue reports, on one setup, two renders differing in 61 of 2768 frames under load; earlier failures were BeginFrame on an NVIDIA GPU with `--use-angle=gl-egl`.
-- Under WSL2 the GPU is not used; native Windows with `--browser-gpu` is reported about 5x faster than SwiftShader. Beer works on native Windows, so this matters.
+- Under WSL2 the GPU is not used; native Windows with `--browser-gpu` is reported about 5x faster than SwiftShader.
+  Beer works on native Windows, so this matters.
 
 Practical rules:
 - New headless with `--disable-gpu` has no WebGL at all; since Chrome 137 the automatic SwiftShader fallback is gone, so launch flags `--use-gl=angle --use-angle=swiftshader` (and `--enable-unsafe-swiftshader` on some builds) are needed (secondary).
-- `preserveDrawingBuffer: true` matters when frames are read back from the canvas (`toDataURL`, `readPixels`); plain screenshots usually work without it (secondary). Set it anyway if unsure; small perf cost.
-- `devicePixelRatio`: fix it. Use `renderer.setPixelRatio(1)` and a canvas at final composition size; do not read `window.devicePixelRatio` in the capture path.
-- Anti-aliasing: MSAA patterns differ between SwiftShader and real GPUs. For identical frames across machines, render at 2x and downscale (supersampling) or accept small differences (judgement). Stencil capping needs `stencil: true`; test MSAA plus stencil on SwiftShader.
+- `preserveDrawingBuffer: true` matters when frames are read back from the canvas (`toDataURL`, `readPixels`); plain screenshots usually work without it (secondary).
+  Set it anyway if unsure; small perf cost.
+- `devicePixelRatio`: fix it.
+  Use `renderer.setPixelRatio(1)` and a canvas at final composition size; do not read `window.devicePixelRatio` in the capture path.
+- Anti-aliasing: MSAA patterns differ between SwiftShader and real GPUs.
+  For identical frames across machines, render at 2x and downscale (supersampling) or accept small differences (judgement).
+  Stencil capping needs `stencil: true`; test MSAA plus stencil on SwiftShader.
 - Other determinism threats: fat-line `resolution`, shader precision and `fwidth` per GPU, `Math.random`, async texture loads, fonts.
 - Setup: `await renderer.compileAsync(scene, camera)` inside a `window.__hf.buildReady[key]` promise; never `requestAnimationFrame`, clocks or timers in setup (runtimes.md).
-- Fonts: `@font-face` from project files and `await document.fonts.load('600 40px Name')` plus `document.fonts.ready` inside `buildReady` (from knowledge). Prefer HTML labels over canvas-texture text at 1080x1920 (resampling blur).
-- Performance on SwiftShader (CPU): few draw calls (under about 300; `InstancedMesh`, `mergeGeometries` for static plates per material), no shadow maps, no bloom or SSAO, no full-screen outline pass in v1. Profile the heaviest frame once (3d.md).
+- Fonts: `@font-face` from project files and `await document.fonts.load('600 40px Name')` plus `document.fonts.ready` inside `buildReady` (from knowledge).
+  Prefer HTML labels over canvas-texture text at 1080x1920 (resampling blur).
+- Performance on SwiftShader (CPU): few draw calls (under about 300; `InstancedMesh`, `mergeGeometries` for static plates per material), no shadow maps, no bloom or SSAO, no full-screen outline pass in v1.
+  Profile the heaviest frame once (3d.md).
 - Test: render frame N, seek to five other frames, render N again, diff; any difference means hidden state.
 
 ## 6. Existing examples and libraries

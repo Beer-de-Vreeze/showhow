@@ -8,7 +8,8 @@ Sources marked (secondary) were read through a search summary or a third-party w
 ## Summary
 
 - The core showhow design (short, task-focused, real UI, narrated, highlighted, click cues, outcome first) matches the screencast literature (Plaisant & Shneiderman 2005, van der Meij's demonstration-based training) and holds up.
-- Weakest existing claim: "music hurts retention in teaching videos". The evidence is mixed (small harm in older meta-analyses, small benefit in a 2023 one); keep the no-music default but justify it by voice-first design and WCAG 1.4.7, not by a proven retention penalty.
+- Weakest existing claim: "music hurts retention in teaching videos".
+  The evidence is mixed (small harm in older meta-analyses, small benefit in a 2023 one); keep the no-music default but justify it by voice-first design and WCAG 1.4.7, not by a proven retention penalty.
 - Captions: the 42-character line is longer than BBC (37 characters, or 68% of landscape width) and DCMP (32); vertical needs 90% width and may use 3 lines.
 - Accessibility gap: WCAG 1.2.5 (AA) is met by narration only if every important visual fact is also spoken, and 1.2.2 needs captions; showhow should gate on both and ship a transcript and a sidecar caption file.
 - Practice prompts and a short review help procedural learning in some studies and not in others; "Now try it" is right, and an explicit pause point plus a one-line recap of the steps are cheap additions (weak to medium evidence).
@@ -71,10 +72,14 @@ Sources marked (secondary) were read through a search summary or a third-party w
 
 ### Implications
 
-- "Outcome first within 5 s": no source gives a 5 s threshold; YouTube measures 30 s and Guo says only that shorter engages more. CONFIRMS the direction; label 5 s as a heuristic.
-- 45-120 s target, 180 s limit: all data say shorter wins, none sets a 45 s floor. CONFIRMS; below 45 s the `quick-tip` shape applies.
-- Pacing near 150 wpm: Guo says do not slow down. CONFIRMS (section 3).
-- Silent holds of about 2 s at subtask boundaries: Plaisant found long pauses hurt; Rey 2019 finds segmenting helps. CONFIRMS; keep holds short.
+- "Outcome first within 5 s": no source gives a 5 s threshold; YouTube measures 30 s and Guo says only that shorter engages more.
+  CONFIRMS the direction; label 5 s as a heuristic.
+- 45-120 s target, 180 s limit: all data say shorter wins, none sets a 45 s floor.
+  CONFIRMS; below 45 s the `quick-tip` shape applies.
+- Pacing near 150 wpm: Guo says do not slow down.
+  CONFIRMS (section 3).
+- Silent holds of about 2 s at subtask boundaries: Plaisant found long pauses hurt; Rey 2019 finds segmenting helps.
+  CONFIRMS; keep holds short.
 
 ## 3. Narration
 
@@ -91,8 +96,10 @@ Sources marked (secondary) were read through a search summary or a third-party w
 
 ### Implications
 
-- Local TTS default: CONFIRMS (modern TTS matches human voice on learning). NEW: require a modern neural voice; offer a recorded human voice for `release` and brand-facing explainers where trust matters.
-- 2.5 words per second (150 wpm): CONFIRMS against Guo and BBC; sits under the DCMP upper-level cap and above the lower and middle caps. Proposed: keep 2.5 as plan value, add a measured per-scene cap of 2.7 words per second (162 wpm), because captions are verbatim.
+- Local TTS default: CONFIRMS (modern TTS matches human voice on learning).
+  NEW: require a modern neural voice; offer a recorded human voice for `release` and brand-facing explainers where trust matters.
+- 2.5 words per second (150 wpm): CONFIRMS against Guo and BBC; sits under the DCMP upper-level cap and above the lower and middle caps.
+  Proposed: keep 2.5 as plan value, add a measured per-scene cap of 2.7 words per second (162 wpm), because captions are verbatim.
 - Second person, conversational: CONFIRMS.
 - "Say the result": CONFIRMS (Plaisant).
 
@@ -110,7 +117,8 @@ Sources marked (secondary) were read through a search summary or a third-party w
 
 ### Implications
 
-- "No music by default (it hurts retention)": CHANGES the justification, not the default. The retention penalty is not established; the defensible reasons are speech intelligibility (1.4.7), no proven benefit, and the seductive-details caution.
+- "No music by default (it hurts retention)": CHANGES the justification, not the default.
+  The retention penalty is not established; the defensible reasons are speech intelligibility (1.4.7), no proven benefit, and the seductive-details caution.
 - Duck at 0.1 under narration: CONFIRMS, 0.1 amplitude is 20 dB; gate on the measured gap.
 - Action-matched SFX: CONFIRMS (Plaisant).
 - `release` music: no evidence against; it is a marketing video.
@@ -132,10 +140,13 @@ Sources marked (secondary) were read through a search summary or a third-party w
 
 ### Implications
 
-- Burned-in verbatim captions: CONFIRMS. Burned-in text meets 1.2.2 but cannot be switched off or restyled; NEW: ship a sidecar `.vtt` or `.srt` where the host supports it.
+- Burned-in verbatim captions: CONFIRMS.
+  Burned-in text meets 1.2.2 but cannot be switched off or restyled; NEW: ship a sidecar `.vtt` or `.srt` where the host supports it.
 - Line length 42 characters, 2 lines: CHANGES to 37 characters or 68% of landscape width, 90% for square and vertical, 3 lines on vertical only.
 - NEW gate: each caption at least 0.3 s per word and at least 1 s on screen.
-- Audio description 1.2.5: NEW. Narration that names label, action and result meets the exception only if every visual fact is spoken. Gate: on-screen-only content (hook text, change-card tags, version numbers, table numbers) is spoken or in the transcript and written companion, which also serves as the 1.2.3 alternative.
+- Audio description 1.2.5: NEW.
+  Narration that names label, action and result meets the exception only if every visual fact is spoken.
+  Gate: on-screen-only content (hook text, change-card tags, version numbers, table numbers) is spoken or in the transcript and written companion, which also serves as the 1.2.3 alternative.
 - No flashing: CONFIRMS; the real WCAG test also involves area, so the strict "three per second, no strobe, no white flash frames" rule stays.
 - Works muted: CONFIRMS (35% online subtitle use, BBC).
 
@@ -143,7 +154,8 @@ Sources marked (secondary) were read through a search summary or a third-party w
 
 ### Findings
 
-- Pre-training: knowing names and characteristics of key concepts first; 13 of 16 experiments, median d=0.75 (Mayer & Pilegard 2014; a later summary gives d=0.46) (secondary, 29). The DBT preview and advance organizer are the video form. [5]
+- Pre-training: knowing names and characteristics of key concepts first; 13 of 16 experiments, median d=0.75 (Mayer & Pilegard 2014; a later summary gives d=0.46) (secondary, 29).
+  The DBT preview and advance organizer are the video form. [5]
 - Signaling: moderate gains in retention, smaller in transfer (Schneider et al. 2018, 103 studies); two secondary summaries disagree on the exact g, check the paper's tables (secondary, 30).
 - Segmenting: small to medium effects on retention and transfer, lower cognitive load, more learning time, stronger for high-prior-knowledge learners (Rey et al. 2019, 56 investigations) (secondary, 31).
 - Generative activity (prompts to summarize or explain) improves learning from video. [18]
@@ -182,7 +194,8 @@ Sources marked (secondary) were read through a search summary or a third-party w
 
 ## Sources
 
-1. Plaisant & Shneiderman, "Show Me! Guidelines for Producing Recorded Demonstrations", IEEE VL/HCC 2005. http://www.cs.umd.edu/~ben/papers/Plaisant2005Show.pdf (full text, read 2026-11-27).
+1. Plaisant & Shneiderman, "Show Me!
+   Guidelines for Producing Recorded Demonstrations", IEEE VL/HCC 2005. http://www.cs.umd.edu/~ben/papers/Plaisant2005Show.pdf (full text, read 2026-11-27).
 2. van der Meij & van der Meij, "Demonstration-based training (DBT) in the design of a video tutorial for software training", Instructional Science 44(6), 2016. https://doi.org/10.1007/s11251-016-9394-9 (abstract, read 2026-11-27).
 3. van der Meij & van der Meij, "Supporting motivation, task performance and retention in video tutorials for software training", ETR&D, 2018. https://doi.org/10.1007/s11423-017-9560-z (abstract, read 2026-11-27).
 4. Brar & van der Meij, "Complex software training: Harnessing and optimizing video instruction", Computers in Human Behavior 70, 2017. https://doi.org/10.1016/j.chb.2017.01.014 (abstract via search summary) (secondary), read 2026-11-27.

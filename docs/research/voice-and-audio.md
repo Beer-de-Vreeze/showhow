@@ -142,13 +142,30 @@ A generator rarely beats a curated CC BY track for teaching videos, and the skil
 
 ## Recommendation (ranked)
 
-1. Fix the MusicGen license trap. Change `SKILL.md` and `references/audio.md` so MusicGen is only offered after the user confirms non-commercial use, or replace it with a curated CC0/CC BY list. Drop `transformers` and `torch` from `install.ps1` if nothing else needs them (earshot may). Effort: S.
-2. Replace transcribe-the-TTS with forced alignment of the known script. Try torchaudio MMS_FA first (no new dependency), then WhisperX align if quality falls short; keep whisper-cli only for the mispronunciation check. Effort: M (a day: script, per-clip words JSON, a test on one video).
-3. Use Kokoro IPA markup for pronunciation fixes and add `work/pronunciations.md`. First test that `npx hyperframes tts` passes `[word](/ipa/)` through. Effort: S.
-4. Add optional non-English narration. Spanish and French stay on Kokoro; German and Dutch need a second engine. Prefer Pocket TTS for German on CPU (Windows binary; add a CC BY credit to `credits.txt`) and test its Dutch before promising it. Use Chatterbox Multilingual (MIT) for Dutch if a GPU exists, otherwise offer ElevenLabs as a hosted opt-in. Keep "English narration plus translated captions" as the default. Effort: L (a `--lang` flow, voice mapping, a listening test per language, an installer branch).
-5. Keep Kokoro as the English default. Re-check when something permissive, CPU-capable and above about 1100 Arena Elo appears (Fish S2.1 and Voxtral are better but not commercially clean). Effort: none now.
-6. Do not add voice cloning. If a user asks, require their own voice plus a consent note. Effort: none.
-7. Skip OpenAI TTS (shutdown 2027-01-06); document ElevenLabs and Azure as optional paid fallbacks only. Effort: S.
+1. Fix the MusicGen license trap.
+   Change `SKILL.md` and `references/audio.md` so MusicGen is only offered after the user confirms non-commercial use, or replace it with a curated CC0/CC BY list.
+   Drop `transformers` and `torch` from `install.ps1` if nothing else needs them (earshot may).
+   Effort: S.
+2. Replace transcribe-the-TTS with forced alignment of the known script.
+   Try torchaudio MMS_FA first (no new dependency), then WhisperX align if quality falls short; keep whisper-cli only for the mispronunciation check.
+   Effort: M (a day: script, per-clip words JSON, a test on one video).
+3. Use Kokoro IPA markup for pronunciation fixes and add `work/pronunciations.md`.
+   First test that `npx hyperframes tts` passes `[word](/ipa/)` through.
+   Effort: S.
+4. Add optional non-English narration.
+   Spanish and French stay on Kokoro; German and Dutch need a second engine.
+   Prefer Pocket TTS for German on CPU (Windows binary; add a CC BY credit to `credits.txt`) and test its Dutch before promising it.
+   Use Chatterbox Multilingual (MIT) for Dutch if a GPU exists, otherwise offer ElevenLabs as a hosted opt-in.
+   Keep "English narration plus translated captions" as the default.
+   Effort: L (a `--lang` flow, voice mapping, a listening test per language, an installer branch).
+5. Keep Kokoro as the English default.
+   Re-check when something permissive, CPU-capable and above about 1100 Arena Elo appears (Fish S2.1 and Voxtral are better but not commercially clean).
+   Effort: none now.
+6. Do not add voice cloning.
+   If a user asks, require their own voice plus a consent note.
+   Effort: none.
+7. Skip OpenAI TTS (shutdown 2027-01-06); document ElevenLabs and Azure as optional paid fallbacks only.
+   Effort: S.
 
 ## What I could not verify
 
@@ -183,7 +200,8 @@ Items marked (secondary) are not official.
 18. misaki G2P README (inline IPA markup, espeak fallback) - https://github.com/hexgrad/misaki
 19. ElevenLabs API pricing - https://elevenlabs.io/pricing/api
 20. MusicGen small model card (cc-by-nc-4.0) - https://huggingface.co/facebook/musicgen-small
-21. Neo CPU TTS benchmark incl. Pocket TTS (secondary) - https://heyneo.com/blog/kokoro-supertonic-inflect-nano-pocket-tts-cpu-benchmark
+21. Neo CPU TTS benchmark incl.
+    Pocket TTS (secondary) - https://heyneo.com/blog/kokoro-supertonic-inflect-nano-pocket-tts-cpu-benchmark
 22. OpenAI deprecations and pricing pages; per-minute estimate from TokenMix (secondary) - https://platform.openai.com/docs/deprecations ; https://platform.openai.com/docs/pricing ; https://tokenmix.ai/blog/gpt-4o-mini-tts-cheapest-tts-api-2026
 23. Azure Speech pricing page (free tier; per-character figure taken from [14] because the page renders prices by script) - https://azure.microsoft.com/en-us/pricing/details/speech/
 24. WhisperX README and repo - https://github.com/m-bain/whisperX
