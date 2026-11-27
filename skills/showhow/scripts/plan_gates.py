@@ -141,7 +141,7 @@ def parse_plan(text: str) -> dict:
         start += sc["secs"]
     if not scenes and not errors:
         raise SystemExit("no '### Scene N - name - Ns' blocks in the plan's storyboard")
-    if style == "quick-tip" and mode in ("howto", "general"):
+    if gate_mode({"style": style, "mode": mode}) == "quick-tip":
         # A quick-tip shows no counter (SKILL.md): its action scenes are the steps.
         acts = [sc for sc in scenes if has_action(sc)]
         for k, sc in enumerate(acts, 1):
