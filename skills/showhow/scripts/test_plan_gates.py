@@ -2,7 +2,12 @@
   uv run --project <skill-dir>/scripts python <skill-dir>/scripts/test_plan_gates.py
 """
 
-from plan_gates import check_plan, check_render, parse_chapters, parse_plan
+import re
+from pathlib import Path
+
+from plan_gates import FIELDS, SCENE3D_KINDS, VISUALS, check_plan, check_render, parse_chapters, parse_plan
+
+SKILL = Path(__file__).resolve().parent.parent
 
 
 def scene(n: int, name: str, secs: float, counter: str = "none", action: str = "none", on_screen: str = "", narration: str = "", visual: str = "", params: str = "") -> str:
@@ -38,7 +43,7 @@ def main() -> None:
 
     # quick-tip: no counter (SKILL.md), its actions are the steps, 5s each, ends on the result.
     tip = plan("howto", scene(1, "Tip", 5, "none", "press **Ctrl+K**") + scene(2, "Result", 3), preset="quick-tip")
-    assert parse_plan(tip)["mode"] == "quick-tip" and all(verdicts(tip).values()), check_plan(parse_plan(tip))
+    assert parse_plan(tip)["style"] == "quick-tip" and all(verdicts(tip).values()), check_plan(parse_plan(tip))
 
     # update: 2-5 changes of 10s+, counters written "1 of 2" or "Change 1 of 2".
     upd = plan("update", scene(1, "Hook", 4) + scene(2, "Search", 12, "Change 1 of 2", "type \"invoice\"")
@@ -164,6 +169,58 @@ def main() -> None:
         except SystemExit:
             continue
         raise AssertionError(f"expected SystemExit for {broken!r}")
+
+    # Bug 1 (exploration): mode and style are independent; an explainer in the quick-tip style keeps its gates.
+    tip_e = expl().replace("Preset: friendly", "Preset: quick-tip")
+    p = parse_plan(tip_e)
+    assert (p["mode"], p["style"]) == ("explainer", "quick-tip"), (p["mode"], p["style"])
+    assert all(verdicts(tip_e).values()) and "P-visual" in verdicts(tip_e) and "P-steps" not in verdicts(tip_e), check_plan(p)
+    assert (parse_plan(tip)["mode"], parse_plan(tip)["style"]) == ("howto", "quick-tip")
+    assert parse_plan(good)["style"] == "clean"
+
+    # Bug 2: a scene heading the parser can't read is P-parse with its line number, not glued to the scene before.
+    sloppy = plan("howto", scene(1, "Outcome", 4) + scene(2, "Open", 8, "Step 1 of 2", "click **Open**")
+                  + "### Scene 3 - Save - 7 sec\nCounter: Step 2 of 2\nAction: click **Save** then click **Close**\n\n"
+                  + scene(4, "Now try it", 4))
+    results = check_plan(parse_plan(sloppy))
+    assert [r[0] for r in results] == ["P-parse"] and not results[0][1], results
+    line = sloppy.splitlines().index("### Scene 3 - Save - 7 sec") + 1
+    assert f"line {line}" in results[0][2] and "Scene 3" in results[0][2], results
+    # A field written with markup or the wrong case, a counter that can't be read, a field given twice: P-parse too.
+    for field in ("**Narration:** hi", "narration: hi", "Counter: Step one of two", "Action: x"):
+        text = plan("howto", scene(1, "Outcome", 4).replace("Result: x\n", f"Result: x\n{field}\n") + scene(2, "Now try it", 4))
+        name, ok, msg = check_plan(parse_plan(text))[0]
+        assert name == "P-parse" and not ok and "line " in msg, (field, msg)
+    assert "errors" in parse_plan(good) and not parse_plan(good)["errors"]
+
+    # Bug 3: a field spans lines up to the next "Field:" line, so a two-line Narration is read whole.
+    two = plan("howto", scene(1, "Outcome", 4) + "### Scene 2 - Rows - 6s\nCounter: none\nAction: none\n"
+               "Narration: The import is done.\nIt now holds 40 rows.\nOn screen: 40 rows\n\n" + scene(3, "Now try it", 4))
+    assert parse_plan(two)["scenes"][1]["narration"] == "The import is done. It now holds 40 rows.", parse_plan(two)["scenes"][1]
+    assert verdicts(two)["P-described"], check_plan(parse_plan(two))
+
+    # What render.py needs: formats and each scene's start time (the sum of the durations before it).
+    assert [s["start"] for s in parse_plan(good)["scenes"]] == [0.0, 4.0, 12.0, 19.0]
+    assert parse_plan(good)["formats"] == ["landscape"] and parse_plan(good_e)["formats"] == ["landscape", "vertical", "square"]
+    assert parse_plan(good_e + "## Formats\nvertical, square\n")["formats"] == ["vertical", "square"]
+    assert parse_plan(good.replace("## Storyboard", "## Format: vertical - 1080x1920\n\n## Storyboard"))["formats"] == ["vertical"]
+    assert check_plan(parse_plan(good_e + "## Formats\nportrait\n"))[0][0] == "P-parse"
+
+    # The template agents copy parses as shipped, and uses exactly the fields the parser knows.
+    doc = (SKILL / "references" / "step-2-plan.md").read_text(encoding="utf-8")
+    template = re.search(r"```markdown\n(.*?)```", doc, re.S).group(1)
+    t = parse_plan(template)
+    assert not t["errors"] and len(t["scenes"]) == 2 and t["scenes"][0]["counter"] == (1, 4), t
+    assert t["formats"] == ["landscape", "vertical", "square"] and [s["start"] for s in t["scenes"]] == [0.0, 4.0], t
+    used = set(re.findall(r"^([A-Z][A-Za-z ]*):", template.split("## Storyboard")[1].split("## Chapters")[0], re.M))
+    assert used == set(FIELDS), used ^ set(FIELDS)
+
+    # The doc tables are the lists the gates check against.
+    def table(path: str, heading: str) -> tuple:
+        section = (SKILL / "references" / path).read_text(encoding="utf-8").split(heading)[1].split("\n## ")[0]
+        return tuple(re.findall(r"^\| `([\w-]+)` \|", section, re.M))
+    assert table("explainer.md", "## Visual menu") == VISUALS, table("explainer.md", "## Visual menu")
+    assert table("3d-scenes.md", "## Kinds") == SCENE3D_KINDS, table("3d-scenes.md", "## Kinds")
     print("ok")
 
 
