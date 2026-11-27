@@ -1,11 +1,11 @@
 // scene3d kind "globe": Natural Earth globe, highlighted country, great-circle route arcs, zoom to the region,
 // and a flat locator map (orthographic, same centre and scale) the 3D frame cuts to. References: references/3d-scenes.md.
 // Every pose comes from t alone; geometry that changes with t (arc lift, draw-on) is rebuilt from t, never accumulated.
-import { THREE, hull, labels, ease, lerp } from "./scene3d.js";
+import { THREE, hull, labels, ease, lerp, theme, tint } from "./scene3d.js";
 import { toVec, fromVec, arcPoints, faceRotation, orthoProject, centreOf } from "./globe-math.js";
 
 export const R = 4; // globe radius in world units; the stage's viewHeight is 10, so R_px = 0.4 * height * zoom
-const OCEAN = "#dbe7f0", LAND = "#c4d0dc", BORDER = "#1d2330", ACCENT = "#e0533d";
+let OCEAN, LAND, BORDER, ACCENT; // set from the theme in buildGlobe: paper and ink tints, the accent for the highlight and route
 const ZOOM_END = 1.5;
 
 export async function loadCountries(url) {
@@ -54,6 +54,7 @@ const texture = (canvas) => {
 
 // Builds the globe into `stage`; returns { pose(t), centre, timing, flatMap(canvas) }.
 export async function buildGlobe(stage, root, P, url) {
+  OCEAN = tint(theme.paper, theme.ink, 0.1); LAND = tint(theme.paper, theme.ink, 0.28); BORDER = theme.ink; ACCENT = theme.accent;
   const features = await loadCountries(url);
   const route = P.route || [];
   const country = P.country ? findCountry(features, P.country) : null;

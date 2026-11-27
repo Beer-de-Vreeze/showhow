@@ -1,8 +1,8 @@
 // Self-check for the scene3d pure maths. Run: node <skill-dir>/scripts/test_scene3d.mjs
 import assert from "node:assert/strict";
-import { hash, timeMap, layoutLabels } from "../assets/scene3d/scene3d-math.js";
+import { hash, timeMap, layoutLabels, labelEdges, glyphOffsets } from "../assets/scene3d/scene3d-math.js";
 import { greatCircle } from "../assets/scene3d/globe-math.js";
-import { gearOutline, meshAngle, crankSlider, explodeAmount, flowPoint } from "../assets/scene3d/machine-math.js";
+import { gearOutline, meshAngle, crankSlider, explodeAmount, explodeOffsets, flowPoint } from "../assets/scene3d/machine-math.js";
 
 // hash: same input, same value, inside [0, 1), and spread out.
 assert.equal(hash(7, 42), hash(7, 42));
@@ -87,6 +87,40 @@ assert.equal(explodeAmount(0, 8.5, ex), 0.5);
 assert.ok(explodeAmount(2, 8.4, ex) < 1e-9);
 assert.equal(explodeAmount(2, 9.4, ex), 1);
 assert.equal(explodeAmount(1, 100, ex), 1);
+
+// Exploded layout: parts stack in array order about the first one; every neighbouring pair ends up
+// `gap` apart face to face, whatever their home heights (offset = final centre - home centre).
+const homes = [-5, 0, 0, 0, 0], thick = [1, 2, 2, 2, 6];
+const offs = explodeOffsets(homes.map((y, k) => ({ y, t: thick[k] })), 4);
+assert.equal(offs[0], 0);
+const centres = offs.map((o, k) => homes[k] + o);
+for (let k = 1; k < centres.length; k++) {
+  const face = centres[k] - centres[k - 1] - (thick[k] + thick[k - 1]) / 2;
+  assert.ok(Math.abs(face - 4) < 1e-9, `parts ${k - 1} and ${k} are ${face} apart`);
+}
+assert.deepEqual(explodeOffsets([], 4), []);
+
+// Label columns: plates stay `gap` px clear of the object's screen bounds, on screen, and line up in a column.
+const edges = (bounds, plate = 330) => labelEdges({ width: 1920, margin: 150, left: plate, right: plate, bounds, gap: 60, pad: 24 });
+assert.deepEqual(edges({ min: 800, max: 1300 }), { left: 150, right: 1770 }); // room: margins as usual
+const tight = edges({ min: 475, max: 1390 });
+assert.ok(tight.left + 330 + 60 <= 475 && tight.left >= 24, `left plates at ${tight.left}`);
+assert.ok(tight.right - 330 >= 1390 + 60 && tight.right <= 1896, `right edge ${tight.right}`);
+const wide = edges({ min: 475, max: 1500 });
+assert.ok(wide.right - 330 >= 1500 + 60 || wide.right === 1920 - 24, `right edge ${wide.right}`);
+assert.equal(edges({ min: 0, max: 1920 }).left, 24); // no room anywhere: clamp inside the frame
+
+// Glyph spacing: extruded glyphs (x0..x1 wide, z0..z1 deep) turned by any angle, seen side on, never overlap:
+// the projected right edge of each is at least `gap` left of the next one's left edge. Offsets are pure in the angle.
+const glyphs = [{ x0: 0.2, x1: 2.2, z0: -0.7, z1: 0.7 }, { x0: 0.1, x1: 2.9, z0: -0.7, z1: 0.7 }, { x0: 0.2, x1: 3.1, z0: -0.7, z1: 0.7 }, { x0: 0.2, x1: 3.1, z0: -0.7, z1: 0.7 }];
+for (const angle of [-1.1, -0.4, 0, 0.22, 0.26, 0.6, 1.1]) {
+  const off = glyphOffsets(glyphs, angle, 0.3);
+  assert.equal(off[0], 0);
+  const c = Math.cos(angle), s = Math.sin(angle);
+  const hi = (g, o) => (g.x1 + o) * c + Math.max(g.z0 * s, g.z1 * s), lo = (g, o) => (g.x0 + o) * c + Math.min(g.z0 * s, g.z1 * s);
+  for (let k = 1; k < glyphs.length; k++) assert.ok(lo(glyphs[k], off[k]) - hi(glyphs[k - 1], off[k - 1]) > 0.3 - 1e-9, `glyph ${k} at ${angle}`);
+}
+assert.deepEqual(glyphOffsets([], 0.2, 0.3), []);
 
 // Flow particles: a pure function of (i, t, seed). Order of calls never matters, one lap takes 1 / speed
 // seconds, the stream stays inside its box, and a different seed gives a different stream.

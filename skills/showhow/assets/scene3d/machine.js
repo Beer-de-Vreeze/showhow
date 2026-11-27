@@ -1,6 +1,6 @@
 // scene3d kind "machine": a cached part library built from Params, on top of scene3d.js.
 // Motion comes from machine-math.js (gear trains, escapement beat, crank-slider) as closed forms of t.
-import { THREE, toonMaterial } from "./scene3d.js";
+import { THREE, toonMaterial, theme, tint } from "./scene3d.js";
 import { gearOutline, flowPoint } from "./machine-math.js";
 
 export * from "./machine-math.js";
@@ -39,7 +39,7 @@ export function springGeometry({ coils = 6, radius = 1, length = 4, wire = 0.12 
 
 // A row of count blades around +y (a compressor or turbine stage): one geometry, one InstancedMesh.
 // shortcut: no edge lines on instanced blades; merge per-blade edges if a close-up needs them.
-export function bladeRow({ count = 24, hub = 1, span = 1, chord = 0.4, twist = 0.5, thickness = 0.05, color = "#c9d3df" }) {
+export function bladeRow({ count = 24, hub = 1, span = 1, chord = 0.4, twist = 0.5, thickness = 0.05, color = tint(theme.paper, theme.ink, 0.2) }) {
   const geo = cached(`blade:${hub}:${span}:${chord}:${twist}:${thickness}`, () => {
     const g = new THREE.BoxGeometry(chord, thickness, span, 1, 1, 6);
     const p = g.attributes.position, v = new THREE.Vector3();
@@ -62,9 +62,12 @@ export function bladeRow({ count = 24, hub = 1, span = 1, chord = 0.4, twist = 0
 // Clips every part under `root` with one horizontal plane (keeps y <= level) and caps the cut with a hatched
 // face, following three.js's webgl_clipping_stencil: back faces +1, front faces -1 in the stencil, then a
 // plane drawn where the count is not zero. Parts must be closed solids; sets renderer.localClippingEnabled.
-// The hatch is a function of the world position, so it never swims while the parts turn.
+// The cap is a flat tint with sparse 45-degree ink lines (spacing px apart at stage size, line px wide) drawn only on
+// the cut faces; uncut surfaces keep their flat fill. The lines are measured on screen, so they read the same from any
+// view and zoom, and are a function of the cap position, so they never swim while the parts turn.
+// Defaults come from the theme: the cap is paper tinted with the accent, the lines are ink.
 // Returns set(level): a pure function of the level, so call it from render(t); a level at or above `off` is "closed".
-export function sectionCut(stage, root, { color = "#f4d9a6", ink = "#1d2330", spacing = 1.6, off = 50 } = {}) {
+export function sectionCut(stage, root, { color = tint(theme.paper, theme.accent, 0.2), ink = theme.ink, spacing = 10, line = 2, off = 50 } = {}) {
   stage.renderer.localClippingEnabled = true;
   const plane = new THREE.Plane(new THREE.Vector3(0, -1, 0), off);
   const solids = [], extras = [];
@@ -88,13 +91,17 @@ export function sectionCut(stage, root, { color = "#f4d9a6", ink = "#1d2330", sp
     }
   }
   const cap = new THREE.Mesh(new THREE.PlaneGeometry(400, 400).rotateX(-Math.PI / 2), new THREE.ShaderMaterial({
-    uniforms: { base: { value: new THREE.Color(color) }, ink: { value: new THREE.Color(ink) }, spacing: { value: spacing } },
-    vertexShader: "varying vec3 w; void main(){ w = (modelMatrix * vec4(position, 1.0)).xyz; gl_Position = projectionMatrix * viewMatrix * vec4(w, 1.0); }",
-    // Diagonal lines every `spacing` world units, about 2 px wide whatever the zoom (fwidth is the pixel size of s).
-    fragmentShader: `uniform vec3 base; uniform vec3 ink; uniform float spacing; varying vec3 w;
-      void main(){ float s = (w.x + w.z) / spacing; float f = fract(s);
-        float line = 1.0 - smoothstep(0.8, 1.8, min(f, 1.0 - f) / max(fwidth(s), 1e-5));
-        gl_FragColor = vec4(mix(base, ink, line), 1.0);
+    uniforms: { base: { value: new THREE.Color(color) }, ink: { value: new THREE.Color(ink) }, spacing: { value: spacing }, line: { value: line }, halfH: { value: stage.height / 2 } },
+    // The hatch is sampled where the cap point sits at height 0, so sweeping the plane slides the cap, not the lines.
+    vertexShader: `uniform float halfH; varying vec2 xy; varying float ppu;
+      void main(){ vec4 w = modelMatrix * vec4(position, 1.0);
+        xy = (viewMatrix * vec4(w.x, 0.0, w.z, 1.0)).xy; ppu = projectionMatrix[1][1] * halfH;
+        gl_Position = projectionMatrix * viewMatrix * w; }`,
+    // p: pixels along the normal of a 45-degree line; d: pixels to the nearest line (spacing is the pitch between lines).
+    fragmentShader: `uniform vec3 base; uniform vec3 ink; uniform float spacing; uniform float line; varying vec2 xy; varying float ppu;
+      void main(){ float p = (xy.x - xy.y) * 0.70710678 * ppu; float f = fract(p / spacing);
+        float d = min(f, 1.0 - f) * spacing;
+        gl_FragColor = vec4(mix(base, ink, 1.0 - smoothstep(line * 0.5 - 0.5, line * 0.5 + 0.5, d)), 1.0);
         #include <colorspace_fragment>
       }`,
     side: THREE.DoubleSide, stencilWrite: true, stencilRef: 0, stencilFunc: THREE.NotEqualStencilFunc,
@@ -116,15 +123,16 @@ export function sectionCut(stage, root, { color = "#f4d9a6", ink = "#1d2330", sp
 // ---- Airflow: stateless particles ----------------------------------------------------------------
 
 // count round points whose positions are flowPoint(i, t, seed, ...) rewritten every frame (hundreds are cheap).
+// Ink dots with a paper ring (size px across at stage size), so they read on the paper and on any part colour.
 // update(t, amount) places them for time t; amount 0 hides them, 1 is full size.
-export function flowParticles(stage, { count = 240, seed = 1, size = 10, color = "#e0533d", ...flow } = {}) {
+export function flowParticles(stage, { count = 320, seed = 1, size = 18, color = theme.ink, ring = theme.paper, ...flow } = {}) {
   const geo = new THREE.BufferGeometry();
   geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(count * 3), 3));
   const points = new THREE.Points(geo, new THREE.ShaderMaterial({
-    uniforms: { size: { value: size }, color: { value: new THREE.Color(color) } },
+    uniforms: { size: { value: size }, color: { value: new THREE.Color(color) }, ring: { value: new THREE.Color(ring) } },
     vertexShader: "uniform float size; void main(){ gl_PointSize = size; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
-    fragmentShader: `uniform vec3 color; void main(){ if (length(gl_PointCoord - 0.5) > 0.5) discard;
-      gl_FragColor = vec4(color, 1.0);
+    fragmentShader: `uniform vec3 color; uniform vec3 ring; void main(){ float r = length(gl_PointCoord - 0.5) * 2.0; if (r > 1.0) discard;
+      gl_FragColor = vec4(r > 0.74 ? ring : color, 1.0);
       #include <colorspace_fragment>
     }`,
   }));

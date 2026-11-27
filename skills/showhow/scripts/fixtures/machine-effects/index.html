@@ -12,14 +12,16 @@
       }
     </script>
     <style>
-      html, body { margin: 0; background: #f4f1ea; }
-      #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #f4f1ea; font-family: "Segoe UI", system-ui, sans-serif; }
+      /* The theme: scene3d reads --paper, --ink, --accent (the showhow frame preset) and tints everything from them. */
+      #root { --paper: #F3ECDD; --ink: #23201B; --accent: #0F6E6A; --muted: #5B5547; }
+      html, body { margin: 0; background: #F3ECDD; }
+      #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: var(--paper); font-family: "Segoe UI", system-ui, sans-serif; }
       #stage { position: absolute; inset: 0; width: 1920px; height: 1080px; }
-      #title { position: absolute; left: 150px; top: 64px; font-size: 44px; font-weight: 700; color: #1d2330; }
+      #title { position: absolute; left: 150px; top: 64px; font-size: 44px; font-weight: 700; color: var(--ink); }
       .s3d-leaders { position: absolute; inset: 0; pointer-events: none; }
-      .s3d-leaders line { stroke: #1d2330; stroke-width: 2.5; }
-      .s3d-leaders circle { fill: #e0533d; stroke: #1d2330; stroke-width: 2; }
-      .s3d-label { position: absolute; left: 0; top: 0; padding: 10px 18px; border: 2.5px solid #1d2330; border-radius: 10px; background: #fffdf8; color: #1d2330; font-size: 40px; font-weight: 600; white-space: nowrap; }
+      .s3d-leaders line { stroke: var(--ink); stroke-width: 2.5; }
+      .s3d-leaders circle { fill: var(--accent); stroke: var(--ink); stroke-width: 2; }
+      .s3d-label { position: absolute; left: 0; top: 0; padding: 10px 18px; border: 2.5px solid var(--ink); border-radius: 10px; background: var(--paper); color: var(--ink); font-size: 40px; font-weight: 600; white-space: nowrap; }
     </style>
   </head>
   <body>
@@ -35,8 +37,8 @@
       window.__timelines["main"] = gsap.timeline({ paused: true });
     </script>
     <script type="module">
-      import { THREE, createStage, part, labels, timeMap, ease, seedOf, onSeek } from "./assets/scene3d/scene3d.js";
-      import { gearGeometry, latheGeometry, meshAngle, explodeAmount, sectionCut, flowParticles } from "./assets/scene3d/machine.js";
+      import { THREE, createStage, part, labels, timeMap, ease, seedOf, onSeek, theme, tint } from "./assets/scene3d/scene3d.js";
+      import { gearGeometry, latheGeometry, meshAngle, explodeAmount, explodeOffsets, sectionCut, flowParticles } from "./assets/scene3d/machine.js";
 
       const root = document.getElementById("root");
       const title = document.getElementById("title");
@@ -59,29 +61,35 @@
         machine.position.set(-(right - left) / 2 - 1, 0, 1);
         stage.scene.add(machine);
 
-        // Parts in explode order, each with the vector it flies out along: base plate, gears, shafts.
+        // Parts in explode order, bottom to top: base plate, gears, shafts. thick is each part's size along its axis.
+        // Colours are tints of the theme; the driver, the part the narration names, takes the accent.
         const parts = [];
-        const add = (group, x, y, vec) => {
+        const add = (group, x, y, thick) => {
           group.position.set(x, y, 0);
           machine.add(group);
-          parts.push({ group, vec, home: group.position.clone() });
+          parts.push({ group, thick, home: group.position.clone() });
           return group;
         };
-        add(part(new THREE.BoxGeometry(right - left + 8, 1, 30), stage, { color: "#d8d2c4" }), (right - left) / 2 - 1, -5, [0, -6, 0]);
-        const colors = ["#e0533d", "#c9d3df", "#9fb4c8"];
-        const gears = teeth.map((n, i) => add(part(gearGeometry({ teeth: n, module: m, width: 2, bore: 1.2 }), stage, { color: colors[i] }), xs[i], 0, [0, 7, 0]));
-        teeth.forEach((n, i) => add(part(latheGeometry([[0, -3], [1.2, -3], [1.2, 3], [0, 3]], 32), stage, { color: "#6b7a8c" }), xs[i], 0, [0, 16, 0]));
+        add(part(new THREE.BoxGeometry(right - left + 8, 1, 30), stage, { color: tint(theme.paper, theme.ink, 0.16) }), (right - left) / 2 - 1, -5, 1);
+        const colors = [theme.accent, tint(theme.paper, theme.ink, 0.2), tint(theme.paper, theme.ink, 0.38)];
+        // Stacked driven first, so the stack climbs against the row's slope on screen and the levels read as levels.
+        const gears = [];
+        [2, 1, 0].forEach((i) => (gears[i] = add(part(gearGeometry({ teeth: teeth[i], module: m, width: 2, bore: 1.2 }), stage, { color: colors[i] }), xs[i], 0, 2)));
+        [2, 1, 0].forEach((i) => add(part(latheGeometry([[0, -3], [1.2, -3], [1.2, 3], [0, 3]], 32), stage, { color: tint(theme.paper, theme.ink, 0.62) }), xs[i], 0, 6));
+        // Every part ends up one gear thickness (2) plus a clear gap (9) from the next, staggered up the axis.
+        const out = explodeOffsets(parts.map((p) => ({ y: p.home.y, t: p.thick })), 9);
+        const top = out[out.length - 1];
 
         const setCut = sectionCut(stage, machine);
-        const flow = flowParticles(stage, { count: 240, seed: seedOf("machine-effects"), speed: 0.2, length: 90, spread: 12 });
-        flow.position.set((right - left) / 2 - 1, 4, 0);
-        machine.add(flow);
+        const flow = flowParticles(stage, { count: 220, seed: seedOf("machine-effects"), size: 16, speed: 0.2, length: 90, spread: 12 });
+        flow.position.set(machine.position.x + (right - left) / 2 - 1, 4, machine.position.z);
+        stage.scene.add(flow); // not in machine, so the label columns ignore the cloud
 
         const layout = labels(root, stage, [
           { text: `Driver - ${base.driver} teeth`, anchor: gears[0], at: 0.5, side: "left" },
           { text: `Idler - ${base.idler} teeth`, anchor: gears[1], at: 1.0, side: "left" },
           { text: `Driven - ${base.driven} teeth`, anchor: gears[2], at: 1.5, side: "right" },
-        ], { top: 240, bottom: 900 });
+        ], { top: 240, bottom: 900, avoid: machine });
         await stage.renderer.compileAsync(stage.scene, stage.camera);
 
         const slow = [[0, 0], [12, 12], [16, 13.6]]; // 0.4 speed from 12 s on
@@ -100,10 +108,11 @@
           let ex = 0;
           parts.forEach((pt, i) => {
             const e = p.explode ? explodeAmount(i, t, { at: 8, stagger: 0.15, dur: 1 }) * (1 - ease((t - 11.2) / 0.8)) : 0;
-            pt.group.position.set(pt.home.x + pt.vec[0] * e, pt.home.y + pt.vec[1] * e, pt.home.z + pt.vec[2] * e);
+            pt.group.position.set(pt.home.x, pt.home.y + out[i] * e, pt.home.z);
             ex = Math.max(ex, e);
           });
-          flow.update(t, p.flow ? ease((t - 1.5) / 0.5) * (1 - ease((t - 3.6) / 0.4)) : 0);
+          machine.position.y = -0.5 * top * ex; // keep the stack centred while it grows
+          flow.update(t, p.flow ? ease((t - 0.3) / 0.5) * (1 - ease((t - 3.6) / 0.4)) : 0);
           stage.camera.zoom = 1 - 0.3 * ex + (p.slowmo ? 0.15 * ease((t - 12) / 2) : 0);
           stage.camera.updateProjectionMatrix();
           stage.draw();

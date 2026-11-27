@@ -47,3 +47,26 @@ export function layoutLabels(anchors, { width, top, bottom, pitch }) {
   }
   return out;
 }
+
+// Where the label columns sit so plates stay `gap` px clear of the object's screen bounds {min, max} (x, px).
+// left / right: the widest plate in each column. Returns the left column's left edge and the right column's right
+// edge: the usual margin when there is room, pulled outward when not, never closer than `pad` to the frame edge.
+export function labelEdges({ width, margin, left, right, bounds, gap, pad }) {
+  const clamp = (x) => Math.min(width - pad, Math.max(pad, x));
+  return { left: clamp(Math.min(margin, bounds.min - gap - left)), right: clamp(Math.max(width - margin, bounds.max + gap + right)) };
+}
+
+// Hero-number spacing: boxes [{ x0, x1, z0, z1 }] are each glyph's extent (x across, z the extrusion depth) in its own
+// space. Turned about y by `angle` and seen side on, a point projects to x * cos + z * sin, so a deep glyph reaches
+// sideways into its neighbour. Returns each glyph's x offset (before the turn) leaving `gap` between projected edges.
+export function glyphOffsets(boxes, angle, gap) {
+  const c = Math.max(Math.abs(Math.cos(angle)), 0.2) * Math.sign(Math.cos(angle) || 1), s = Math.sin(angle);
+  const out = [];
+  let right = -Infinity;
+  boxes.forEach((b, k) => {
+    const left = b.x0 * c + Math.min(b.z0 * s, b.z1 * s);
+    out.push(k ? (right + gap - left) / c : 0);
+    right = (b.x1 + out[k]) * c + Math.max(b.z0 * s, b.z1 * s);
+  });
+  return out;
+}

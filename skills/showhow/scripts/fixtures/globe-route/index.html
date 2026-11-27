@@ -12,15 +12,17 @@
       }
     </script>
     <style>
-      html, body { margin: 0; background: #f4f1ea; }
-      #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #f4f1ea; font-family: "Segoe UI", system-ui, sans-serif; }
+      /* The theme: scene3d reads --paper, --ink, --accent (the showhow frame preset) and tints everything from them. */
+      #root { --paper: #F3ECDD; --ink: #23201B; --accent: #0F6E6A; --muted: #5B5547; }
+      html, body { margin: 0; background: #F3ECDD; }
+      #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: var(--paper); font-family: "Segoe UI", system-ui, sans-serif; }
       #stage, #flat { position: absolute; inset: 0; width: 1920px; height: 1080px; }
       #flat { opacity: 0; }
-      #title { position: absolute; left: 150px; top: 56px; padding: 8px 20px; border-radius: 10px; background: #f4f1ea; font-size: 44px; font-weight: 700; color: #1d2330; }
+      #title { position: absolute; left: 150px; top: 56px; padding: 8px 20px; border-radius: 10px; background: var(--paper); font-size: 44px; font-weight: 700; color: var(--ink); }
       .s3d-leaders { position: absolute; inset: 0; pointer-events: none; }
-      .s3d-leaders line { stroke: #1d2330; stroke-width: 2.5; }
-      .s3d-leaders circle { fill: #e0533d; stroke: #1d2330; stroke-width: 2; }
-      .s3d-label { position: absolute; left: 0; top: 0; padding: 10px 18px; border: 2.5px solid #1d2330; border-radius: 10px; background: #fffdf8; color: #1d2330; font-size: 40px; font-weight: 600; white-space: nowrap; }
+      .s3d-leaders line { stroke: var(--ink); stroke-width: 2.5; }
+      .s3d-leaders circle { fill: var(--accent); stroke: var(--ink); stroke-width: 2; }
+      .s3d-label { position: absolute; left: 0; top: 0; padding: 10px 18px; border: 2.5px solid var(--ink); border-radius: 10px; background: var(--paper); color: var(--ink); font-size: 40px; font-weight: 600; white-space: nowrap; }
     </style>
   </head>
   <body>

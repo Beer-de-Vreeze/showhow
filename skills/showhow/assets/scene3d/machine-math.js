@@ -48,6 +48,18 @@ export function explodeAmount(i, t, { at = 0, stagger = 0.15, dur = 1 }) {
   return ease((t - at - i * stagger) / dur);
 }
 
+// Exploded layout: parts [{ y, t }] (home centre height, thickness along the axis) stack in array order about
+// the first part, every neighbouring pair `gap` apart face to face. Returns each part's offset along the axis
+// (final centre minus home), so place it at home + offset * explodeAmount(...); order the array bottom to top.
+export function explodeOffsets(parts, gap) {
+  let c = null, prev = null;
+  return parts.map((p) => {
+    c = prev ? c + (prev.t + p.t) / 2 + gap : p.y;
+    prev = p;
+    return c - p.y;
+  });
+}
+
 // Airflow particle i at time t: a stream along x, y and z fixed by the hash plus a gentle swirl.
 // Stateless: it depends on (i, t, seed) only, and repeats every 1 / speed seconds. Never Math.random().
 export function flowPoint(i, t, seed, { speed = 0.25, length = 40, spread = 6 }) {
