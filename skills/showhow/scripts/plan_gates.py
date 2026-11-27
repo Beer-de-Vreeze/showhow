@@ -7,7 +7,27 @@
 Run it after writing the plan (Step 2) and again after the render with --chapters and --video,
 so the timing the viewer actually gets is checked, not only the timing that was planned.
 
-P-steps:  the step (or change) counters run 1..N with one N, and N fits the mode
+This module owns the plan format (the template in references/step-2-plan.md; a test parses it as shipped).
+Parsing is strict: a "### Scene" heading or a storyboard field it can't read is a P-parse failure naming the line,
+and the other gates wait until the plan parses. A field runs from "Field:" at the start of a line up to the next
+field line, so narration may span lines. Mode (## Mode) and style (- Preset:) are independent; the quick-tip style
+only changes the step limits of a howto or general video.
+
+parse_plan(text) returns a dict other scripts may use (render.py reads formats and scene starts):
+  mode     howto | update | general | explainer
+  style    clean | friendly | release | quick-tip (clean when the plan names none)
+  formats  format names in FORMATS order, from "## Formats", else "## Format: <name> - WxH",
+           else all three for an explainer and ["landscape"] otherwise
+  scenes   in plan order, each {n, name, secs, start, line, counter, action, on_screen, narration, visual, params};
+           start is the sum of the durations before it (seconds), line is the heading's line number,
+           counter is (k, of) or None (a quick-tip numbers its action scenes itself)
+  script   the "## Narration script" section text
+  errors   the P-parse messages, "line N: ..."; empty when the plan reads cleanly
+
+P-parse:  every scene heading reads as "### Scene N - name - Ns", fields are written "Field:" at the start of a
+          line (no markup, each once per scene), a Counter reads as "Step 1 of 4" or none, a Preset is a known
+          style and a format line names a known format.
+P-steps: the step (or change) counters run 1..N with one N, and N fits the mode
           (howto 1-8 steps, update 2-5 changes).
 P-action: each step does one thing; catches the usual joins in its Action line: "then", ";",
           arrows, and "and click/press/select/type/open/choose/drag".
@@ -40,6 +60,11 @@ from pathlib import Path
 
 from video_gates import video_duration
 
+MODES = ("howto", "update", "general", "explainer")
+STYLES = ("clean", "friendly", "release", "quick-tip")  # any style works in any mode (SKILL.md "Styles")
+FORMATS = ("landscape", "vertical", "square")
+# The storyboard fields of references/step-2-plan.md; a test holds the template to exactly this list.
+FIELDS = ("Source", "Screen", "Counter", "Highlight", "Action", "Result", "Narration", "Visual", "Params", "Caption", "On screen", "Audio", "Transition")
 MIN_STEP = {"howto": 6.0, "quick-tip": 5.0, "update": 10.0, "general": 6.0}  # explainer has no steps
 HARD_LIMIT = {"howto": 180.0, "quick-tip": 60.0, "update": 120.0, "general": 180.0, "explainer": 180.0}
 # The visual menu for explainer scenes; a new type is one entry here and one row in references/explainer.md.
@@ -52,43 +77,93 @@ MULTI_ACTION = re.compile(r"\bthen\b|;|->|→|\band\s+(?:click|press|select|type
 
 
 def parse_plan(text: str) -> dict:
+    """The plan as data; see the module docstring for the fields. Unreadable lines land in "errors" (P-parse)."""
     mode_line = re.search(r"^## Mode\s*\n+\s*\[?(\w[\w-]*)", text, re.M)
     if not mode_line:
         raise SystemExit("no '## Mode' section with howto, update, general or explainer in the plan")
     mode = mode_line.group(1).lower()
-    if mode not in ("howto", "update", "general", "explainer"):
+    if mode not in MODES:
         raise SystemExit(f"unknown mode {mode!r} in the plan")
-    if mode != "update" and re.search(r"^- Preset:\s*`?quick-tip", text, re.M | re.I):
-        mode = "quick-tip"
+    errors: list[str] = []
+    lines = text.splitlines()
 
-    scenes = []
-    for m in re.finditer(r"^### Scene (\d+) - (.+?) - ([\d.]+)\s*s\b(.*?)(?=^### Scene |\Z|^## )", text, re.M | re.S):
-        body = m.group(4)
-        # [ \t]*, not \s*: an empty field (a silent outro's Narration:) must not take the next line.
-        counter = re.search(r"^Counter:[ \t]*\"?(?:(?:Step|Change|Point)\s+)?(\d+)\s+of\s+(\d+)", body, re.M | re.I)
-        action = re.search(r"^Action:[ \t]*(.+)$", body, re.M)
-        on_screen = re.search(r"^On screen:[ \t]*(.+)$", body, re.M)
-        narration = re.search(r"^Narration:[ \t]*(.+)$", body, re.M)
-        visual = re.search(r"^Visual:[ \t]*(.+)$", body, re.M)
-        params = re.search(r"^Params:[ \t]*(.+)$", body, re.M)
-        scenes.append({
-            "n": int(m.group(1)), "name": m.group(2).strip(), "secs": float(m.group(3)),
-            "counter": (int(counter.group(1)), int(counter.group(2))) if counter else None,
-            "action": action.group(1).strip() if action else "",
-            "on_screen": on_screen.group(1).strip() if on_screen else "",
-            "narration": narration.group(1).strip() if narration else "",
-            "visual": visual.group(1).strip("[]*` ").lower() if visual else "",
-            "params": params.group(1).strip().strip("`") if params else "",
+    style = "clean"
+    for i, line in enumerate(lines, 1):
+        if m := re.match(r"- Preset:[ \t]*\[?`?([\w-]+)", line):
+            style = m.group(1).lower()
+            if style not in STYLES:
+                errors.append(f"line {i}: unknown Preset {style!r} (styles: {', '.join(STYLES)})")
+
+    scenes: list[dict] = []
+    fields: dict = {}
+    field = None
+    for i, line in enumerate(lines, 1):
+        if re.match(r"#{1,6}\s*scene\b", line, re.I):
+            m = re.fullmatch(r"### Scene (\d+) - (.+) - (\d+(?:\.\d+)?)\s*s\s*", line)
+            if not m:
+                errors.append(f"line {i}: can't read scene heading {line.strip()!r}; write '### Scene N - name - Ns'")
+                field = fields = None
+                continue
+            fields = {}
+            scenes.append({"n": int(m.group(1)), "name": m.group(2).strip(), "secs": float(m.group(3)), "line": i, "fields": fields})
+            field = None
+        elif line.startswith("#"):
+            field = fields = None  # any other heading ends the scene
+        elif fields is None:
+            continue
+        elif m := re.match(rf"({'|'.join(FIELDS)}):(.*)", line):
+            field = m.group(1)
+            if field in fields:
+                errors.append(f"line {i}: second {field}: in scene {scenes[-1]['n']}")
+            fields[field] = m.group(2).strip()
+        elif m := re.match(rf"[\s>*_`-]*({'|'.join(FIELDS)})[\s*_`]*:", line, re.I):
+            errors.append(f"line {i}: can't read field {line.strip()!r}; write '{m.group(1).capitalize()}:' at the start of the line, no markup")
+        elif field and line.strip():
+            fields[field] = (fields[field] + " " + line.strip()).strip()  # a field runs up to the next "Field:" line
+
+    start = 0.0
+    for sc in scenes:
+        f = sc.pop("fields")
+        counter = f.get("Counter", "")
+        c = re.match(r"(?:(?:Step|Change|Point)\s+)?(\d+)\s+of\s+(\d+)", counter.lstrip("[*`\" "), re.I)
+        if counter and not c and counter.strip("[]*`\" ").lower() not in ("none", "-", "n/a"):
+            errors.append(f"line {sc['line']}: can't read the Counter of scene {sc['n']} ({counter!r}); write 'Step 1 of 4' or none")
+        sc.update({
+            "start": start,
+            "counter": (int(c.group(1)), int(c.group(2))) if c else None,
+            "action": f.get("Action", ""),
+            "on_screen": f.get("On screen", ""),
+            "narration": f.get("Narration", ""),
+            "visual": f.get("Visual", "").strip("[]*` ").lower(),
+            "params": f.get("Params", "").strip("`"),
         })
-    if not scenes:
+        start += sc["secs"]
+    if not scenes and not errors:
         raise SystemExit("no '### Scene N - name - Ns' blocks in the plan's storyboard")
-    if mode == "quick-tip":
+    if style == "quick-tip" and mode in ("howto", "general"):
         # A quick-tip shows no counter (SKILL.md): its action scenes are the steps.
         acts = [sc for sc in scenes if has_action(sc)]
         for k, sc in enumerate(acts, 1):
             sc["counter"] = (k, len(acts))
+
+    formats = list(FORMATS) if mode == "explainer" else ["landscape"]
+    # "## Formats" (explainer) wins over the single "## Format: <name> - WxH" line.
+    source = re.search(r"^## Formats\b[^\n]*\n?(.*?)(?=^#|\Z)", text, re.M | re.S) or re.search(r"^## Format:(.*)$", text, re.M)
+    if source:
+        found = [f for f in FORMATS if re.search(rf"\b{f}\b", source.group(1))]
+        if found:
+            formats = found
+        else:
+            errors.append(f"line {text.count(chr(10), 0, source.start()) + 1}: no format name ({', '.join(FORMATS)}) in {source.group(1).strip()!r}")
+
     script = re.search(r"^## Narration script\s*\n(.*?)(?=^## |\Z)", text, re.M | re.S)
-    return {"mode": mode, "scenes": scenes, "script": script.group(1) if script else ""}
+    return {"mode": mode, "style": style, "formats": formats, "scenes": scenes, "errors": errors,
+            "script": script.group(1) if script else ""}
+
+
+def gate_mode(plan: dict) -> str:
+    """The rule set: a quick-tip howto or general video is held to the quick-tip limits."""
+    return "quick-tip" if plan["style"] == "quick-tip" and plan["mode"] in ("howto", "general") else plan["mode"]
 
 
 def numbers(text: str) -> set[str]:
@@ -118,7 +193,10 @@ def step_scenes(plan: dict) -> list[dict]:
 
 
 def check_plan(plan: dict) -> list[tuple[str, bool, str]]:
-    mode, scenes, steps = plan["mode"], plan["scenes"], step_scenes(plan)
+    if plan["errors"]:
+        # The other gates would judge a misread plan, so they wait until it parses.
+        return [("P-parse", False, "; ".join(plan["errors"]))]
+    mode, scenes, steps = gate_mode(plan), plan["scenes"], step_scenes(plan)
     results = []
     if mode == "explainer":
         return check_explainer(plan) + check_described(scenes)
@@ -265,7 +343,7 @@ def parse_chapters(text: str, duration: float) -> list[tuple[str, float]]:
 
 
 def check_render(plan: dict, chapters: list[tuple[str, float]]) -> tuple[str, bool, str]:
-    mode = plan["mode"]
+    mode = gate_mode(plan)
     if mode == "explainer":
         # One chapter per "### " section of the narration script; a script without sections still needs 2-4.
         sections = len(re.findall(r"^### ", plan["script"], re.M))
@@ -293,7 +371,7 @@ def main() -> int:
 
     plan = parse_plan(args.plan.read_text(encoding="utf-8"))
     results = check_plan(plan)
-    if args.chapters:
+    if args.chapters and not plan["errors"]:
         chapters = parse_chapters(args.chapters.read_text(encoding="utf-8"), video_duration(args.video))
         results.append(check_render(plan, chapters))
 

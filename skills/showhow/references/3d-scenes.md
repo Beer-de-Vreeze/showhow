@@ -29,6 +29,7 @@ Params: {"kind": "machine", "driver": 12, "idler": 24, "driven": 36}
 | `hero-number` | One key figure as extruded 3D text | `assets/scene3d/hero-number.js` |
 
 A new kind is one row here, one entry in `SCENE3D_KINDS` in `scripts/plan_gates.py`, and one module in `assets/scene3d/` built on `scene3d.js`.
+`scripts/test_plan_gates.py` fails when this table's kinds and `SCENE3D_KINDS` differ.
 
 ## The scaffold every kind uses
 

@@ -69,7 +69,8 @@ Parallax or other decorative motion is for the intro only; it never competes wit
 | `scene3d` | Something whose shape is the point: a working machine, a globe, a hero number | One 3D stage per video, reused across scenes; `Params:` names the `kind` and its numbers, or a `model` (`references/3d-scenes.md`) |
 
 The 2D motion rows have a recipe each in `references/motion-2d.md`.
-Later releases add rows here; `VISUALS` in `scripts/plan_gates.py` is the single list the gate checks against, so a new type is one row here and one entry there.
+Later releases add rows here; `VISUALS` in `scripts/plan_gates.py` is the list the gate checks against, so a new type is one row here and one entry there.
+`scripts/test_plan_gates.py` fails when this table's types and `VISUALS` differ.
 A scene with no voice (a title, a hold) needs no `Visual:`.
 Every fact shown in a visual is also spoken in that scene (P-described).
 
