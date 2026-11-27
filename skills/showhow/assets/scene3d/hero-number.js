@@ -1,6 +1,6 @@
 // scene3d kind "hero-number": one key figure (Params.value) as extruded 3D text, swinging into view.
 // The text is String(Params.value), so what is on screen is what P-params checked is spoken.
-import { THREE, part, ease, lerp, theme, glyphOffsets } from "./scene3d.js";
+import { THREE, part, ease, lerp, theme, glyphOffsets, missingGlyphs } from "./scene3d.js";
 import { FontLoader } from "three/addons/loaders/FontLoader.js";
 import { TextGeometry } from "three/addons/geometries/TextGeometry.js";
 
@@ -12,6 +12,8 @@ export const FONT_URL = new URL("../three/examples/fonts/helvetiker_bold.typefac
 export async function buildHeroNumber(stage, P, { fontUrl = FONT_URL, color = theme.accent, width = 14, gap = 0.3 } = {}) {
   if (!String(P.value ?? "").trim()) throw new Error("hero-number: Params.value is required and must not be empty");
   const font = await new FontLoader().loadAsync(fontUrl);
+  const lacking = missingGlyphs(font.data.glyphs, P.value);
+  if (lacking.length) throw new Error(`hero-number: the typeface has no glyph for ${lacking.join(" ")} in ${JSON.stringify(String(P.value))}; spell it out in Params.value or pass a fontUrl that has it`);
   const size = 3;
   // One mesh per glyph, so each can be spaced by its extruded, projected bounds (a whole string overlaps once turned).
   const geos = [...String(P.value)].map((ch) => {

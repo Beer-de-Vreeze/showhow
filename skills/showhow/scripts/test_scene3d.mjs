@@ -1,6 +1,6 @@
 // Self-check for the scene3d pure maths. Run: node <skill-dir>/scripts/test_scene3d.mjs
 import assert from "node:assert/strict";
-import { hash, timeMap, layoutLabels, labelEdges, glyphOffsets } from "../assets/scene3d/scene3d-math.js";
+import { hash, timeMap, layoutLabels, labelEdges, glyphOffsets, missingGlyphs } from "../assets/scene3d/scene3d-math.js";
 import { readFileSync } from "node:fs";
 import { greatCircle, countryCentre } from "../assets/scene3d/globe-math.js";
 import { gearOutline, meshAngle, crankSlider, explodeAmount, explodeOffsets, flowPoint } from "../assets/scene3d/machine-math.js";
@@ -132,6 +132,10 @@ for (const angle of [-1.1, -0.4, 0, 0.22, 0.26, 0.6, 1.1]) {
   for (let k = 1; k < glyphs.length; k++) assert.ok(lo(glyphs[k], off[k]) - hi(glyphs[k - 1], off[k - 1]) > 0.3 - 1e-9, `glyph ${k} at ${angle}`);
 }
 assert.deepEqual(glyphOffsets([], 0.2, 0.3), []);
+
+// hero-number: characters the typeface lacks (helvetiker has no € − °) would render as "?"; they are named instead.
+assert.deepEqual(missingGlyphs({ "4": {}, "0": {}, "%": {} }, "40 %"), []);
+assert.deepEqual(missingGlyphs({ "4": {}, "0": {} }, "−40°€€"), ["−", "°", "€"]);
 
 // Flow particles: a pure function of (i, t, seed). Order of calls never matters, one lap takes 1 / speed
 // seconds, the stream stays inside its box, and a different seed gives a different stream.
