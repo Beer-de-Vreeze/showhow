@@ -67,9 +67,22 @@ def main() -> None:
         # The ring is drawn in the staged theme's accent (#D9822B), here on the top edge of the clamped ring.
         assert Image.open(base / "rings" / "board-r0.png").getpixel((28, 1)) == (0xD9, 0x82, 0x2B)
 
-        # One accent: a spec colour, or a theme without --accent, fails instead of falling back to a default.
+        # A "color" overrides the accent where it would vanish into the screenshot (a blue ring on a blue toolbar):
+        # per ring, or for the whole spec (the older field); the ring's own wins.
+        ringed = json.loads(spec.read_text(encoding="utf-8"))
+        spec.write_text(json.dumps({**ringed, "color": "#000000"}), encoding="utf-8")
+        bake(spec, theme)
+        assert Image.open(base / "rings" / "board-r0.png").getpixel((28, 1)) == (0, 0, 0)
+        ringed["rings"][0]["color"] = "#0000FF"
+        spec.write_text(json.dumps({**ringed, "color": "#000000"}), encoding="utf-8")
+        bake(spec, theme)
+        assert Image.open(base / "rings" / "board-r0.png").getpixel((28, 1)) == (0, 0, 255)
+        ringed["rings"][0].pop("color")
+        spec.write_text(json.dumps(ringed), encoding="utf-8")
+
+        # A colour PIL can't read, or a theme without --accent, fails by name instead of a traceback or a default.
         other, t2 = base / "other.json", base / "t2.css"
-        for bad_spec, bad_theme, text in (({"color": "#000000", "shows": [], "rings": []}, theme.read_text(encoding="utf-8"), "color"),
+        for bad_spec, bad_theme, text in (({**ringed, "color": "oklch(0.6 0.1 200)"}, theme.read_text(encoding="utf-8"), "oklch"),
                                           (json.loads(spec.read_text(encoding="utf-8")), ":root { --ink: #000; }", "--accent")):
             other.write_text(json.dumps(bad_spec), encoding="utf-8")
             t2.write_text(bad_theme, encoding="utf-8")

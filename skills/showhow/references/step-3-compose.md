@@ -170,6 +170,7 @@ Everything is local at render time and every version pin lives in `stage.py`; ne
 For the product's own theme (howto, update), write a `FRAME.md` with those colours and a `title` and `label` font family, and the font files as `fonts/<Family>-<weight>.woff2`, into `work/theme/`, and pass `--theme work/theme`.
 Use only `var(--...)` for the chrome colors and fonts (backgrounds, title and card fills, tags, counters, rings, ripples, fades), so a retheme is one re-run.
 `bake_highlights.py` takes the ring colour from the same file: pass `--theme composition/assets/theme.css`.
+When the accent has low contrast against the screenshot under a ring (a blue ring on a blue toolbar), give that ring a `"color"` in hex that stands out there.
 
 For a desktop app whose frontend is a web SPA, render the frontend in a browser with its API calls mocked.
 If the app needs a backend you cannot run, rebuild the screens from its components and styles instead.
