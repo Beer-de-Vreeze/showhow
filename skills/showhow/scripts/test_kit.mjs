@@ -23,7 +23,8 @@ node("#a", nodes["#root"]);
 node("#b", nodes["#root"]);
 
 globalThis.document = { querySelector: (s) => nodes[s] || null };
-globalThis.gsap = { set: () => {} };
+const sets = [];
+globalThis.gsap = { set: (target, vars) => sets.push([target, vars]) };
 globalThis.SplitText = { create: () => ({ words: ["w1", "w2"] }) };
 Object.assign(globalThis, { DrawSVGPlugin: {}, MorphSVGPlugin: {}, MotionPathPlugin: {} });
 globalThis.window = globalThis;
@@ -70,6 +71,8 @@ for (const [name, run] of Object.entries(helpers)) {
   if (calls.length === before || !calls.slice(before).every((c) => c.immediateRender === false)) throw new Error(`${name} needs fromTo with immediateRender:false`);
   expectThrow(() => run("#missing"), "no element #missing");
 }
+// words hides its split words at build time, so the full text never flashes before t (the fixture showed it 2.0-2.3s).
+if (!sets.some(([target, vars]) => Array.isArray(target) && target[0] === "w1" && vars.yPercent === 110)) throw new Error("words must set its words to yPercent 110 at build time");
 // rise is one fromTo per element, not one tween for the list.
 const n = tweens.length;
 kit.rise(1, ["#a", "#b"]);

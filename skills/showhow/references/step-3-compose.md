@@ -167,9 +167,12 @@ Stage the composition once `composition/index.html` exists with a `<head>` (stag
 
 It copies every asset the composition may use (the kit, `scene3d` with its data, GSAP and its plugins, three.js and the hero-number typeface, the theme's fonts), writes `assets/theme.css` with `@font-face` and one `:root` token set (`--paper`, `--ink`, `--accent`, `--muted`, `--font-display`, `--font-body`) from the theme's `FRAME.md`, and puts the three.js import map and the theme link in `index.html`'s head.
 Everything is local at render time and every version pin lives in `stage.py`; never copy these by hand or load them from a CDN.
-For the product's own theme (howto, update), write a `FRAME.md` with those colours and a `title` and `label` font family, and the font files as `fonts/<Family>-<weight>.woff2`, into `work/theme/`, and pass `--theme work/theme`.
+For the product's own theme (howto, update), write a `FRAME.md` with those colours and a `title` and `label` font family into `work/theme/`, and pass `--theme work/theme`.
+Add the font files as `work/theme/fonts/<Family>-<weight>.woff2` only when you have them (an open font the product ships); `fonts/` is optional.
+Without it (system fonts such as Segoe UI, or a commercial or CDN font), staging writes the family names with a system font stack and no `@font-face`; never invent font files.
 Use only `var(--...)` for the chrome colors and fonts (backgrounds, title and card fills, tags, counters, rings, ripples, fades), so a retheme is one re-run.
 `bake_highlights.py` takes the ring colour from the same file: pass `--theme composition/assets/theme.css`.
+When the accent has low contrast against the screenshot under a ring (a blue ring on a blue toolbar), give that ring a `"color"` in hex that stands out there.
 
 For a desktop app whose frontend is a web SPA, render the frontend in a browser with its API calls mocked.
 If the app needs a backend you cannot run, rebuild the screens from its components and styles instead.

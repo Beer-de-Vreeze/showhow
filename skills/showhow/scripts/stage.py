@@ -4,10 +4,11 @@
 
 Copies into <composition-dir>/assets/: kit/, scene3d/ (with its data), gsap/ (GSAP and the DrawSVG, MorphSVG,
 SplitText and MotionPath plugins), three/ (build, examples/jsm addons, the helvetiker_bold typeface), fonts/
-(the theme's font files and licences), and writes theme.css: @font-face for each font file and one :root
+(the theme's font files and licences), brand/ (the FRAME.md `logo:` and `music:` files, when given), and writes theme.css: @font-face for each font file and one :root
 token set, --paper --ink --accent --muted --font-display --font-body, from the theme's FRAME.md.
 A stock Hyperframes preset (no fonts/ folder, other colour keys) is mapped by the ALIASES rule below and
-gets its font names with a system-font fallback stack instead of @font-face.
+gets its font names with a system-font fallback stack instead of @font-face. A preset the table can't map, or
+an accent under 3:1 against paper, stops staging and names the work/theme path.
 Copies FRAME.md to <composition-dir>/frame.md and writes a block into index.html's <head> (between
 BEGIN and END, replaced on every run) with the three.js import map and the theme.css link.
 Everything is local at render time; npm packages come from `npm pack` into a cache folder, never a CDN.
@@ -25,7 +26,9 @@ import tarfile
 import tempfile
 from pathlib import Path
 
-from brand_kit import block, check, frontmatter, parse_colors, valid_color
+from PIL import ImageColor
+
+from brand_kit import check, file_problems, font_faces, frontmatter, parse_colors, scalar, valid_color
 
 # Every version pin for staged assets lives here.
 GSAP = "gsap@3.14.2"
@@ -37,7 +40,6 @@ BRANDS = Path.home() / ".showhow" / "brands"
 CACHE = Path.home() / ".cache" / "showhow" / "npm"
 GSAP_FILES = ("gsap", "DrawSVGPlugin", "MorphSVGPlugin", "SplitText", "MotionPathPlugin")
 TOKENS = ("paper", "ink", "accent", "muted")
-FONT_TYPES = (".woff2", ".woff", ".ttf", ".otf")
 BEGIN, END = "<!-- stage.py: generated, re-run stage.py instead of editing -->", "<!-- /stage.py -->"
 HEAD = f"""{BEGIN}
     <script type="importmap">
@@ -66,31 +68,36 @@ def resolve(theme: str | None = None, brand: str | None = None, brands: Path = B
 
 
 # Stock Hyperframes presets name colours and fonts differently from showhow's FRAME.md. The rule, deterministic:
-# each token takes the first alias present in `colors:`; with no accent alias, accent is the first #hex colour in
-# file order with saturation over 0.25; muted falls back to ink. Title and label fonts take the first alias in `typography:`.
+# each token takes the first alias present in `colors:`; muted falls back to ink; a preset with no accent alias is
+# never guessed, it fails into the work/theme path. Title and label fonts: brand_kit.FONT_ALIASES.
 ALIASES = {
     "paper": ("paper", "bg", "background", "canvas", "cream", "surface"),
     "ink": ("ink", "text", "black", "fg", "foreground"),
     "accent": ("accent", "primary", "brand"),
     "muted": ("muted", "text-muted", "gray", "grey", "text-light"),
 }
-FONT_ALIASES = {"title": ("title", "h1", "headline", "hero-title", "display"), "label": ("label", "body")}
+MIN_ACCENT_CONTRAST = 3.0  # WCAG 1.4.11 non-text contrast: rings, ripples and highlights sit on paper
+UNMAPPED = "write work/theme/FRAME.md with paper, ink, accent and muted picked for this video and pass --theme work/theme (general.md)"
+
+
+def contrast(a: str, b: str) -> float:
+    """WCAG contrast ratio of two CSS colours (1 to 21)."""
+    def lum(c: str) -> float:
+        rgb = (v / 255 for v in ImageColor.getrgb(c)[:3])
+        return sum(w * (v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4) for w, v in zip((0.2126, 0.7152, 0.0722), rgb))
+    hi, lo = sorted((lum(a), lum(b)), reverse=True)
+    return (hi + 0.05) / (lo + 0.05)
 
 
 def map_colors(colors: dict[str, str]) -> tuple[dict[str, str | None], list[str]]:
     """The four tokens from a FRAME.md colour map, and a problem naming each token that cannot be mapped."""
     out = {k: next((colors[n] for n in names if n in colors), None) for k, names in ALIASES.items()}
-    if out["accent"] is None:
-        for v in colors.values():
-            m = re.fullmatch(r"#([0-9a-fA-F]{6})", v)
-            if m:
-                r, g, b = (int(m[1][i:i + 2], 16) / 255 for i in (0, 2, 4))
-                if (max(r, g, b) - min(r, g, b)) / max(r, g, b, 1e-9) > 0.25:
-                    out["accent"] = v
-                    break
     out["muted"] = out["muted"] or out["ink"]
-    problems = [f"FRAME.md colors: missing '{k}' (or an alias: {', '.join(ALIASES[k][1:]) or 'none'})" for k in TOKENS if out[k] is None]
+    problems = [f"FRAME.md colors: missing '{k}' (or an alias: {', '.join(ALIASES[k][1:]) or 'none'}); {UNMAPPED}" for k in TOKENS if out[k] is None]
     problems += [f"FRAME.md colors: '{k}' is not a CSS colour: {out[k]}" for k in TOKENS if out[k] and not valid_color(out[k])]
+    if not problems and (ratio := contrast(out["accent"], out["paper"])) < MIN_ACCENT_CONTRAST:
+        problems.append(f"FRAME.md colors: accent {out['accent']} on paper {out['paper']} is {ratio:.2f}:1, under {MIN_ACCENT_CONTRAST:g}:1, "
+                        f"so rings and highlights would not show; pick a darker or stronger accent, or {UNMAPPED}")
     return out, problems
 
 
@@ -98,30 +105,9 @@ def theme_css(theme: Path) -> str:
     """@font-face rules and the :root token set, from theme/FRAME.md and the files in theme/fonts/."""
     head = frontmatter((theme / "FRAME.md").read_text(encoding="utf-8"))
     colors, problems = map_colors(parse_colors(head))
-    ramp = {}
-    for ln in block(head, "typography"):
-        m = re.match(r"([\w-]+):\s*\{.*fontFamily:\s*[\"']([^\"']+)[\"']", ln)
-        if m:
-            ramp[m.group(1)] = m.group(2)
-    families = {}
-    for role, names in FONT_ALIASES.items():
-        found = next((ramp[n] for n in names if n in ramp), None)
-        if found:
-            families[role] = found
-        else:
-            problems.append(f"FRAME.md typography: no fontFamily for '{role}' (or an alias: {', '.join(names[1:]) or 'none'})")
-
-    # Font files are named <Family without spaces>-<weight>.<ext>, e.g. EBGaramond-700.woff2.
-    # shortcut: a theme with no fonts/ folder (every stock Hyperframes preset) gets the family names plus a system
-    # font stack and no @font-face, so the render uses whatever is installed; ship fonts/ to pin the faces.
+    families, faces, font_problems = font_faces(theme, head)
+    problems += font_problems
     stock = not (theme / "fonts").is_dir()
-    faces = []
-    files = sorted(p for p in (theme / "fonts").glob("*") if p.suffix.lower() in FONT_TYPES)
-    for family in [] if stock else dict.fromkeys(families.values()):
-        mine = [(p, w) for p in files for f, _, w in [p.stem.rpartition("-")] if f == family.replace(" ", "") and w.isdigit()]
-        if not mine:
-            problems.append(f"no font file for '{family}' in {theme / 'fonts'} (name it {family.replace(' ', '')}-<weight>.woff2)")
-        faces += [f'@font-face {{ font-family: "{family}"; src: url("fonts/{p.name}"); font-weight: {w}; }}' for p, w in mine]
     if problems:
         raise SystemExit(f"theme {theme} cannot be staged:\n" + "\n".join(f"FAIL {p}" for p in problems))
 
@@ -171,6 +157,11 @@ def stage(comp: Path, theme: Path, fetch=npm_fetch) -> None:
             raise SystemExit(f"{index} has no <head>")
         html = html[: m.end()] + "\n    " + HEAD + html[m.end():]
     css = theme_css(theme)  # validates the theme before anything is copied
+    # A kit's logo and music bed go to assets/brand/ (brand-kits.md); a path outside the theme folder is refused.
+    head = frontmatter((theme / "FRAME.md").read_text(encoding="utf-8"))
+    extras = [(theme / name, file_problems(theme, name, key)) for key in ("logo", "music") if (name := scalar(head, key))]
+    if problems := [p for _, ps in extras for p in ps]:
+        raise SystemExit(f"theme {theme} cannot be staged:\n" + "\n".join(f"FAIL {p}" for p in problems))
 
     a = comp / "assets"
     for name in ("kit", "scene3d"):
@@ -185,6 +176,8 @@ def stage(comp: Path, theme: Path, fetch=npm_fetch) -> None:
             copy(three / f, a / "three" / f)
     if (theme / "fonts").is_dir():
         copy(theme / "fonts", a / "fonts")
+    for src, _ in extras:
+        copy(src, a / "brand" / src.name)
     (a / "theme.css").write_text(css, encoding="utf-8")
     shutil.copy2(theme / "FRAME.md", comp / "frame.md")
     index.write_text(html, encoding="utf-8")

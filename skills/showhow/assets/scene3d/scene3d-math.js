@@ -70,3 +70,9 @@ export function glyphOffsets(boxes, angle, gap) {
   });
   return out;
 }
+
+// The characters of text that a typeface's glyph map lacks (whitespace needs none), once each in order;
+// three's FontLoader would quietly draw them as "?".
+export function missingGlyphs(glyphs, text) {
+  return [...new Set([...String(text)].filter((ch) => !/\s/.test(ch) && !(ch in glyphs)))];
+}

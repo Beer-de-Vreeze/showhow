@@ -3,8 +3,7 @@
 ## Validate
 
 ```bash
-cd <output-dir>/composition
-npx hyperframes check   # the single pre-render gate - fix every error it reports
+npx hyperframes check composition   # from <output-dir>; the single pre-render gate - fix every error it reports
 ```
 
 Fix all errors, including WCAG contrast failures (they gate as errors).
@@ -30,13 +29,13 @@ Other escape hatches that exist: `data-layout-allow-overflow` (intentional ellip
 Then capture key frames and look at them:
 
 ```bash
-npx hyperframes snapshot   # PNG key frames
+npx hyperframes snapshot composition   # PNG key frames
 ```
 
 Snapshot every ring moment and every result, in one call, into `work/snap/`:
 
 ```bash
-npx hyperframes snapshot --no-end --describe false -o ../work/snap --at 4.5,16.5,21.5,24
+npx hyperframes snapshot composition --no-end --describe false -o work/snap --at 4.5,16.5,21.5,24
 ```
 
 Read the contact sheets it writes and **describe every frame in one sentence** (what is on screen, what the viewer should look at) before you judge any of them; a frame you can't describe, or that reads as an empty slide, is a finding.
@@ -58,7 +57,7 @@ Fix, re-run `check`, and re-snapshot only the frames you changed.
 ## Preview
 
 ```bash
-npx hyperframes preview
+npx hyperframes preview composition
 ```
 
 Tell the user the preview is running and give them the localhost URL.
@@ -77,8 +76,9 @@ Write `captions.srt` first (below): the wrapper takes each scene's settled momen
 uv run --project <skill-dir>/scripts <skill-dir>/scripts/render.py <output-dir>/composition <output-dir>/<video-name>.mp4 --work <output-dir>/work --plan <output-dir>/showhow-plan.md
 ```
 
-The wrapper renders every format the plan lists, each from a resized copy in `work/formats/<format>/` and with its own `work/<format>/render.log`.
-Several formats write `<video-name>-landscape.mp4`, `-vertical.mp4` and `-square.mp4`; one format writes `<video-name>.mp4`.
+With one format, the wrapper renders the composition as is to `<video-name>.mp4` and logs to `work/render.log`.
+With several, it renders each from a resized copy in `work/formats/<format>/`, with its own `work/<format>/render.log`, to `<video-name>-landscape.mp4`, `-vertical.mp4` and `-square.mp4`.
+`--plan` is optional for a one-format render, but without it (and without `--poster-at`) there is no poster; the wrapper says so.
 Each file is loudness-normalised and gets its poster (below) as soon as it renders.
 A failing format is named in the error and exits non-zero; the formats that rendered stay on disk, finished, so re-run only the failed one with `--format <name>` (it always writes `<video-name>-<name>.mp4`, next to the others).
 Run the video gates once per file the wrapper wrote; `captions.srt` and `chapters.txt` are the same for all.
@@ -101,7 +101,7 @@ When the composition tweens `height`, `width`, `top`/`left` or padding, add `--n
 **Check the mp4, not only the snapshots.** Pull frames from the rendered file at every ring and result moment into one sheet and look at it:
 
 ```bash
-uv run --project <skill-dir>/scripts <skill-dir>/scripts/frame_sheet.py ../<video-name>.mp4 --overlays ../work/rings.overlays.json --at 5.5,88 -o ../work/check.jpg
+uv run --project <skill-dir>/scripts <skill-dir>/scripts/frame_sheet.py <video-name>.mp4 --overlays work/rings.overlays.json --at 5.5,88 -o work/check.jpg
 ```
 
 Add `--crop x,y,w,h` (video pixels) to zoom every frame on one region when a ring is small.
@@ -116,8 +116,8 @@ Loudness is already normalised by the wrapper; earshot is for timing and masking
 Pass every SFX `data-start` from `index.html` as cues, so it reports where each one actually sounds:
 
 ```bash
-earshot measure ../<video-name>.mp4
-earshot timeline ../<video-name>.mp4 --cues "2.6,2.8,9.4" --out ../work/timeline.json
+earshot measure <video-name>.mp4
+earshot timeline <video-name>.mp4 --cues "2.6,2.8,9.4" --out work/timeline.json
 ```
 
 For a 45 s video, `measure` takes about 20 s and `timeline` about 50 s (most of it model loading), so run both once per render, not per fix.
@@ -138,10 +138,28 @@ The poster is the still shown before the video plays.
 For instructional videos the best poster is the **title card** (how-to: the goal line; update: "What's new in [version]"), or the finished result with the title over it.
 Pick a settled moment: text fully in, not mid-transition, and no caption on screen (half a sentence under the title looks broken as a thumbnail).
 
-The render wrapper makes it: for each mp4 it writes `<same name>.jpg` from that file's own frame, so a vertical or square file gets its own layout, at scene 1's settled moment (0.1 s after its last caption cue ends).
+The render wrapper makes it: for each mp4 it writes `<same name>.jpg` from that file's own frame, so a vertical or square file gets its own layout.
+The moment is the settled moment (0.1 s after the last caption cue ends) of the first scene that holds without voice, so no caption is on screen; usually scene 1, the title.
 Then it bakes the jpg in as frame 0, after the loudness pass (the bake copies the audio), replacing only the first frame's pixels; duration, frame count and audio stay the same.
-For another moment (the finished result with the title), re-run the render with `--poster-at <seconds>`.
-Look at each jpg; if one lands on a transition or a caption, give the scene more hold after its last cue, or pick another moment.
+For another moment (the finished result with the title), run the same render command with `--poster-at <seconds>`: when the composition has not changed since the render, it only re-takes and re-bakes the poster, with no new render.
+Look at each jpg.
+
+When every scene is voiced to its end, the wrapper warns that the poster may show a caption.
+Then make a caption-free poster from a copy with the captions hidden, and bake it over frame 0 (from `<output-dir>`):
+
+```bash
+cp -r composition work/poster
+# add `.cap { display: none !important; }` (your caption selector) to work/poster/index.html's <style>
+npx hyperframes snapshot work/poster --at <seconds> --no-end -o work/poster-snap --describe false
+ffmpeg -y -i work/poster-snap/frame-00-at-<seconds>s.png -q:v 2 <video-name>.jpg
+ffmpeg -y -i <video-name>.mp4 -i <video-name>.jpg \
+  -filter_complex "[0:v][1:v]overlay=0:0:enable='eq(n,0)'[v]" \
+  -map "[v]" -map "0:a?" -c:v libx264 -crf 18 -preset slow -pix_fmt yuv420p \
+  -c:a copy -movflags +faststart work/poster.mp4 \
+  && mv -f work/poster.mp4 <video-name>.mp4
+```
+
+With several formats, snapshot `work/formats/<format>` instead of `composition`, once per format, and name the files `<video-name>-<format>`.
 
 Players that show the first frame before playback (Teams, SharePoint, Slack, a plain `<video>` tag) use frame 0 as the idle thumbnail.
 YouTube doesn't: it offers its own auto-picked frames or a custom upload, so upload the jpg there as the thumbnail.
@@ -195,6 +213,7 @@ One line per scene group, starting at `00:00`, in the YouTube chapter format (al
 ```
 
 Use the measured scene start times from the render.
+An update names its changes `Change N - <what changed>` (`00:12 Change 1 - Search by invoice number`), and a general task video its steps `Step N` or `Point N`; `plan_gates.py --chapters` counts those titles.
 
 ## Write credits.txt
 

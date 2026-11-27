@@ -21,7 +21,7 @@
     #bar { position: absolute; left: 1100px; top: 300px; width: 360px; height: 560px; background: var(--accent); transform-origin: 50% 100%; transform: scaleY(0); }
     #morph-shape { fill: var(--accent); }
     .cube { fill: var(--accent); opacity: 0; }
-    #dot { fill: var(--warm); }
+    #dot { fill: var(--warm); opacity: 0; } /* drawn at 0,0 until along places it on the route */
     #route { fill: none; stroke: var(--ink); stroke-width: 3; stroke-dasharray: 2 14; stroke-linecap: round; }
   </style>
   <div id="root" data-composition-id="demo" data-width="1920" data-height="1080">
@@ -78,6 +78,7 @@
       // flat-scene: cubes settle in, then a dot travels the route
       kit.rise(8.3, ["#cube-1", "#cube-2", "#cube-3"]);
       kit.along(8.9, "#dot", "#route", 0.9);
+      tl.fromTo("#dot", { opacity: 0 }, { opacity: 1, duration: 0.1, immediateRender: false }, 8.9);
 
       window.__timelines["demo"] = tl;
     });

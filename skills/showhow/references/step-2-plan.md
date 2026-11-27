@@ -58,9 +58,10 @@ With `--no-voice`, the same script becomes the caption text; plan about 0.35s pe
 [pasted / drafted]
 
 ## Formats (explainer only)
-[landscape, vertical, square (the default; one name renders only that format)]
+[explainer: landscape, vertical, square (the default; one name renders only that format); other modes ignore this section]
 
 ## Format: [landscape / vertical / square] - [width]x[height]
+[howto, update and general: replace the placeholder with one format, e.g. "## Format: landscape - 1920x1080"; an explainer uses "## Formats" above instead]
 ## Target duration: [seconds, from the script word count]
 
 ## Visual identity (from the project; general mode: from the preset)

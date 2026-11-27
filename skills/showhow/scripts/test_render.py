@@ -2,6 +2,8 @@
   uv run --project <skill-dir>/scripts python <skill-dir>/scripts/test_render.py
 """
 
+import contextlib
+import io
 import os
 import re
 import sys
@@ -375,20 +377,63 @@ def plan_driven() -> None:
         kinds = ["probe" if "-select_streams" in c else "extract" if "-frames:v" in c else "bake" if any("overlay" in a for a in c) else "render" if "render" in c else "?" for c in tools.calls]
         assert kinds == ["render", "probe", "extract", "bake"] * 2, kinds
 
-        # poster_at_overrides: --poster-at picks the poster moment.
+        # poster_at_overrides: --poster-at picks the poster moment (the mp4 is made older than the composition, so it renders).
+        os.utime(root / "video-vertical.mp4", (1, 1))
         tools = FakeTools()
         mod.main([str(comp), str(out), "--work", str(work), "--plan", str(plan), "--format", "vertical", "--poster-at", "0.5"], run=tools)
         # format_override: --format renders only that format, still suffixed so it lands next to the others.
         assert [Path(c[3]).name for c in tools.calls if "render" in c] == ["vertical"]
         assert [c[c.index("-ss") + 1] for c in tools.calls if "-frames:v" in c] == ["0.5"]
 
-        # one_format_plan_unsuffixed: a plan with one format writes <name>.mp4 and <name>.jpg.
+        # one_format_plan_unsuffixed: a plan with one format writes <name>.mp4 and <name>.jpg, rendered from the
+        # composition as is (never a resized copy, so a 1280x720 composition keeps its size) and logged to work/render.log.
         one = root / "one"
         one.mkdir()
         (one / "showhow-plan.md").write_text(plan_text(None, [2, 3]), encoding="utf-8")
         (one / "captions.srt").write_text(srt([(0.3, 1.5)]), encoding="utf-8")
-        mod.main([str(comp), str(one / "video.mp4"), "--work", str(one / "work"), "--plan", str(one / "showhow-plan.md")], run=FakeTools())
+        tools = FakeTools()
+        mod.main([str(comp), str(one / "video.mp4"), "--work", str(one / "work"), "--plan", str(one / "showhow-plan.md")], run=tools)
         assert sorted(p.name for p in one.glob("video*")) == ["video.jpg", "video.mp4"]
+        assert [Path(c[3]) for c in tools.calls if "render" in c] == [comp], tools.calls
+        assert (one / "work" / "render.log").is_file() and not (one / "work" / "formats").exists()
+
+        # poster_at_moves_without_render: with the mp4 newer than every composition file, --poster-at only re-takes
+        # and re-bakes the poster; no render, no loudnorm. The CLI's own state in composition/.hyperframes/, written
+        # just after the mp4 (seen in a real 0.9.85 render), is not a change to the composition.
+        (comp / ".hyperframes").mkdir(exist_ok=True)
+        (comp / ".hyperframes" / "video-state.json").write_text("{}", encoding="utf-8")
+        tools = FakeTools()
+        mod.main([str(comp), str(one / "video.mp4"), "--work", str(one / "work"), "--plan", str(one / "showhow-plan.md"), "--poster-at", "3.2"], run=tools)
+        kinds = ["extract" if "-frames:v" in c else "bake" if any("overlay" in x for x in c) else "other" for c in tools.calls]
+        assert kinds == ["extract", "bake"] and tools.calls[0][tools.calls[0].index("-ss") + 1] == "3.2", tools.calls
+        # A composition changed after the render is rendered again, even with --poster-at.
+        os.utime(one / "video.mp4", (1, 1))
+        tools = FakeTools()
+        mod.main([str(comp), str(one / "video.mp4"), "--work", str(one / "work"), "--plan", str(one / "showhow-plan.md"), "--poster-at", "3.2"], run=tools)
+        assert any("render" in c for c in tools.calls), tools.calls
+
+        # poster_skips_voiced_scene: scene 1's voice runs to its end (a caption would show), so the poster is the
+        # settled moment of the first scene that holds without voice: scene 2, 0.1s after its cue (worked: 4.0 + 0.1).
+        voiced = root / "voiced"
+        voiced.mkdir()
+        (voiced / "showhow-plan.md").write_text(plan_text(None, [2, 3]), encoding="utf-8")
+        (voiced / "captions.srt").write_text(srt([(0.3, 1.95), (2.3, 4.0)]), encoding="utf-8")
+        tools = FakeTools()
+        mod.main([str(comp), str(voiced / "v.mp4"), "--work", str(voiced / "work"), "--plan", str(voiced / "showhow-plan.md")], run=tools)
+        assert [c[c.index("-ss") + 1] for c in tools.calls if "-frames:v" in c] == ["4.1"], tools.calls
+        # No scene holds without voice: scene 1's settled moment, with a warning that names the caption-hidden recipe.
+        (voiced / "captions.srt").write_text(srt([(0.3, 1.95), (2.3, 4.95)]), encoding="utf-8")
+        tools, said = FakeTools(), io.StringIO()
+        with contextlib.redirect_stdout(said):
+            mod.main([str(comp), str(voiced / "w.mp4"), "--work", str(voiced / "work"), "--plan", str(voiced / "showhow-plan.md")], run=tools)
+        assert [c[c.index("-ss") + 1] for c in tools.calls if "-frames:v" in c] == ["1.9"], tools.calls
+        assert "caption" in said.getvalue() and "step-4-deliver.md" in said.getvalue(), said.getvalue()
+
+        # no_plan_says_no_poster: a render without --plan or --poster-at says loudly that it wrote no poster.
+        tools, said = FakeTools(), io.StringIO()
+        with contextlib.redirect_stdout(said):
+            mod.main([str(comp), str(root / "bare.mp4"), "--work", str(root / "bwork")], run=tools)
+        assert "no poster" in said.getvalue() and not (root / "bare.jpg").exists(), said.getvalue()
 
         # stills: --stills writes each format's copy and one still per scene at its settled moment, named scene-NN.png in
         # scene order (numeric, not text, order), removes the contact sheets, and never renders.

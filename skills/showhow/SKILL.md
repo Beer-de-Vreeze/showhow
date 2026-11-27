@@ -42,6 +42,7 @@ The first line that applies wins.
 `learn <output-dir>`: make no video; record lessons from that run (`references/house-style.md`, "`/showhow learn`") and stop.
 
 `<skill-dir>` is the folder holding this file (Claude Code prints it as "Base directory for this skill"); bundled files are in `assets/` and `scripts/`.
+Paths starting `../hyperframes/` here and in `references/` mean the installed `hyperframes` skill next to this one (for example `~/.claude/skills/hyperframes/`); when this skill runs from a repo checkout, that sibling is not in the checkout, so read it from the installed skills folder.
 If `ffmpeg`, `uv` or `whisper-cli` is missing, or `HYPERFRAMES_PYTHON` is empty, the session started before the installer ran: ask the user to restart the app; don't reinstall.
 
 **Output.** First decide `<video-name>`: a 2-5 word kebab-case slug of the video's title (`connect-confluence`, `whats-new-2-4-0`).

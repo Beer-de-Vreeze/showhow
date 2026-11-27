@@ -11,13 +11,14 @@ tail on failure.
       [--stills] [--format <names>] [--poster-at <s>] [--no-fast-capture] [--no-loudnorm] [-- --docker --quality high]
 
 --plan: the formats come from the plan (parse_plan in plan_gates.py; a plan that does not parse renders
-nothing). Several formats render one file each, <video-name>-<format>.mp4 (landscape 1920x1080, vertical
-1080x1920, square 1080x1080); one format renders <video-name>.mp4. Each format renders a copy of the
+nothing). One format renders the composition as is to <video-name>.mp4 (its own size; log in <work>/render.log).
+Several formats render one file each, <video-name>-<format>.mp4 (landscape 1920x1080, vertical
+1080x1920, square 1080x1080). Each of those renders a copy of the
 composition in <work>/formats/<format>/ whose root gets data-format and whose composition elements sized
 like the root (root, sub-composition hosts, compositions/*.html roots) get the format's data-width and
 data-height; the original is never edited, and CSS keys layout off [data-format="vertical"]. The root needs
 data-width and data-height. A failing format is named and exits non-zero; formats that rendered are kept,
-each finished (loudnorm, poster) as it rendered.
+each finished (loudnorm, poster) as it rendered, with its log in <work>/<format>/render.log.
 
 Settled moment of a scene: 0.1s after its last caption cue ends (captions.srt next to the plan), at most
 0.1s before the scene ends; 0.3s before the end for a scene without a cue.
@@ -25,11 +26,13 @@ Settled moment of a scene: 0.1s after its last caption cue ends (captions.srt ne
 --stills (with --plan): write the format copies and one still per scene at its settled moment to
 <work>/preview/<format>/scene-NN.png, then stop; no render. For the explainer's Stop 2.
 
-Poster: after loudnorm each mp4 gets <same name>.jpg, its own frame at scene 1's settled moment
-(--poster-at <s> picks another), baked in as frame 0. Without --plan only --poster-at makes one.
+Poster: after loudnorm each mp4 gets <same name>.jpg, its own frame at the settled moment of the first scene
+that holds without voice (no caption on screen; scene 1's, with a warning, when every scene talks to its end),
+baked in as frame 0. --poster-at <s> picks another moment; when every mp4 is newer than every composition file,
+it only re-takes and re-bakes the poster, with no render. Without --plan or --poster-at there is no poster (it says so).
 
---format: overrides the plan's formats and always suffixes the name, so re-running one failed format
-lands next to the others. Without --plan and --format the composition renders as is.
+--format: overrides the plan's formats, renders resized copies and always suffixes the name, so re-running one
+failed format lands next to the others. Without --plan and --format the composition renders as is.
 
 --no-fast-capture: for compositions that tween layout (height, width, position,
 padding); fast drawelement capture drops those changes.
@@ -241,16 +244,14 @@ def render_formats(
     extra: list[str] | None = None,
     run: Callable[[list[str]], tuple[int, str]] = run_cli,
     after: Callable[[Path, Path], None] | None = None,
-    suffix: bool = True,
 ) -> list[Path]:
-    """One render per format, each to <stem>-<format> (to output itself when suffix is off, for a one-format plan);
-    `after(mp4, work)` (loudnorm, poster) runs as each one finishes,
+    """One render per format, each to <stem>-<format>; `after(mp4, work)` (loudnorm, poster) runs as each one finishes,
     so a later failed format never leaves the earlier ones un-normalised. Failures are named at the end."""
     done: list[Path] = []
     failed: list[str] = []
     for f in formats:
-        # Suffixed whenever --format is given, so re-running one failed format of an "all" run lands next to the others.
-        out = output.with_name(f"{output.stem}-{f}{output.suffix}") if suffix else output
+        # Always suffixed, so re-running one failed format of an "all" run lands next to the others.
+        out = output.with_name(f"{output.stem}-{f}{output.suffix}")
         try:
             copy = work / "formats" / f
             size_copy(composition, copy, f)
@@ -282,12 +283,37 @@ def settled_times(scenes: list[dict], srt_text: str) -> list[float]:
     return times
 
 
-def write_stills(copy: Path, times: list[float], dest: Path, run: Callable[[list[str]], tuple[int, str]] = run_cli) -> None:
-    """One snapshot per time of the format copy, renamed in time order to dest/scene-NN.png; contact sheets removed."""
+CLEAR = 0.3  # a poster moment this far before its scene's end has no caption and no transition yet
+
+
+def poster_time(scenes: list[dict], srt_text: str) -> tuple[float, bool]:
+    """The settled moment of the first scene that holds without voice (its last cue ends by CLEAR + 0.1s before the
+    scene does, or it has no cue), and True; scene 1's settled moment and False when every scene talks to its end."""
+    times = settled_times(scenes, srt_text)
+    for s, t in zip(scenes, times):
+        if t <= s["start"] + s["secs"] - CLEAR + 1e-6:
+            return t, True
+    return times[0], False
+
+
+def rendered_after(composition: Path, mp4s: list[Path]) -> bool:
+    """Every mp4 exists and is newer than every file of the composition, so moving the poster needs no new render."""
+    if not all(p.is_file() for p in mp4s):
+        return False
+    # .hyperframes/ is the CLI's own state, written just after the mp4, not composition content.
+    files = (p for p in composition.rglob("*") if p.is_file() and ".hyperframes" not in p.relative_to(composition).parts)
+    newest = max((p.stat().st_mtime for p in files), default=0)
+    return min(p.stat().st_mtime for p in mp4s) > newest
+
+
+def write_stills(copy: Path, times: list[float], dest: Path, run: Callable[[list[str]], tuple[int, str]] = run_cli,
+                 extra: list[str] | None = None) -> None:
+    """One snapshot per time of the format copy, renamed in time order to dest/scene-NN.png; contact sheets removed.
+    `extra` goes to the snapshot command (check_fixture.py passes --no-browser-gpu)."""
     if dest.exists():
         shutil.rmtree(dest)  # stale stills from an earlier plan would pass for this one
     cmd = [shutil.which("npx") or "npx", HYPERFRAMES, "snapshot", str(copy), "--no-end", "--describe", "false",
-           "--at", ",".join(f"{t:g}" for t in times), "-o", str(dest)]
+           "--at", ",".join(f"{t:g}" for t in times), "-o", str(dest), *(extra or [])]
     code, text = run(cmd)
     # The CLI numbers frames in --at order; sort by that number, since frame-10 sorts before frame-2 as text.
     frames = sorted(dest.glob("frame-*-at-*.png"), key=lambda p: int(p.name.split("-")[1])) if dest.is_dir() else []
@@ -355,7 +381,22 @@ def main(argv: list[str] | None = None, run: Callable[[list[str]], tuple[int, st
         times = settled_times(plan["scenes"], srt.read_text(encoding="utf-8"))
         if not times:
             raise SystemExit(f"{a.plan} has no scenes to take stills or a poster from")
-        poster_at = times[0] if poster_at is None else poster_at
+        if poster_at is None:
+            poster_at, clear = poster_time(plan["scenes"], srt.read_text(encoding="utf-8"))
+            if not clear:
+                print(f"poster at {poster_at:g}s may show a caption: every scene is voiced to its end. Pass --poster-at, or make "
+                      "a caption-hidden poster (step-4-deliver.md, \"Pick the poster frame\").")
+
+    # One format from the plan (or no plan) renders the composition as is; --format always renders resized copies.
+    as_is = a.format is None and (formats is None or len(formats) == 1)
+    outs = {"": a.output} if as_is else {f: a.output.with_name(f"{a.output.stem}-{f}{a.output.suffix}") for f in formats}
+    if poster_at is None:
+        print(f"no poster: pass --plan (with captions.srt beside it) or --poster-at <s> to get {a.output.stem}.jpg and a baked frame 0")
+    elif a.poster_at is not None and not a.stills and rendered_after(a.composition, list(outs.values())):
+        print("the composition has not changed since the render: moving the poster only")
+        for f, mp4 in outs.items():
+            bake_poster(mp4, poster_at, a.work / f, run=run)
+        return
 
     if a.stills:
         for f in formats:
@@ -370,13 +411,12 @@ def main(argv: list[str] | None = None, run: Callable[[list[str]], tuple[int, st
         if poster_at is not None:
             bake_poster(mp4, poster_at, work, run=run)
 
-    if formats is None:  # no plan, no --format: the composition's own size
+    if as_is:  # the composition's own size
         render(a.composition, a.output, a.work, fast_capture=not a.no_fast_capture, extra=extra, run=run)
         finish(a.output, a.work)
     else:
         # Each format is finished (loudnorm, poster) as it renders; a failed format exits here and the others stay done.
-        render_formats(a.composition, a.output, a.work, formats, fast_capture=not a.no_fast_capture, extra=extra, run=run,
-                       after=finish, suffix=a.format is not None or len(formats) > 1)
+        render_formats(a.composition, a.output, a.work, formats, fast_capture=not a.no_fast_capture, extra=extra, run=run, after=finish)
 
 
 if __name__ == "__main__":

@@ -16,8 +16,8 @@ only changes the step limits of a howto or general video.
 parse_plan(text) returns a dict other scripts may use (render.py reads formats and scene starts):
   mode     howto | update | general | explainer
   style    clean | friendly | release | quick-tip (clean when the plan names none)
-  formats  format names in FORMATS order, from "## Formats", else "## Format: <name> - WxH",
-           else all three for an explainer and ["landscape"] otherwise
+  formats  format names in FORMATS order: an explainer's "## Formats", else the one "## Format: <name> - WxH"
+           (other modes ignore "## Formats"), else all three for an explainer and ["landscape"] otherwise
   scenes   in plan order, each {n, name, secs, start, line, counter, action, on_screen, narration, visual, params};
            start is the sum of the durations before it (seconds), line is the heading's line number,
            counter is (k, of) or None (a quick-tip numbers its action scenes itself)
@@ -141,21 +141,28 @@ def parse_plan(text: str) -> dict:
         start += sc["secs"]
     if not scenes and not errors:
         raise SystemExit("no '### Scene N - name - Ns' blocks in the plan's storyboard")
-    if style == "quick-tip" and mode in ("howto", "general"):
+    if gate_mode({"style": style, "mode": mode}) == "quick-tip":
         # A quick-tip shows no counter (SKILL.md): its action scenes are the steps.
         acts = [sc for sc in scenes if has_action(sc)]
         for k, sc in enumerate(acts, 1):
             sc["counter"] = (k, len(acts))
 
     formats = list(FORMATS) if mode == "explainer" else ["landscape"]
-    # "## Formats" (explainer) wins over the single "## Format: <name> - WxH" line.
-    source = re.search(r"^## Formats\b[^\n]*\n?(.*?)(?=^#|\Z)", text, re.M | re.S) or re.search(r"^## Format:(.*)$", text, re.M)
+    # An explainer's "## Formats" wins over the single "## Format: <name> - WxH" line; other modes read only that line,
+    # so a howto that keeps the template's "## Formats" section (filled, empty or n/a) still renders one format.
+    many = mode == "explainer" and re.search(r"^## Formats\b[^\n]*\n?(.*?)(?=^#|\Z)", text, re.M | re.S)
+    source = many or re.search(r"^## Format:(.*)$", text, re.M)
     if source:
+        where = f"line {text.count(chr(10), 0, source.start()) + 1}"
         found = [f for f in FORMATS if re.search(rf"\b{f}\b", source.group(1))]
-        if found:
+        if not many and "[" in source.group(1):
+            errors.append(f"{where}: the '## Format:' line is still the template placeholder; write one format, e.g. '## Format: landscape - 1920x1080'")
+        elif not many and len(found) > 1:
+            errors.append(f"{where}: '## Format:' names {', '.join(found)}; write one format (an explainer lists several under '## Formats')")
+        elif found:
             formats = found
         else:
-            errors.append(f"line {text.count(chr(10), 0, source.start()) + 1}: no format name ({', '.join(FORMATS)}) in {source.group(1).strip()!r}")
+            errors.append(f"{where}: no format name ({', '.join(FORMATS)}) in {source.group(1).strip()!r}")
 
     script = re.search(r"^## Narration script\s*\n(.*?)(?=^## |\Z)", text, re.M | re.S)
     return {"mode": mode, "style": style, "formats": formats, "scenes": scenes, "errors": errors,
@@ -294,7 +301,8 @@ COUNTRIES = Path(__file__).resolve().parent.parent / "assets" / "scene3d" / "dat
 def country_codes() -> set[str]:
     """The alpha-3 and alpha-2 codes globe.js can find in the bundled Natural Earth file."""
     features = json.loads(COUNTRIES.read_text(encoding="utf-8"))["features"]
-    return {f["properties"][k] for f in features for k in ("a3", "a2") if f["properties"].get(k)}
+    # Natural Earth writes "-99" for "no code" (N. Cyprus, Somaliland); it names no country.
+    return {f["properties"][k] for f in features for k in ("a3", "a2") if str(f["properties"].get(k) or "").isalpha()}
 
 
 def check_params(plan: dict) -> list[tuple[str, bool, str]]:
