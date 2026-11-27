@@ -90,6 +90,14 @@ def main() -> None:
     assert not verdicts(expl().replace("Recap", "Wrap-up"))["P-end"]
     assert verdicts(expl() + scene(6, "Outro", 3))["P-end"]
 
+    # 2D motion styles: stroke-reveal is a known visual; parallax is for the first scene only.
+    assert verdicts(expl(vThrust="stroke-reveal"))["P-visual"]
+    for style in ("kinetic-type", "data-anim", "morph", "flat-scene"):
+        assert verdicts(expl(vThrust=style))["P-visual"], style
+    name, ok, msg = [r for r in check_plan(parse_plan(expl(vThrust="parallax"))) if r[0] == "P-visual"][0]
+    assert not ok and "scene 4" in msg and "parallax" in msg, msg
+    assert verdicts(expl(vOutcome="parallax"))["P-visual"]
+
     for broken in ("no mode here", "## Mode\nhowto\n\n## Storyboard\nnothing\n"):
         try:
             parse_plan(broken)

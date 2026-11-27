@@ -20,7 +20,7 @@ P-described: every number and **bold label** in a scene's optional "On screen:" 
           "40" and "1700"), labels ignore case. Runs in every mode; skipped without "On screen:" lines.
 Explainer mode (no counters, so no P-steps or P-action; P-time has no step minimum):
 P-need:   no "[NEED" marker left in the narration (scenes or the "## Narration script" section).
-P-visual: every voiced scene has exactly one "Visual:" from VISUALS.
+P-visual: every voiced scene has exactly one "Visual:" from VISUALS; parallax only on the first scene.
 P-time:   total under 180s; a total outside 60-120s passes with a warning.
 P-end:    the last scene before the outro is a recap.
 P-render: with --chapters, the rendered steps match the plan's count and each lasts the minimum.
@@ -39,7 +39,8 @@ from video_gates import video_duration
 MIN_STEP = {"howto": 6.0, "quick-tip": 5.0, "update": 10.0, "general": 6.0, "explainer": 0.0}
 HARD_LIMIT = {"howto": 180.0, "quick-tip": 60.0, "update": 120.0, "general": 180.0, "explainer": 180.0}
 # The visual menu for explainer scenes; later tickets add their types here (references/explainer.md).
-VISUALS = ("flow", "chart", "map", "photo", "card")
+VISUALS = ("flow", "chart", "map", "photo", "card", "stroke-reveal", "kinetic-type", "data-anim", "morph", "flat-scene", "parallax")
+FIRST_SCENE_ONLY = ("parallax",)  # intro motion; it never competes with an explanation
 MAX_STEPS = {"howto": 8, "quick-tip": 3, "update": 5, "general": 8}
 MULTI_ACTION = re.compile(r"\bthen\b|;|->|→|\band\s+(?:click|press|select|type|open|choose|drag)\b", re.I)
 
@@ -154,6 +155,9 @@ def check_explainer(plan: dict) -> list[tuple[str, bool, str]]:
 
     bad = []
     for s in scenes:
+        if s["visual"].strip() in FIRST_SCENE_ONLY and s is not scenes[0]:
+            bad.append(f"scene {s['n']} uses {s['visual'].strip()!r}, allowed only on the first scene")
+            continue
         if not s["narration"]:
             continue
         kinds = [v.strip() for v in re.split(r"[,/+]|\band\b", s["visual"]) if v.strip()]
