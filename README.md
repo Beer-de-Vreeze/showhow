@@ -18,6 +18,7 @@ https://github.com/user-attachments/assets/185ce832-b266-4fd0-8f93-ffb733b11a3a
 /showhow how to export a report
 /showhow what's new in 2.4.0
 /showhow --mode general how to share a calendar in Outlook
+/showhow --mode explainer how a gear train trades speed for force
 ```
 
 ## Contents
@@ -26,6 +27,7 @@ https://github.com/user-attachments/assets/185ce832-b266-4fd0-8f93-ffb733b11a3a
 - [Install](#install)
 - [Usage](#usage)
 - [Modes](#modes)
+- [Explainer mode](#explainer-mode)
 - [Styles, themes and voices](#styles-themes-and-voices)
 - [Options](#options)
 - [How it works](#how-it-works)
@@ -111,7 +113,7 @@ Open your project in your agent and describe the video:
 /showhow options
 ```
 
-`/showhow options` lists every style, theme and voice on your machine.
+`/showhow options` lists every mode, style, explainer visual type, theme and voice on your machine.
 
 ## Modes
 
@@ -120,10 +122,40 @@ Open your project in your agent and describe the video:
 | `howto` | One task in your product | Do the task without the video |
 | `update` | A release, tag, PR or commit range | Say what changed, where to find it and why it matters |
 | `general` | A process, a third-party app, a physical task or a topic, no codebase needed | Do the task, or explain the topic |
+| `explainer` | An idea, a mechanism, a place or a piece of history, from a topic or your own script | Explain how it works |
 
 The mode is inferred from your request.
 Steps that happen outside your product, like creating an API token in a vendor portal before connecting it, work in every mode.
 showhow researches them from official docs and rebuilds the screens with fictional data.
+
+## Explainer mode
+
+An explainer is a narrated video about an idea, a mechanism, a place or a piece of history, where every spoken sentence gets one picture drawn in code.
+Ask for one with `--mode explainer`, or just ask how something works or paste a script:
+
+```text
+/showhow --mode explainer how a gear train trades speed for force
+```
+
+- **Your script or a drafted one.** A pasted script is narrated word for word.
+  Give a topic instead and showhow drafts the script, ties every fact to a source, and stops for your approval before it builds anything.
+  A fact it cannot source shows up as `[NEED: what is missing]`, and the plan check refuses to render until you fill it in.
+- **Preview before render.** After the build, showhow writes one still per scene in every format and waits for your approval, so a wrong picture costs you a minute, not a render.
+- **Shape.** What you'll understand, the parts by name, one scene per sentence grouped into chapters, then a recap; no step counter.
+  60 to 120 seconds, 180 at most.
+- **Visual types**, one per sentence:
+  - `flow` (boxes and arrows that build in order), `chart` (bars from zero, axes first), `map` (a labelled locator), `photo` (a licensed photo), `card` (one number, name or quote).
+  - Five 2D motion styles: `stroke-reveal` (lines draw themselves), `kinetic-type` (whole words rise out of a mask), `data-anim` (a number ticks while a bar grows), `morph` (one shape becomes another, also for match cuts) and `flat-scene` (flat or isometric shapes, things travelling along a path); `parallax` for the intro only.
+  - `scene3d`, one 3D stage per video with a `kind`: `machine` (gears, shafts and springs built from the script's numbers, moving in ratio, with a cutaway, an exploded view, slow motion and airflow), `globe` (a highlighted country, great-circle routes, a zoom that cuts to a flat map) or `hero-number` (one key figure as 3D type).
+    Your own glTF model can stand in when no kind fits.
+  - Every number in a 3D scene's parameters must be spoken, so the model never contradicts the voice.
+- **Three formats in one run.** 16:9, 9:16 and 1:1 by default, each laid out for its own frame, named `<video-name>-landscape.mp4`, `-vertical.mp4` and `-square.mp4`, sharing one `captions.srt` and `chapters.txt`.
+  `--format landscape` renders just one.
+- **The `showhow` theme.** Warm paper, ink line drawings and one teal accent, with EB Garamond titles and Inter labels; the explainer default, and available in any mode with `--theme showhow`.
+- **Brand kits.** `--brand <name>` uses a local kit in `~/.showhow/brands/<name>/` (colours, fonts, logo) instead; 3D scenes and the 2D styles take their colours from it too.
+  `/showhow brand <name> <repo or URL>` creates one.
+- **Music on by default**, a bundled track kept 20 dB under the voice; `--no-music` turns it off.
+- **Written companion.** `showhow.md` is the script as a short article with a numbered sources list.
 
 ## Styles, themes and voices
 
@@ -138,7 +170,8 @@ Four styles, in every mode:
 
 Presets are a starting point: add freeform direction such as `--style "calm, like Apple support videos"`.
 
-- **Themes:** `--theme <preset>` applies a Hyperframes frame preset to title cards, captions and step cards. Rebuilt product screens keep their own look.
+- **Themes:** `--theme <preset>` applies a frame preset to title cards, captions and step cards: `showhow` (the house theme) or any Hyperframes preset. Rebuilt product screens keep their own look.
+- **Brand kits:** `--brand <name>` applies a local kit from `~/.showhow/brands/<name>/` (never committed); `/showhow brand <name> <repo or URL>` creates one.
 - **Design floor:** every video's own chrome (title, cards, counters, captions, outro) follows a short design floor adapted from impeccable: contrast and type checks, and a list of generated-design defaults it refuses, such as eyebrow labels and blurred gradient backgrounds. A `--theme` preset keeps its deliberate choices.
 - **House style:** showhow remembers how you like your videos.
 It reads `~/.showhow/verdicts.md` (your defaults and always/never rules) and `~/.showhow/edits.md` (before/after lessons) at the start of every run.
@@ -149,22 +182,22 @@ When you ask for changes, it keeps the lasting ones there and shows you the diff
 
 | Option | Values | Default |
 |---|---|---|
-| `--mode` | `howto`, `update`, `general` | Inferred |
-| `--style` (alias `--tone`) | A preset or a freeform description | `clean`, or `release` for updates |
-| `--format` | `landscape`, `vertical`, `square` | `landscape` |
+| `--mode` | `howto`, `update`, `general`, `explainer` | Inferred |
+| `--style` (alias `--tone`) | A preset or a freeform description | `clean`; `release` for updates; `friendly` for explainers |
+| `--format` | `landscape`, `vertical`, `square`, `all`, or a comma list | `landscape`; all three for explainers |
 | `--duration` | Seconds | Set by the narration |
 | `--audience` | Freeform, for example "new users" | Inferred |
-| `--theme` | A frame preset name | The product's theme |
+| `--theme` | A frame preset name, `showhow` first | The product's theme; `showhow` for explainers |
 | `--brand` | A local brand kit name (`~/.showhow/brands/<name>/`, never committed) | None |
 | `--voice` | A Kokoro voice id | `af_heart` |
 | `--title` | Text | Inferred |
 | `--no-voice` | Flag | Narration on |
 | `--no-captions` | Flag | Captions on |
-| `--music` | Flag | Music off for `clean`, `friendly` and `quick-tip`; on for `release` |
+| `--music` | Flag | Music off for `clean`, `friendly` and `quick-tip`; on for `release` and explainers |
 | `--no-music` | Flag | Forces music off in any style |
 | `--no-sfx` | Flag | Sound effects on |
 
-Length limits keep videos watchable: how-tos run 45 to 120 seconds (3 minutes at most, longer topics are split), and updates cover 2 to 5 changes in 30 to 90 seconds.
+Length limits keep videos watchable: how-tos run 45 to 120 seconds (3 minutes at most, longer topics are split), updates cover 2 to 5 changes in 30 to 90 seconds, and explainers run 60 to 120 seconds (3 minutes at most).
 
 ## How it works
 
@@ -177,7 +210,7 @@ Every video follows the same teaching rules: say the outcome first, highlight a 
 
 ## Privacy
 
-Rendering, voice-over, captions and generated music run on your machine.
+Rendering, voice-over and captions run on your machine.
 Two things can be downloaded per video: a music track from [Incompetech](https://incompetech.com) when no bundled track fits, and a sound effect from Openverse (through Hyperframes media-use) when the bundled library has none; only the search terms are sent.
 `general` mode and outside steps go online to read official docs and capture public pages.
 Tooling also reaches the network: `npx hyperframes` fetches the Hyperframes package from npm when it isn't cached, and `uv` downloads the helper scripts' Python packages the first time; neither sends anything about your project.
