@@ -10,8 +10,8 @@ G-end:   the video ends no more than 1.4s after the last caption (needs --srt); 
          credits.txt sits next to the srt, because the outro credit line needs 2.5s with no caption
          over it. Under 0.5s is a note: the result may cut off before the viewer has read it.
 
-G-captions: every srt cue has lines of at most 37 characters (BBC), at most 2 lines (3 with --vertical),
-         and stays on screen at least 0.3s per word (needs --srt).
+G-captions: every srt cue has lines of at most 37 characters (BBC), at most 2 lines (3 in a video taller than wide,
+         read from the mp4), and stays on screen at least 0.3s per word (needs --srt).
 
 Adapted from motionmaxxing's G2 and G3 gates (github.com/Tejashmakwana/motionmaxxing, Apache-2.0).
 Mid-video holds are not gated: showhow holds results on purpose.
@@ -101,6 +101,18 @@ def video_duration(video: Path) -> float:
     return float(probe.stdout.strip())
 
 
+def frame_size(video: Path) -> tuple[int, int]:
+    probe = subprocess.run(
+        ["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height", "-of", "csv=p=0", str(video)],
+        capture_output=True, encoding="utf-8", errors="replace", check=False,
+    )
+    try:
+        width, height = (int(x) for x in probe.stdout.strip().split(",")[:2])
+    except ValueError:
+        raise SystemExit(f"ffprobe could not read the frame size of {video}: {(probe.stderr or '').strip()}")
+    return width, height
+
+
 def measure(video: Path) -> tuple[list[tuple[float, int]], float]:
     duration = video_duration(video)
     result = subprocess.run(
@@ -136,7 +148,6 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("video", type=Path)
     parser.add_argument("--srt", type=Path, help="captions.srt, to time the end hold and check caption limits")
-    parser.add_argument("--vertical", action="store_true", help="allow 3 caption lines instead of 2")
     args = parser.parse_args()
 
     frames, duration = measure(args.video)
@@ -151,7 +162,8 @@ def main() -> int:
         print(f"G-blank PASS: no blank run over {MAX_BLANK_RUN} frames in {len(frames)} frames")
 
     if args.srt:
-        problems = caption_problems(args.srt.read_text(encoding="utf-8"), args.vertical)
+        width, height = frame_size(args.video)
+        problems = caption_problems(args.srt.read_text(encoding="utf-8"), vertical=width < height)
         if problems:
             failed = True
             print("G-captions FAIL: " + "; ".join(problems))
