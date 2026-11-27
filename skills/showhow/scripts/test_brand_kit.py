@@ -48,13 +48,21 @@ def main() -> None:
         code, out = broken(tmp / "d", bad_accent)
         assert code == 1 and "accent" in out, f"bad accent: {code} {out}"
 
-        # muted is part of the token set stage.py writes, so a kit without it fails here, not at staging.
+        # muted is optional (stage.py falls back to ink), so kits saved before it existed still pass.
         def no_muted(k: Path) -> None:
             f = k / "FRAME.md"
             f.write_text(f.read_text(encoding="utf-8").replace('  muted: "#4A5B6A"\n', ""), encoding="utf-8")
 
         code, out = broken(tmp / "m", no_muted)
-        assert code == 1 and "muted" in out, f"missing muted: {code} {out}"
+        assert code == 0, f"a kit without muted must pass: {code} {out}"
+
+        # A kit stage.py would reject fails here too: no title or label fontFamily in typography.
+        def no_title(k: Path) -> None:
+            f = k / "FRAME.md"
+            f.write_text("\n".join(ln for ln in f.read_text(encoding="utf-8").splitlines() if "fontFamily" not in ln) + "\n", encoding="utf-8")
+
+        code, out = broken(tmp / "t", no_title)
+        assert code == 1 and "title" in out and "label" in out, f"no typography: {code} {out}"
 
         # A third-party kit's paths stay inside the kit: a relative escape or an absolute path to a file that
         # exists elsewhere fails, even though the file is there.
@@ -67,13 +75,21 @@ def main() -> None:
         code, out = broken(tmp / "e", escape)
         assert code == 1 and out.count("outside the kit") == 2, f"escaping paths: {code} {out}"
 
-        # Colours: a deg hue and oklch() are CSS colours.
-        def modern(k: Path) -> None:
+        # Colours: only what both PIL (bake_highlights) and THREE.Color (scene3d) parse; comma rgb() and hsl() pass.
+        def comma(k: Path) -> None:
             f = k / "FRAME.md"
-            f.write_text(f.read_text(encoding="utf-8").replace('"#B5651D"', '"hsl(28deg 70% 51%)"').replace('"#4A5B6A"', '"oklch(45% 0.03 240)"'), encoding="utf-8")
+            f.write_text(f.read_text(encoding="utf-8").replace('"#B5651D"', '"hsl(28, 72%, 41%)"').replace('"#4A5B6A"', '"rgb(74, 91, 106)"'), encoding="utf-8")
 
-        code, out = broken(tmp / "f", modern)
-        assert code == 0, f"modern colours: {code} {out}"
+        code, out = broken(tmp / "f", comma)
+        assert code == 0, f"comma colours: {code} {out}"
+        # oklch(), a deg hue, space-separated rgb() and 8-digit hex crash bake_highlights or whiten scene3d: they fail.
+        for i, colour in enumerate(("oklch(0.6 0.1 200)", "hsl(28deg 70% 51%)", "rgb(181 101 29)", "#B5651DFF")):
+            def modern(k: Path, colour=colour) -> None:
+                f = k / "FRAME.md"
+                f.write_text(f.read_text(encoding="utf-8").replace('"#B5651D"', f'"{colour}"'), encoding="utf-8")
+
+            code, out = broken(tmp / f"g{i}", modern)
+            assert code == 1 and "accent" in out, f"{colour}: {code} {out}"
     print("ok")
 
 

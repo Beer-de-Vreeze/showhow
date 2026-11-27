@@ -28,7 +28,7 @@ from pathlib import Path
 
 from PIL import ImageColor
 
-from brand_kit import block, check, frontmatter, parse_colors, valid_color
+from brand_kit import check, font_faces, frontmatter, parse_colors, valid_color
 
 # Every version pin for staged assets lives here.
 GSAP = "gsap@3.14.2"
@@ -40,7 +40,6 @@ BRANDS = Path.home() / ".showhow" / "brands"
 CACHE = Path.home() / ".cache" / "showhow" / "npm"
 GSAP_FILES = ("gsap", "DrawSVGPlugin", "MorphSVGPlugin", "SplitText", "MotionPathPlugin")
 TOKENS = ("paper", "ink", "accent", "muted")
-FONT_TYPES = (".woff2", ".woff", ".ttf", ".otf")
 BEGIN, END = "<!-- stage.py: generated, re-run stage.py instead of editing -->", "<!-- /stage.py -->"
 HEAD = f"""{BEGIN}
     <script type="importmap">
@@ -70,14 +69,13 @@ def resolve(theme: str | None = None, brand: str | None = None, brands: Path = B
 
 # Stock Hyperframes presets name colours and fonts differently from showhow's FRAME.md. The rule, deterministic:
 # each token takes the first alias present in `colors:`; muted falls back to ink; a preset with no accent alias is
-# never guessed, it fails into the work/theme path. Title and label fonts take the first alias in `typography:`.
+# never guessed, it fails into the work/theme path. Title and label fonts: brand_kit.FONT_ALIASES.
 ALIASES = {
     "paper": ("paper", "bg", "background", "canvas", "cream", "surface"),
     "ink": ("ink", "text", "black", "fg", "foreground"),
     "accent": ("accent", "primary", "brand"),
     "muted": ("muted", "text-muted", "gray", "grey", "text-light"),
 }
-FONT_ALIASES = {"title": ("title", "h1", "headline", "hero-title", "display"), "label": ("label", "body")}
 MIN_ACCENT_CONTRAST = 3.0  # WCAG 1.4.11 non-text contrast: rings, ripples and highlights sit on paper
 UNMAPPED = "write work/theme/FRAME.md with paper, ink, accent and muted picked for this video and pass --theme work/theme (general.md)"
 
@@ -107,30 +105,9 @@ def theme_css(theme: Path) -> str:
     """@font-face rules and the :root token set, from theme/FRAME.md and the files in theme/fonts/."""
     head = frontmatter((theme / "FRAME.md").read_text(encoding="utf-8"))
     colors, problems = map_colors(parse_colors(head))
-    ramp = {}
-    for ln in block(head, "typography"):
-        m = re.match(r"([\w-]+):\s*\{.*fontFamily:\s*[\"']([^\"']+)[\"']", ln)
-        if m:
-            ramp[m.group(1)] = m.group(2)
-    families = {}
-    for role, names in FONT_ALIASES.items():
-        found = next((ramp[n] for n in names if n in ramp), None)
-        if found:
-            families[role] = found
-        else:
-            problems.append(f"FRAME.md typography: no fontFamily for '{role}' (or an alias: {', '.join(names[1:]) or 'none'})")
-
-    # Font files are named <Family without spaces>-<weight>.<ext>, e.g. EBGaramond-700.woff2.
-    # shortcut: a theme with no fonts/ folder (every stock Hyperframes preset) gets the family names plus a system
-    # font stack and no @font-face, so the render uses whatever is installed; ship fonts/ to pin the faces.
+    families, faces, font_problems = font_faces(theme, head)
+    problems += font_problems
     stock = not (theme / "fonts").is_dir()
-    faces = []
-    files = sorted(p for p in (theme / "fonts").glob("*") if p.suffix.lower() in FONT_TYPES)
-    for family in [] if stock else dict.fromkeys(families.values()):
-        mine = [(p, w) for p in files for f, _, w in [p.stem.rpartition("-")] if f == family.replace(" ", "") and w.isdigit()]
-        if not mine:
-            problems.append(f"no font file for '{family}' in {theme / 'fonts'} (name it {family.replace(' ', '')}-<weight>.woff2)")
-        faces += [f'@font-face {{ font-family: "{family}"; src: url("fonts/{p.name}"); font-weight: {w}; }}' for p, w in mine]
     if problems:
         raise SystemExit(f"theme {theme} cannot be staged:\n" + "\n".join(f"FAIL {p}" for p in problems))
 

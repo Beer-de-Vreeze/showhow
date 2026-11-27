@@ -9,8 +9,10 @@ Kits are never committed to the showhow repo; keep them out of any checkout.
 Nothing but these.
 
 - `FRAME.md`: the same shape as `assets/frame-presets/showhow/FRAME.md` (frontmatter with `colors`, `typography`, then the prose sections).
-  The `colors` block must have `paper`, `ink`, `accent` and `muted`, and `typography` a `fontFamily` for `title` and `label`.
-  The frontmatter adds `logo: <file>` and a `fonts:` list of the font files it uses, named `fonts/<Family without spaces>-<weight>.woff2` (`- fonts/BrandSans-400.woff2`) so `stage.py` can declare them, and may add `voice: <Kokoro id>`, `music: <file in the kit>` and `outro: "<line>"` (for example `"ASAPCLOUD - asapcloud.nl"`).
+  The `colors` block must have `paper`, `ink` and `accent` (at least 3:1 against `paper`), and may have `muted` (without it, `ink` is used); `typography` needs a `fontFamily` for `title` and `label`.
+  The frontmatter adds `logo: <file>` and a `fonts:` list of the font files it uses, so the check can find them.
+  Name them `fonts/<Family without spaces>-<weight>.woff2` (`- fonts/BrandSans-400.woff2`): `stage.py` declares every file in `fonts/` named that way, listed or not, so leave no stray font files there.
+  The frontmatter may add `voice: <Kokoro id>`, `music: <file in the kit>` and `outro: "<line>"` (for example `"ASAPCLOUD - asapcloud.nl"`).
 - The font files, in `fonts/`, with their licences.
 - The logo, SVG or PNG.
 
@@ -33,9 +35,10 @@ In howto and update, rebuilt product and third-party screens keep their own look
 
 `uv run --project <skill-dir>/scripts python <skill-dir>/scripts/brand_kit.py check <kit-dir>`
 
-It prints `PASS`, or one `FAIL` line per problem and exits 1: `FRAME.md` missing, a required colour missing or not a CSS colour, a font file or the logo or the music file missing.
-The colour check is deliberately small: hex, `rgb()`/`hsl()` and a short list of colour names.
-If a real brand value is rejected, write it as hex.
+It prints `PASS`, or one `FAIL` line per problem and exits 1: `FRAME.md` missing, a required colour missing or not a CSS colour, no `title` or `label` font family or no font file for one, a font file or the logo or the music file missing.
+The colour check takes only what both the ring bake (PIL) and scene3d (three.js) read: 3- or 6-digit hex, comma `rgb(r, g, b)`, comma `hsl(h, s%, l%)` and a short list of colour names.
+If a real brand value is rejected (`oklch()`, a space-separated `rgb()`), write it as hex.
+`stage.py` also checks the accent's contrast against paper.
 
 ## Creating a kit
 
