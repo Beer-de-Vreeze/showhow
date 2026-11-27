@@ -2,7 +2,7 @@
 // and a flat locator map (orthographic, same centre and scale) the 3D frame cuts to. References: references/3d-scenes.md.
 // Every pose comes from t alone; geometry that changes with t (arc lift, draw-on) is rebuilt from t, never accumulated.
 import { THREE, hull, labels, ease, lerp, theme, tint } from "./scene3d.js";
-import { toVec, fromVec, arcPoints, faceRotation, orthoProject, centreOf } from "./globe-math.js";
+import { toVec, fromVec, arcPoints, faceRotation, orthoProject, centreOf, rings, countryCentre } from "./globe-math.js";
 
 export const R = 4; // globe radius in world units; R_px = R * (pixels per unit) * zoom, so any viewHeight works
 let OCEAN, LAND, BORDER, ACCENT; // set from the theme in buildGlobe: paper and ink tints, the accent for the highlight and route
@@ -13,9 +13,6 @@ export async function loadCountries(url) {
   if (!res.ok) throw new Error(`globe: cannot load ${url} (${res.status})`);
   return (await res.json()).features;
 }
-
-// Polygon rings of a feature as arrays of [lon, lat].
-const rings = (f) => (f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates).flat();
 
 export function findCountry(features, code) {
   const c = String(code).toUpperCase();
@@ -60,7 +57,8 @@ export async function buildGlobe(stage, root, P, url) {
   // A place without coordinates would draw at NaN and vanish; P-params catches it, this names it if a plan skipped the gate.
   for (const p of route) if (!Number.isFinite(p?.lat) || !Number.isFinite(p?.lon)) throw new Error(`globe: route place ${JSON.stringify(p)} needs numeric lat and lon`);
   const country = P.country ? findCountry(features, P.country) : null;
-  const centre = P.focus || (route.length > 1 ? centreOf(route) : centreOf(rings(country)[0].map(([lon, lat]) => ({ lat, lon }))));
+  if (!country && route.length < 2) throw new Error("globe: Params needs a country or a route of 2+ places");
+  const centre = P.focus || (route.length > 1 ? centreOf(route) : countryCentre(country));
   const timing = globeTiming(P);
 
   const globe = new THREE.Group();

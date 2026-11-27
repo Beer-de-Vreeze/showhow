@@ -115,7 +115,7 @@ A new kind is one row here, one entry in `SCENE3D_KINDS` in `scripts/plan_gates.
   `side` (`left` or `right`) is optional and picks the label column.
 - A globe needs a `country` or a `route` of 2 or more places; `plan_gates.py` fails it otherwise.
   Say in the narration that the arc is the shortest path if the route is not literally flown.
-- `focus` (`{lat, lon}`) overrides the centre the globe settles on; the default is the mean direction of the route, or of the country.
+- `focus` (`{lat, lon}`) overrides the centre the globe settles on; the default is the mean direction of the route, or of the country's largest polygon (France settles on France, not French Guiana).
 - Avoid antipodal route pairs: they have no single shortest arc.
 - Data: `assets/scene3d/data/ne_110m_admin_0_countries.min.geojson`, Natural Earth 110m, public domain (see `data/README.md`).
   Pass its URL to `buildGlobe`; the file is fetched, so serve it next to the composition.
