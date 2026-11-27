@@ -398,7 +398,10 @@ def plan_driven() -> None:
         assert (one / "work" / "render.log").is_file() and not (one / "work" / "formats").exists()
 
         # poster_at_moves_without_render: with the mp4 newer than every composition file, --poster-at only re-takes
-        # and re-bakes the poster; no render, no loudnorm.
+        # and re-bakes the poster; no render, no loudnorm. The CLI's own state in composition/.hyperframes/, written
+        # just after the mp4 (seen in a real 0.9.85 render), is not a change to the composition.
+        (comp / ".hyperframes").mkdir(exist_ok=True)
+        (comp / ".hyperframes" / "video-state.json").write_text("{}", encoding="utf-8")
         tools = FakeTools()
         mod.main([str(comp), str(one / "video.mp4"), "--work", str(one / "work"), "--plan", str(one / "showhow-plan.md"), "--poster-at", "3.2"], run=tools)
         kinds = ["extract" if "-frames:v" in c else "bake" if any("overlay" in x for x in c) else "other" for c in tools.calls]

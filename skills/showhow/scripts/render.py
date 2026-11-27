@@ -300,7 +300,9 @@ def rendered_after(composition: Path, mp4s: list[Path]) -> bool:
     """Every mp4 exists and is newer than every file of the composition, so moving the poster needs no new render."""
     if not all(p.is_file() for p in mp4s):
         return False
-    newest = max((p.stat().st_mtime for p in composition.rglob("*") if p.is_file()), default=0)
+    # .hyperframes/ is the CLI's own state, written just after the mp4, not composition content.
+    files = (p for p in composition.rglob("*") if p.is_file() and ".hyperframes" not in p.relative_to(composition).parts)
+    newest = max((p.stat().st_mtime for p in files), default=0)
     return min(p.stat().st_mtime for p in mp4s) > newest
 
 
