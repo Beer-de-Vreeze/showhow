@@ -40,14 +40,15 @@
       window.__timelines["main"] = gsap.timeline({ paused: true });
     </script>
     <script type="module">
-      import { createStage, onSeek, ease } from "./assets/scene3d/scene3d.js";
+      import { createStage, fitToRoot, onSeek, ease } from "./assets/scene3d/scene3d.js";
       import { buildGlobe } from "./assets/scene3d/globe.js";
 
       const root = document.getElementById("root");
       const P = JSON.parse(root.dataset.params);
 
       onSeek("globe-route", async () => {
-        const stage = createStage({ canvas: document.getElementById("stage"), viewHeight: 10, view: "front" });
+        const { width, height } = fitToRoot(root); // sizes both canvases, so the flat map matches the stage
+        const stage = createStage({ canvas: document.getElementById("stage"), width, height, viewHeight: (10 * height) / Math.min(width, height), view: "front" });
         const globe = await buildGlobe(stage, root, P, "./assets/scene3d/data/ne_110m_admin_0_countries.min.geojson");
         globe.flatMap(document.getElementById("flat"));
         const { cut, cutFade } = globe.timing;

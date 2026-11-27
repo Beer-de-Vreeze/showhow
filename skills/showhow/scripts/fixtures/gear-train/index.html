@@ -38,14 +38,16 @@
       window.__timelines["main"] = gsap.timeline({ paused: true });
     </script>
     <script type="module">
-      import { THREE, createStage, part, loadModel, labels, timeMap, ease, onSeek, theme, tint } from "./assets/scene3d/scene3d.js";
+      import { THREE, createStage, fitToRoot, part, loadModel, labels, timeMap, ease, onSeek, theme, tint } from "./assets/scene3d/scene3d.js";
       import { gearGeometry, latheGeometry, meshAngle } from "./assets/scene3d/machine.js";
 
       const root = document.getElementById("root");
       const P = JSON.parse(root.dataset.params);
 
       onSeek("gear-train", async () => {
-        const stage = createStage({ canvas: document.getElementById("stage"), viewHeight: 82 });
+        // Size from the root, so the format copies (render.py --format) draw a full portrait or square stage; a narrow frame widens viewHeight.
+        const { width, height } = fitToRoot(root);
+        const stage = createStage({ canvas: document.getElementById("stage"), width, height, viewHeight: Math.max(82, (110 * height) / width) });
         const m = 1, teeth = [P.driver, P.idler, P.driven];
         // Centres in a row along the shape plane's x: centre distance = m * (N1 + N2) / 2.
         const xs = [0, (m * (teeth[0] + teeth[1])) / 2];
@@ -78,7 +80,7 @@
           { text: `Driver - ${P.driver} teeth`, anchor: gears[0], at: 0.5, side: "left" },
           { text: `Idler - ${P.idler} teeth`, anchor: gears[1], at: 1.0, side: "left" },
           { text: `Driven - ${P.driven} teeth`, anchor: gears[2], at: 1.5, side: "right" },
-        ], { top: 240, bottom: 900, avoid: machine });
+        ], { top: 0.22 * height, bottom: 0.833 * height, avoid: machine });
 
         await stage.renderer.compileAsync(stage.scene, stage.camera);
 

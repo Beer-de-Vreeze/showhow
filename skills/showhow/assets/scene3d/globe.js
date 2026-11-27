@@ -92,7 +92,7 @@ export async function buildGlobe(stage, root, P, url) {
   layer.style.cssText = "position:absolute;inset:0;pointer-events:none";
   root.appendChild(layer);
   const layout = route.length
-    ? labels(layer, stage, route.map((p, i) => ({ text: p.name, anchor: markers[i], at: i ? timing.legAt(i - 1)[1] : 0.4, side: p.side })), { top: 240, bottom: 900 })
+    ? labels(layer, stage, route.map((p, i) => ({ text: p.name, anchor: markers[i], at: i ? timing.legAt(i - 1)[1] : 0.4, side: p.side })), { top: 0.22 * stage.height, bottom: 0.833 * stage.height })
     : () => {};
 
   await stage.renderer.compileAsync(stage.scene, stage.camera);
