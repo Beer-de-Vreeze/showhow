@@ -90,7 +90,7 @@ Result: [what visibly changes after the action]
 Narration: [the lines for this scene]
 Visual: [explainer only: one of flow / chart / map / photo / card]
 Params: [explainer only, optional: JSON for the visual, e.g. {"key": "value"}]
-Caption: [same as narration, one phrase at a time, max 2 lines of ~42 characters]
+Caption: [same as narration, one phrase at a time, at most 37 characters per line, 2 lines (3 on vertical), 0.3s per word on screen]
 On screen: [title cards and labels, if any; every number and **bold label** written here must also be spoken in this scene's Narration (P-described)]
 Audio: [click / typing / none; music level]
 Transition: [cut / soft fade / slide / zoom-out] -> Scene 2
@@ -161,7 +161,7 @@ Never highlight more than one control at a time.
 
 Captions are on by default.
 Place them in a fixed band (bottom in landscape, lower third in vertical) and move them to the top for a scene if the highlighted target sits in that band.
-Max two lines, max ~42 characters per line.
+Max two lines (three on vertical), max 37 characters per line, each cue on screen at least 0.3s per word.
 
 ## Duration check
 

@@ -7,7 +7,7 @@ $ErrorActionPreference = 'Stop'
 
 # Pinned versions: update them together, after a test video renders cleanly.
 $Hyperframes = 'hyperframes@0.9.85'   # keep in step with HYPERFRAMES in render.py
-$PythonPackages = 'kokoro-onnx==0.6.1', 'soundfile==0.14.0', 'transformers==5.18.0', 'torch==2.14.1', 'numpy==2.5.3'
+$PythonPackages = 'kokoro-onnx==0.6.1', 'soundfile==0.14.0', 'numpy==2.5.3'
 $WhisperTag = 'b5130'
 $WhisperSha256 = 'F9EC6C52A2E949B62AB51FA21D0D497958F9E41C3010C157C4E42932D5316F3C'
 $EarshotCommit = '972132643583fc0b9a60c6c50983ed7dc1aa55bf'  # tag v0.2.0
@@ -78,10 +78,10 @@ Need python 'Python.Python.3.12'  # Kokoro voice-over
 Need uv     'astral-sh.uv'        # beat analysis, ring baking, frame sheets
 if ($Docker) { Need docker 'Docker.DockerDesktop' }  # render --docker (reproducible renders); asks for admin
 
-Step 'Kokoro voice and MusicGen music (Python venv)'
+Step 'Kokoro voice (Python venv)'
 $venv = "$HOME\.cache\hyperframes\kokoro-venv"
 $venvPython = "$venv\Scripts\python.exe"
-# Always x64: torch/kokoro wheels exist for it everywhere, and Windows on ARM runs it emulated.
+# Always x64: kokoro and onnxruntime wheels exist for it everywhere, and Windows on ARM runs it emulated.
 $x64Python = 'cpython-3.12-windows-x86_64-none'
 if ((Test-Path $venvPython) -and ((& $venvPython -c 'import platform; print(platform.machine())') -ne 'AMD64')) {
   Write-Host 'redo venv is not x64'
@@ -146,7 +146,6 @@ Push-Location $test
 try {
   Run 'npx.cmd' @('-y', $Hyperframes, 'tts', 'Show how setup works.', '-o', 'test.wav')
   Run 'npx.cmd' @('-y', $Hyperframes, 'transcribe', 'test.wav')
-  Run $venvPython @('-c', "from transformers import AutoProcessor, MusicgenForConditionalGeneration as M; AutoProcessor.from_pretrained('facebook/musicgen-small'); M.from_pretrained('facebook/musicgen-small'); print('musicgen ok')")
 } finally {
   Pop-Location
   Remove-Item -Recurse -Force $test -ErrorAction SilentlyContinue
