@@ -12,6 +12,7 @@
 //   kit.draw(1.0, "#line-1", 0.8);                   // DrawSVG: the path draws itself (hide it in CSS first)
 //   kit.words(1.0, "#quote");                        // SplitText: whole words rise out of a mask, 5 frames apart
 //   kit.count(1.0, "#num", 0, 1700, 1.2);            // the number ticks from 0 to 1700
+//   kit.bar(1.0, "#bar", "#bar-num", 8, 24, 1);      // the bar grows and its number ticks with it, always in step
 //   kit.morph(1.0, "#shape", "M0 0L9 9", 0.8);       // MorphSVG: the path becomes the given path
 //   kit.along(1.0, "#dot", "#route", 2);             // MotionPath: the element travels along the path
 //   kit.rise(1.0, ["#a", "#b", "#c"]);               // flat scenes: each element settles up 24px, 0.15s apart
@@ -115,6 +116,18 @@
       tl.fromTo(e, { textContent: from }, { textContent: to, duration: d, ease: "power1.out", modifiers: { textContent: fmt }, immediateRender: false }, t);
     }
 
+    // A bar and its number as one value: height value / max and the label tick through the same ease and timing,
+    // so the drawn bar never disagrees with its label (chart honesty, motion-2d.md). Write the from value in the
+    // label's HTML and size the bar's CSS at from / max. SVG <rect> bars pass svgOrigin: "0 <baseline y>".
+    function bar(t, sel, label, from, to, d, { max = Math.max(from, to), ease = "power1.out", decimals = 0, svgOrigin } = {}) {
+      const e = el(sel), l = el(label);
+      if (!(max > 0) || Math.max(from, to) > max) throw new Error(`showhowKit: bar ${sel} needs a max of at least ${Math.max(from, to)}`);
+      const origin = svgOrigin ? { svgOrigin } : { transformOrigin: "50% 100%" };
+      const fmt = (v) => Number(v).toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+      tl.fromTo(e, { scaleY: from / max, ...origin }, { scaleY: to / max, ...origin, duration: d, ease, immediateRender: false }, t);
+      tl.fromTo(l, { textContent: from }, { textContent: to, duration: d, ease, modifiers: { textContent: fmt }, immediateRender: false }, t);
+    }
+
     // The from shape is the path's HTML d, or the end shape of its previous morph (call morphs in time order),
     // so a second morph continues instead of snapping back to the HTML shape. toShape is path data or a path's selector.
     const shapes = new Map();
@@ -141,6 +154,6 @@
       });
     }
 
-    return { R, ring, move, ripple, counter, draw, words, count, morph, along, rise };
+    return { R, ring, move, ripple, counter, draw, words, count, bar, morph, along, rise };
   };
 })();

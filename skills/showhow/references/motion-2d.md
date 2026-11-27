@@ -43,6 +43,10 @@ For a quantity that changes: a counter, bars, a before and after.
 - Bars grow from their baseline with a plain `fromTo` on `scaleY` (`transform-origin: 50% 100%`), axes before values, scale starting at zero.
   An SVG `<rect>` bar ignores the CSS origin: give every tween on it `svgOrigin: "0 <baseline y>"`, or the bar grows from its top and floats off the axis.
   Never put a label inside a bar you scale; it scales with it.
+- Chart honesty: at every frame, a bar's drawn value matches its label and what the narration has said so far.
+  A static label that already shows the end value ("24 out") over a bar still drawn at its start value is a lie for as long as the bar waits.
+  Use `kit.bar(t, "#bar", "#bar-num", from, to, d, { max })`: the height and the number run one value through the same ease, so they agree on every frame.
+  Otherwise show the label only once the bar has reached it.
 - Highlight one series at a time; one format for numbers across the video.
 
 ## morph

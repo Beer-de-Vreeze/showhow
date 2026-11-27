@@ -82,6 +82,23 @@ kit.morph(4, "#path", "#circle", 1);
 kit.morph(5, "#path", "M0 0L3 3", 1);
 if (froms.at(-1).attr.d !== "M9 9L1 1") throw new Error(`morph after a selector target started from ${froms.at(-1).attr.d}`);
 expectThrow(() => kit.morph(6, "#path", "#missing", 1), "no element #missing");
+// kit.bar: the bar and its label run one value through the same ease and timing, so the drawn height (value / max)
+// and the number shown agree at every frame. Worked example: 8 -> 24 on a scale of 24 is scaleY 1/3 -> 1, label 8 -> 24.
+{
+  const at = calls.length;
+  const seen = [];
+  const barKit = window.showhowKit({ fromTo: (target, from, to, pos) => seen.push({ target, from, to, pos }) }, { root: "#root" });
+  barKit.bar(54.2, "#a", "#num", 8, 24, 1, { max: 24 });
+  const [b, l] = seen;
+  if (seen.length !== 2 || b.target !== nodes["#a"] || l.target !== nodes["#num"]) throw new Error(`bar tweens ${JSON.stringify(seen.map((s) => s.target))}`);
+  if (Math.abs(b.from.scaleY - 1 / 3) > 1e-9 || b.to.scaleY !== 1) throw new Error(`bar scale ${b.from.scaleY} -> ${b.to.scaleY}`);
+  if (l.from.textContent !== 8 || l.to.textContent !== 24) throw new Error(`bar label ${l.from.textContent} -> ${l.to.textContent}`);
+  if (b.pos !== l.pos || b.to.duration !== l.to.duration || b.to.ease !== l.to.ease || b.to.immediateRender !== false || l.to.immediateRender !== false) throw new Error("bar and label must share start, duration and ease");
+  expectThrow(() => barKit.bar(1, "#a", "#missing", 0, 1, 1), "no element #missing");
+  expectThrow(() => barKit.bar(1, "#a", "#num", 0, 30, 1, { max: 24 }), "max");
+  if (calls.length !== at) throw new Error("bar used the wrong timeline");
+}
+
 // Every plugin-backed helper fails loudly when its plugin is missing, like words() does, instead of a still frame.
 for (const [plugin, run] of [["DrawSVGPlugin", () => kit.draw(1, "#a", 1)], ["MorphSVGPlugin", () => kit.morph(1, "#path", "M0 0", 1)], ["MotionPathPlugin", () => kit.along(1, "#a", "#path", 1)]]) {
   const saved = globalThis[plugin];
