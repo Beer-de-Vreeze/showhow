@@ -165,6 +165,9 @@ def main() -> None:
     ok, msg = p_params('{"kind": "globe", "country": "XYZ"}')
     assert not ok and "XYZ" in msg, msg
     assert p_params('{"kind": "globe", "country": "gr"}')[0]
+    # Natural Earth's "-99" (no code) is not a country: it would highlight whichever unnamed shape carries it.
+    ok, msg = said("Region 99.", '{"kind": "globe", "country": "-99"}')
+    assert not ok and "is not an ISO" in msg, msg
 
     for broken in ("no mode here", "## Mode\nhowto\n\n## Storyboard\nnothing\n"):
         try:

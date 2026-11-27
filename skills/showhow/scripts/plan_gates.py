@@ -301,7 +301,8 @@ COUNTRIES = Path(__file__).resolve().parent.parent / "assets" / "scene3d" / "dat
 def country_codes() -> set[str]:
     """The alpha-3 and alpha-2 codes globe.js can find in the bundled Natural Earth file."""
     features = json.loads(COUNTRIES.read_text(encoding="utf-8"))["features"]
-    return {f["properties"][k] for f in features for k in ("a3", "a2") if f["properties"].get(k)}
+    # Natural Earth writes "-99" for "no code" (N. Cyprus, Somaliland); it names no country.
+    return {f["properties"][k] for f in features for k in ("a3", "a2") if str(f["properties"].get(k) or "").isalpha()}
 
 
 def check_params(plan: dict) -> list[tuple[str, bool, str]]:
