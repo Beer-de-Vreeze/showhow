@@ -84,7 +84,10 @@ export function sectionCut(stage, root, { color = tint(theme.paper, theme.accent
   });
   for (const o of solids) {
     for (const [side, op] of [[THREE.BackSide, THREE.IncrementWrapStencilOp], [THREE.FrontSide, THREE.DecrementWrapStencilOp]]) {
-      const m = new THREE.Mesh(o.geometry, pass(side, op));
+      // An instanced part (a blade row) needs instanced passes sharing its matrices, or only one blade gets a cap.
+      const m = o.isInstancedMesh
+        ? Object.assign(new THREE.InstancedMesh(o.geometry, pass(side, op), o.count), { instanceMatrix: o.instanceMatrix })
+        : new THREE.Mesh(o.geometry, pass(side, op));
       m.renderOrder = 1;
       o.add(m);
       extras.push(m);
