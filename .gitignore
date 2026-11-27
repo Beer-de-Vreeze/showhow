@@ -4,6 +4,7 @@ __pycache__/
 
 # kit-demo fixture: kit is copied in before each run; render output and CLI artifacts
 skills/showhow/scripts/fixtures/kit-demo/assets/kit/
+skills/showhow/scripts/fixtures/kit-demo/assets/gsap/
 skills/showhow/scripts/fixtures/kit-demo/.hyperframes/
 skills/showhow/scripts/out/
 

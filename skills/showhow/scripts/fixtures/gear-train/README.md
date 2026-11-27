@@ -7,6 +7,7 @@ From `skills/showhow/scripts`:
 
 ```bash
 mkdir -p fixtures/gear-train/assets/scene3d && cp ../assets/scene3d/* fixtures/gear-train/assets/scene3d/
+mkdir -p fixtures/gear-train/assets/gsap && (cd "$(mktemp -d)" && npm pack gsap@3.14.2 && tar xzf gsap-3.14.2.tgz && cp package/dist/gsap.min.js "$OLDPWD/fixtures/gear-train/assets/gsap/")
 npx hyperframes snapshot fixtures/gear-train --at 3,10,3 --no-end --no-browser-gpu -o out/gear-train
 ```
 
