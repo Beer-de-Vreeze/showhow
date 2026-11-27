@@ -80,15 +80,12 @@ Explainer only.
 After `npx hyperframes check` passes and before the render, write one still per scene in each chosen format to `work/preview/<format>/scene-NN.png`, show them, and wait for the user's approval.
 Other modes keep "render without waiting".
 
-- **Moment:** each scene's settled moment, when its visual has finished building and the scene's last caption cue has ended (the hold after the narration).
-  Captions are in the composition, so a scene with no gap after its last cue gets a longer hold, not a still with a caption over it.
-- **Which copy:** every format is snapshotted from its per-format copy in `work/formats/<format>/`, the copy the render will use.
-  `render.py` makes those copies during a render, so write them first without rendering:
-  `uv run --project <skill-dir>/scripts <skill-dir>/scripts/render.py composition <video-name>.mp4 --work work --format <formats> --prepare-only`.
-- **Command,** once per format, with the settled time of each scene in order (seconds):
-  `npx -y hyperframes@0.9.85 snapshot work/formats/<format> --no-end --describe false --at <t1>,<t2>,... -o work/preview/<format>`.
-  It writes `frame-00-at-<t1>s.png`, `frame-01-at-<t2>s.png` and so on; rename them in order to `scene-01.png`, `scene-02.png` (sort by the frame number: `frame-10` sorts before `frame-2` as text), then look at the contact sheets (`contact-sheet.jpg`, or `contact-sheet-1.jpg`, `-2.jpg` past nine frames) and delete them.
-- **Captions and the still:** end each scene's last cue after the voice and its 0.3 s per word, and give the scene enough hold that the still lands after the cue; a cue held to the scene's end leaves no caption-free moment.
+- **Command:** write `captions.srt` first (`references/step-4-deliver.md`), then
+  `uv run --project <skill-dir>/scripts <skill-dir>/scripts/render.py composition <video-name>.mp4 --work work --plan showhow-plan.md --stills`.
+  For every format in the plan's `## Formats` it writes the per-format copy in `work/formats/<format>/` (the copy the render will use) and snapshots it once per scene to `work/preview/<format>/scene-NN.png`; nothing renders.
+- **Moment:** each scene's settled moment, 0.1 s after the scene's last caption cue ends in `captions.srt` (at most 0.1 s before the scene ends; 0.3 s before the end for a scene without a cue).
+  So the visual must have finished building by then.
+- **Captions and the still:** end each scene's last cue after the voice and its 0.3 s per word, and give the scene enough hold after it; a cue held to the scene's end leaves no caption-free moment, and its still shows the caption.
 - **Approval:** list the stills by scene and format, say what each shows in one sentence, and stop.
   A rejected still means fix the composition, re-run `check`, redo only the stills that changed and ask again.
   Render only after the user approves.

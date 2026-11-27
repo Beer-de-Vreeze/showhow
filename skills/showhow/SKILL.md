@@ -47,7 +47,7 @@ If `ffmpeg`, `uv` or `whisper-cli` is missing, or `HYPERFRAMES_PYTHON` is empty,
 **Output.** First decide `<video-name>`: a 2-5 word kebab-case slug of the video's title (`connect-confluence`, `whats-new-2-4-0`).
 Write everything to `~/Downloads/showhow-<video-name>/` (Windows: `%USERPROFILE%\Downloads`), the `<output-dir>`; if it exists, append `-YYYY-MM-DD-HHmmss`.
 Intermediate files go in `<output-dir>/work/`, the Hyperframes project in `<output-dir>/composition/`; run every command below from `<output-dir>` unless it says otherwise.
-Name the video `<video-name>.mp4` and the poster `<video-name>.jpg`; the other files keep their fixed names.
+Name the video `<video-name>.mp4` and the poster `<video-name>.jpg` (with several formats, `<video-name>-<format>.mp4` and `.jpg`; the render wrapper writes these names); the other files keep their fixed names.
 
 **House style.** Before anything else, read `~/.showhow/verdicts.md` and `~/.showhow/edits.md` if they exist (`references/house-style.md`): typed flags beat its `## Defaults`, which beat the defaults above; its `## Always` and `## Never` rules join the laws below but never override a teaching law, accessibility or "Show the real product".
 
@@ -183,10 +183,11 @@ On the title, one step and the outro, also check the design floor's Refuse list 
 SFX clips get `data-duration` equal to the file's real length, or `check` warns about the slot.
 
 Start `npx hyperframes preview`, give the user the URL and ask them to watch for wrong labels or order; render without waiting for an answer, and redo it if they find one.
-In `explainer` mode do not render yet: write the preview stills and wait for approval (`references/explainer.md`, "Stop 2: preview stills").
+Write `captions.srt` before the render (format in step 4): the wrapper takes each scene's settled moment from it.
+In `explainer` mode do not render yet: write the preview stills with the same command plus `--stills` and wait for approval (`references/explainer.md`, "Stop 2: preview stills").
 Render with the wrapper, never `npx hyperframes render` directly (a quiet render can exit non-zero with no message and no file):
-`uv run --project <skill-dir>/scripts <skill-dir>/scripts/render.py composition <video-name>.mp4 --work work [-- --docker]`.
-It logs to `work/render.log`, succeeds only when this run wrote a non-empty mp4, retries once, then normalises the soundtrack to -16 LUFS, -1 dBTP and prints the measured input; if it still fails, check free disk space and report the log tail.
+`uv run --project <skill-dir>/scripts <skill-dir>/scripts/render.py composition <video-name>.mp4 --work work --plan showhow-plan.md [-- --docker]`.
+It renders every format the plan lists (several: `<video-name>-<format>.mp4`; one: `<video-name>.mp4`), logs to `work/<format>/render.log`, succeeds only when this run wrote a non-empty mp4, retries once, normalises the soundtrack to -16 LUFS, -1 dBTP and prints the measured input, then writes each file's poster and bakes it in as frame 0; if it still fails, check free disk space and report the log tail.
 If the composition tweens layout (`height`, `width`, position, padding), add `--no-fast-capture`: fast capture drops those changes while snapshots still show them.
 Then pull frames from the mp4 itself at every ring and result moment; snapshots alone don't prove the render:
 `uv run --project <skill-dir>/scripts <skill-dir>/scripts/frame_sheet.py <video-name>.mp4 --overlays work/rings.overlays.json -o work/check.jpg` (add `--at <t1,t2,...>` for other moments, `--crop x,y,w,h` for small rings).
@@ -197,13 +198,13 @@ Keep creation and rendering local; publishing or uploading needs a separate expl
 
 `references/step-4-deliver.md` has the commands and templates for each file.
 
-- **Poster:** the settled title card (or the finished result with the title) with no caption on it, to `<video-name>.jpg`, baked in as frame 0 of the mp4 by replacing that frame, so duration and audio sync stay the same; when the voice talks over the title, snapshot a caption-hidden copy of the composition.
+- **Poster:** the render wrapper writes one per mp4 (`<same name>.jpg`), that file's own frame at scene 1's settled moment (the title card after its caption ends), baked in as frame 0 so duration and audio sync stay the same; `--poster-at <s>` picks another caption-free moment.
   Teams, SharePoint and Slack show frame 0; YouTube doesn't, so the poster is also the upload thumbnail there.
 - **`captions.srt`:** the script phrases with their absolute times, even when captions are burned in.
 - **`chapters.txt`:** `00:00 Title` style, one line per step (`Step N: ...`) or change (`Change N: ...`), from the real scene start times.
-- **Gates:** fix any FAIL and re-render, never argue it, and quote every line in the report:
-  `uv run --project <skill-dir>/scripts <skill-dir>/scripts/video_gates.py <video-name>.mp4 --srt captions.srt` (no run of more than 3 blank frames; caption lines of at most 37 characters, 2 lines or 3 with `--vertical`, 0.3s per word; the video ends at most 1.4s after the last caption, 3.5s with `credits.txt`) and
-  `uv run --project <skill-dir>/scripts <skill-dir>/scripts/plan_gates.py showhow-plan.md --chapters chapters.txt --video <video-name>.mp4` (the rendered steps match the plan and each lasts its minimum).
+- **Gates:** run both on every mp4 the wrapper wrote; fix any FAIL and re-render, never argue it, and quote every line in the report:
+  `uv run --project <skill-dir>/scripts <skill-dir>/scripts/video_gates.py <mp4> --srt captions.srt` (no run of more than 3 blank frames; caption lines of at most 37 characters, 2 lines or 3 in a vertical video, 0.3s per word; the video ends at most 1.4s after the last caption, 3.5s with `credits.txt`) and
+  `uv run --project <skill-dir>/scripts <skill-dir>/scripts/plan_gates.py showhow-plan.md --chapters chapters.txt --video <mp4>` (the rendered steps match the plan and each lasts its minimum).
 - **`showhow.md`:** the written companion. howto: "How to [task]", prerequisites, numbered steps with labels in bold, result, tip. update: "What's new in [version]", one short section per change with where to find it, then how to get it.
 - **`credits.txt`:** only when a bundled or Incompetech music track is used, an image or sound license asks for attribution (title, author, license, URL, one line each), or a third-party app's screens are rebuilt (its trademark line).
   The same credits appear on the outro credit line.

@@ -302,23 +302,125 @@ def main() -> None:
     finally:
         mod.render, mod.normalize_loudness, sys.argv = real
 
-    # prepare_only: --prepare-only writes the per-format copies and never renders or normalises.
-    with tempfile.TemporaryDirectory() as t:
-        pc = Path(t) / "comp"; pc.mkdir(); (pc / "index.html").write_text(ROOT_HTML, encoding="utf-8")
-        pw = Path(t) / "work"
-        seen.clear()
-        mod.render = lambda *a, **k: seen.append("render")
-        mod.normalize_loudness = lambda *a, **k: seen.append("loudnorm")
-        try:
-            sys.argv = ["render.py", str(pc), "o.mp4", "--work", str(pw), "--format", "landscape,vertical", "--prepare-only"]
-            mod.main()
-        finally:
-            mod.render, mod.normalize_loudness, sys.argv = real
-        assert seen == [], seen
-        assert 'data-format="vertical"' in (pw / "formats" / "vertical" / "index.html").read_text(encoding="utf-8")
-        assert (pw / "formats" / "landscape" / "index.html").is_file()
-
+    plan_driven()
     print("render self-check passed")
+
+
+def plan_text(formats: str | None, secs: list[float]) -> str:
+    head = "## Mode\nexplainer\n\n" + (f"## Formats\n{formats}\n\n" if formats else "## Format: landscape - 1920x1080\n\n")
+    return head + "## Storyboard\n\n" + "".join(f"### Scene {i} - S{i} - {s}s\nNarration: line {i}\n\n" for i, s in enumerate(secs, 1))
+
+
+def srt(cues: list[tuple[float, float]]) -> str:
+    def ts(t: float) -> str:
+        ms = round(t * 1000)
+        return f"00:{ms // 60000:02d}:{ms // 1000 % 60:02d},{ms % 1000:03d}"
+    return "\n".join(f"{i}\n{ts(a)} --> {ts(b)}\nline {i}\n" for i, (a, b) in enumerate(cues, 1))
+
+
+class FakeTools:
+    """Stands in for every tool the plan-driven path calls: the HyperFrames render and snapshot, ffprobe and ffmpeg.
+    The mp4 has no audio, so loudnorm skips after its probe."""
+
+    def __init__(self):
+        self.calls: list[list[str]] = []
+
+    def __call__(self, cmd: list[str]) -> tuple[int, str]:
+        self.calls.append(cmd)
+        if "render" in cmd:
+            Path(cmd[cmd.index("--output") + 1]).write_bytes(b"mp4")
+        elif "snapshot" in cmd:
+            # Unpadded frame numbers on purpose: frame-10 sorts before frame-2 as text.
+            dest = Path(cmd[cmd.index("-o") + 1])
+            dest.mkdir(parents=True, exist_ok=True)
+            for i, t in enumerate(cmd[cmd.index("--at") + 1].split(",")):
+                (dest / f"frame-{i}-at-{t}s.png").write_text(t, encoding="utf-8")
+            (dest / "contact-sheet.jpg").write_bytes(b"sheet")
+        elif "-select_streams" in cmd:
+            return 0, ""
+        else:  # ffmpeg: poster extract or bake writes its last argument
+            Path(cmd[-1]).write_bytes(b"jpg" if cmd[-1].endswith(".jpg") else b"baked")
+        return 0, "ok\n"
+
+
+def plan_driven() -> None:
+    import render as mod
+
+    with tempfile.TemporaryDirectory() as d:
+        root = Path(d)
+        comp, work, out = root / "composition", root / "work", root / "video.mp4"
+        comp.mkdir()
+        (comp / "index.html").write_text(ROOT_HTML, encoding="utf-8")
+        plan = root / "showhow-plan.md"
+
+        # settled_moment: 0.1s after the scene's last cue ends; capped 0.1s before the scene ends; a scene without a cue
+        # is taken 0.3s before its end. Worked example: scenes 2s, 3s, 2s (0-2, 2-5, 5-7).
+        scenes = mod.parse_plan(plan_text(None, [2, 3, 2]))["scenes"]
+        assert mod.settled_times(scenes, srt([(0.3, 1.5), (2.3, 3.0), (3.0, 4.0)])) == [1.6, 4.1, 6.7]
+        assert mod.settled_times(scenes, srt([(0.3, 2.0), (2.3, 4.0)]))[0] == 1.9
+
+        # plan_formats_and_names: the plan's two formats render to <name>-<format>.mp4, each with its own poster jpg
+        # taken from that format's mp4 at scene 1's settled moment and baked in as frame 0, after loudnorm.
+        plan.write_text(plan_text("landscape, vertical", [2, 3]), encoding="utf-8")
+        (root / "captions.srt").write_text(srt([(0.3, 1.5), (2.3, 4.0)]), encoding="utf-8")
+        tools = FakeTools()
+        mod.main([str(comp), str(out), "--work", str(work), "--plan", str(plan)], run=tools)
+        renders = [c for c in tools.calls if "render" in c]
+        assert [Path(c[3]) for c in renders] == [work / "formats" / "landscape", work / "formats" / "vertical"], renders
+        assert sorted(p.name for p in root.glob("video*")) == ["video-landscape.jpg", "video-landscape.mp4", "video-vertical.jpg", "video-vertical.mp4"]
+        extract = [c for c in tools.calls if "-frames:v" in c]
+        assert [(c[c.index("-ss") + 1], Path(c[c.index("-i") + 1]).name, Path(c[-1]).name) for c in extract] == [
+            ("1.6", "video-landscape.mp4", "video-landscape.jpg"), ("1.6", "video-vertical.mp4", "video-vertical.jpg")], extract
+        assert (root / "video-vertical.mp4").read_bytes() == b"baked"
+        kinds = ["probe" if "-select_streams" in c else "extract" if "-frames:v" in c else "bake" if any("overlay" in a for a in c) else "render" if "render" in c else "?" for c in tools.calls]
+        assert kinds == ["render", "probe", "extract", "bake"] * 2, kinds
+
+        # poster_at_overrides: --poster-at picks the poster moment.
+        tools = FakeTools()
+        mod.main([str(comp), str(out), "--work", str(work), "--plan", str(plan), "--format", "vertical", "--poster-at", "0.5"], run=tools)
+        # format_override: --format renders only that format, still suffixed so it lands next to the others.
+        assert [Path(c[3]).name for c in tools.calls if "render" in c] == ["vertical"]
+        assert [c[c.index("-ss") + 1] for c in tools.calls if "-frames:v" in c] == ["0.5"]
+
+        # one_format_plan_unsuffixed: a plan with one format writes <name>.mp4 and <name>.jpg.
+        one = root / "one"
+        one.mkdir()
+        (one / "showhow-plan.md").write_text(plan_text(None, [2, 3]), encoding="utf-8")
+        (one / "captions.srt").write_text(srt([(0.3, 1.5)]), encoding="utf-8")
+        mod.main([str(comp), str(one / "video.mp4"), "--work", str(one / "work"), "--plan", str(one / "showhow-plan.md")], run=FakeTools())
+        assert sorted(p.name for p in one.glob("video*")) == ["video.jpg", "video.mp4"]
+
+        # stills: --stills writes each format's copy and one still per scene at its settled moment, named scene-NN.png in
+        # scene order (numeric, not text, order), removes the contact sheets, and never renders.
+        eleven = root / "eleven"
+        eleven.mkdir()
+        (eleven / "showhow-plan.md").write_text(plan_text("vertical, square", [1] * 11), encoding="utf-8")
+        (eleven / "captions.srt").write_text(srt([(i + 0.1, i + 0.5) for i in range(11)]), encoding="utf-8")
+        tools = FakeTools()
+        ew = eleven / "work"
+        mod.main([str(comp), str(eleven / "v.mp4"), "--work", str(ew), "--plan", str(eleven / "showhow-plan.md"), "--stills"], run=tools)
+        assert not any("render" in c for c in tools.calls) and not list(eleven.glob("*.mp4"))
+        snaps = [c for c in tools.calls if "snapshot" in c]
+        assert [Path(c[3]) for c in snaps] == [ew / "formats" / "vertical", ew / "formats" / "square"], snaps
+        assert snaps[0][snaps[0].index("--at") + 1] == "0.6,1.6,2.6,3.6,4.6,5.6,6.6,7.6,8.6,9.6,10.6", snaps[0]
+        for f in ("vertical", "square"):
+            names = sorted(p.name for p in (ew / "preview" / f).iterdir())
+            assert names == [f"scene-{i:02d}.png" for i in range(1, 12)], names
+        assert (ew / "preview" / "square" / "scene-11.png").read_text(encoding="utf-8") == "10.6"
+        assert 'data-format="square"' in (ew / "formats" / "square" / "index.html").read_text(encoding="utf-8")
+
+        # stills_need_captions: no captions.srt beside the plan means no settled moment; say so before any work.
+        (eleven / "captions.srt").unlink()
+        tools = FakeTools()
+        expect_exit(lambda: mod.main([str(comp), str(eleven / "v.mp4"), "--work", str(ew), "--plan", str(eleven / "showhow-plan.md"), "--stills"], run=tools), "captions.srt")
+        assert tools.calls == []
+
+        # unreadable_plan_refused: a plan with P-parse errors renders nothing.
+        bad = root / "bad-plan.md"
+        bad.write_text("## Mode\nexplainer\n\n## Storyboard\n\n### Scene 1 - no seconds\n", encoding="utf-8")
+        tools = FakeTools()
+        expect_exit(lambda: mod.main([str(comp), str(out), "--work", str(work), "--plan", str(bad)], run=tools), "line")
+        assert tools.calls == []
 
 
 if __name__ == "__main__":
