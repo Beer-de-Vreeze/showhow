@@ -16,9 +16,11 @@ NAMED = {  # shortcut: a small set of CSS names, add more when a real kit needs 
     "black", "white", "red", "green", "blue", "yellow", "orange", "purple", "pink", "gray", "grey",
     "teal", "navy", "maroon", "silver", "cyan", "magenta", "brown", "gold", "transparent",
 }
-# shortcut: shape-only check (hex, rgb/hsl with comma or space args, a name from NAMED), not a full CSS parser
+# shortcut: shape-only check (hex, colour functions with comma or space args, a name from NAMED), not a full CSS
+# parser; it accepts out-of-range values. Use a real CSS parser if a kit ever ships a colour it gets wrong.
+ARG = r"[-+]?[0-9.]+(?:%|deg|turn|rad|grad)?"
 COLOR_RE = re.compile(
-    r"^(#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})|(?:rgb|hsl)a?\(\s*[-+0-9.%]+(?:\s*[, /]\s*[-+0-9.%]+(?:deg)?){2,3}\s*\))$",
+    rf"^(#(?:[0-9a-f]{{3,4}}|[0-9a-f]{{6}}|[0-9a-f]{{8}})|(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch)\(\s*{ARG}(?:\s*[, /]\s*{ARG}){{2,3}}\s*\))$",
     re.I,
 )
 

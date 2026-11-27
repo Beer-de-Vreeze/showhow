@@ -58,6 +58,14 @@ def main() -> None:
 
         code, out = broken(tmp / "e", escape)
         assert code == 1 and out.count("outside the kit") == 2, f"escaping paths: {code} {out}"
+
+        # Colours: a deg hue and oklch() are CSS colours.
+        def modern(k: Path) -> None:
+            f = k / "FRAME.md"
+            f.write_text(f.read_text(encoding="utf-8").replace('"#D9822B"', '"hsl(28deg 70% 51%)"').replace('"#4A5B6A"', '"oklch(45% 0.03 240)"'), encoding="utf-8")
+
+        code, out = broken(tmp / "f", modern)
+        assert code == 0, f"modern colours: {code} {out}"
     print("ok")
 
 
