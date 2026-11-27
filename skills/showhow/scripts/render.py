@@ -304,12 +304,14 @@ def rendered_after(composition: Path, mp4s: list[Path]) -> bool:
     return min(p.stat().st_mtime for p in mp4s) > newest
 
 
-def write_stills(copy: Path, times: list[float], dest: Path, run: Callable[[list[str]], tuple[int, str]] = run_cli) -> None:
-    """One snapshot per time of the format copy, renamed in time order to dest/scene-NN.png; contact sheets removed."""
+def write_stills(copy: Path, times: list[float], dest: Path, run: Callable[[list[str]], tuple[int, str]] = run_cli,
+                 extra: list[str] | None = None) -> None:
+    """One snapshot per time of the format copy, renamed in time order to dest/scene-NN.png; contact sheets removed.
+    `extra` goes to the snapshot command (check_fixture.py passes --no-browser-gpu)."""
     if dest.exists():
         shutil.rmtree(dest)  # stale stills from an earlier plan would pass for this one
     cmd = [shutil.which("npx") or "npx", HYPERFRAMES, "snapshot", str(copy), "--no-end", "--describe", "false",
-           "--at", ",".join(f"{t:g}" for t in times), "-o", str(dest)]
+           "--at", ",".join(f"{t:g}" for t in times), "-o", str(dest), *(extra or [])]
     code, text = run(cmd)
     # The CLI numbers frames in --at order; sort by that number, since frame-10 sorts before frame-2 as text.
     frames = sorted(dest.glob("frame-*-at-*.png"), key=lambda p: int(p.name.split("-")[1])) if dest.is_dir() else []
