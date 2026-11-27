@@ -113,28 +113,34 @@ def main() -> None:
         comp = composition(tmp / "brand")
         stage.stage(comp, BRAND, fetch=fetch)
         css = (comp / "assets" / "theme.css").read_text(encoding="utf-8")
-        for decl in ("--paper: #EEF3F5;", "--ink: #12263A;", "--accent: #D9822B;", "--muted: #4A5B6A;",
+        for decl in ("--paper: #EEF3F5;", "--ink: #12263A;", "--accent: #B5651D;", "--muted: #4A5B6A;",
                      '--font-display: "Inter", serif;', '--font-body: "Inter", sans-serif;'):
             assert decl in css, f"missing {decl} in brand theme.css:\n{css}"
 
-        # Stock Hyperframes presets (fixtures mimic their key shape: no accent key, no font files).
+        # Stock Hyperframes presets map through the alias table (fixture mimics the key shape: accent named primary,
+        # no font files).
         sys_stack = "system-ui, sans-serif;"
-        for name, decls in {
-            "stock-blue-professional": ("--paper: #fdfae7;", "--ink: #111111;", "--accent: #1e2bfa;", "--muted: #6b6b6b;",
-                                        f'--font-display: "Space Grotesk", {sys_stack}', f'--font-body: "Inter", {sys_stack}'),
-            "stock-capsule": ("--paper: #F5F5F0;", "--ink: #1A1A1A;", "--accent: #E85D4E;", "--muted: #1A1A1A;",
-                              f'--font-display: "Bodoni Moda", {sys_stack}', f'--font-body: "Space Grotesk", {sys_stack}'),
-        }.items():
-            comp = composition(tmp / name)
-            stage.stage(comp, HERE / "fixtures" / name, fetch=fetch)
-            css = (comp / "assets" / "theme.css").read_text(encoding="utf-8")
-            for decl in decls:
-                assert decl in css, f"missing {decl} in {name} theme.css:\n{css}"
-            assert "@font-face" not in css, css
-        nocolor = tmp / "no-accent"
-        nocolor.mkdir()
-        (nocolor / "FRAME.md").write_text('---\ncolors:\n  bg: "#ffffff"\n  text: "#111111"\n  gray: "#777777"\ntypography:\n  body: { fontFamily: "Inter", px: 20 }\n  h1: { fontFamily: "Inter", px: 60 }\n---\n', encoding="utf-8")
-        fails(lambda: stage.stage(composition(tmp / "c0"), nocolor, fetch=fetch), "accent")
+        comp = composition(tmp / "stock-blue-professional")
+        stage.stage(comp, HERE / "fixtures" / "stock-blue-professional", fetch=fetch)
+        css = (comp / "assets" / "theme.css").read_text(encoding="utf-8")
+        for decl in ("--paper: #fdfae7;", "--ink: #111111;", "--accent: #1e2bfa;", "--muted: #6b6b6b;",
+                     f'--font-display: "Space Grotesk", {sys_stack}', f'--font-body: "Inter", {sys_stack}'):
+            assert decl in css, f"missing {decl} in stock-blue-professional theme.css:\n{css}"
+        assert "@font-face" not in css, css
+
+        # A preset with no accent key is not guessed (capsule's colours are named cream, coral, lime): it fails and
+        # names the work/theme path, where the agent picks the accent with judgment.
+        fails(lambda: stage.stage(composition(tmp / "c0"), HERE / "fixtures" / "stock-capsule", fetch=fetch), "work/theme")
+        fails(lambda: stage.stage(composition(tmp / "c0b"), HERE / "fixtures" / "stock-capsule", fetch=fetch), "'accent'")
+
+        # An accent under 3:1 against paper (biennale-yellow's sun on its paper, about 1.05:1) would hide rings and
+        # highlights: staging stops naming both colours.
+        pale = tmp / "pale"
+        pale.mkdir()
+        (pale / "FRAME.md").write_text('---\ncolors:\n  paper: "#E9E5DB"\n  ink: "#111111"\n  accent: "#F1EE2E"\ntypography:\n  body: { fontFamily: "Inter", px: 20 }\n  h1: { fontFamily: "Inter", px: 60 }\n---\n', encoding="utf-8")
+        fails(lambda: stage.stage(composition(tmp / "c0c"), pale, fetch=fetch), "#F1EE2E")
+        fails(lambda: stage.stage(composition(tmp / "c0d"), pale, fetch=fetch), "#E9E5DB")
+        assert round(stage.contrast("#000000", "#ffffff"), 2) == 21.0 and round(stage.contrast("#777777", "#ffffff"), 2) == 4.48
 
         # Clear failures, never a half-staged fallback.
         fails(lambda: stage.resolve(theme="no-such-theme"), "no-such-theme")

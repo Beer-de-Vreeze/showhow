@@ -13,7 +13,7 @@ colors:
   paper: "#EEF3F5"
   ink: "#12263A"
   muted: "#4A5B6A"
-  accent: "#D9822B"
+  accent: "#B5651D"
 
 typography:
   title:   { fontFamily: "Inter", px: 96, weight: 400, lineHeight: 1.04, tracking: "-0.02em" }

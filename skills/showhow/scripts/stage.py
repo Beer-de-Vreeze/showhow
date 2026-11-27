@@ -7,7 +7,8 @@ SplitText and MotionPath plugins), three/ (build, examples/jsm addons, the helve
 (the theme's font files and licences), and writes theme.css: @font-face for each font file and one :root
 token set, --paper --ink --accent --muted --font-display --font-body, from the theme's FRAME.md.
 A stock Hyperframes preset (no fonts/ folder, other colour keys) is mapped by the ALIASES rule below and
-gets its font names with a system-font fallback stack instead of @font-face.
+gets its font names with a system-font fallback stack instead of @font-face. A preset the table can't map, or
+an accent under 3:1 against paper, stops staging and names the work/theme path.
 Copies FRAME.md to <composition-dir>/frame.md and writes a block into index.html's <head> (between
 BEGIN and END, replaced on every run) with the three.js import map and the theme.css link.
 Everything is local at render time; npm packages come from `npm pack` into a cache folder, never a CDN.
@@ -24,6 +25,8 @@ import sys
 import tarfile
 import tempfile
 from pathlib import Path
+
+from PIL import ImageColor
 
 from brand_kit import block, check, frontmatter, parse_colors, valid_color
 
@@ -66,8 +69,8 @@ def resolve(theme: str | None = None, brand: str | None = None, brands: Path = B
 
 
 # Stock Hyperframes presets name colours and fonts differently from showhow's FRAME.md. The rule, deterministic:
-# each token takes the first alias present in `colors:`; with no accent alias, accent is the first #hex colour in
-# file order with saturation over 0.25; muted falls back to ink. Title and label fonts take the first alias in `typography:`.
+# each token takes the first alias present in `colors:`; muted falls back to ink; a preset with no accent alias is
+# never guessed, it fails into the work/theme path. Title and label fonts take the first alias in `typography:`.
 ALIASES = {
     "paper": ("paper", "bg", "background", "canvas", "cream", "surface"),
     "ink": ("ink", "text", "black", "fg", "foreground"),
@@ -75,22 +78,28 @@ ALIASES = {
     "muted": ("muted", "text-muted", "gray", "grey", "text-light"),
 }
 FONT_ALIASES = {"title": ("title", "h1", "headline", "hero-title", "display"), "label": ("label", "body")}
+MIN_ACCENT_CONTRAST = 3.0  # WCAG 1.4.11 non-text contrast: rings, ripples and highlights sit on paper
+UNMAPPED = "write work/theme/FRAME.md with paper, ink, accent and muted picked for this video and pass --theme work/theme (general.md)"
+
+
+def contrast(a: str, b: str) -> float:
+    """WCAG contrast ratio of two CSS colours (1 to 21)."""
+    def lum(c: str) -> float:
+        rgb = (v / 255 for v in ImageColor.getrgb(c)[:3])
+        return sum(w * (v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4) for w, v in zip((0.2126, 0.7152, 0.0722), rgb))
+    hi, lo = sorted((lum(a), lum(b)), reverse=True)
+    return (hi + 0.05) / (lo + 0.05)
 
 
 def map_colors(colors: dict[str, str]) -> tuple[dict[str, str | None], list[str]]:
     """The four tokens from a FRAME.md colour map, and a problem naming each token that cannot be mapped."""
     out = {k: next((colors[n] for n in names if n in colors), None) for k, names in ALIASES.items()}
-    if out["accent"] is None:
-        for v in colors.values():
-            m = re.fullmatch(r"#([0-9a-fA-F]{6})", v)
-            if m:
-                r, g, b = (int(m[1][i:i + 2], 16) / 255 for i in (0, 2, 4))
-                if (max(r, g, b) - min(r, g, b)) / max(r, g, b, 1e-9) > 0.25:
-                    out["accent"] = v
-                    break
     out["muted"] = out["muted"] or out["ink"]
-    problems = [f"FRAME.md colors: missing '{k}' (or an alias: {', '.join(ALIASES[k][1:]) or 'none'})" for k in TOKENS if out[k] is None]
+    problems = [f"FRAME.md colors: missing '{k}' (or an alias: {', '.join(ALIASES[k][1:]) or 'none'}); {UNMAPPED}" for k in TOKENS if out[k] is None]
     problems += [f"FRAME.md colors: '{k}' is not a CSS colour: {out[k]}" for k in TOKENS if out[k] and not valid_color(out[k])]
+    if not problems and (ratio := contrast(out["accent"], out["paper"])) < MIN_ACCENT_CONTRAST:
+        problems.append(f"FRAME.md colors: accent {out['accent']} on paper {out['paper']} is {ratio:.2f}:1, under {MIN_ACCENT_CONTRAST:g}:1, "
+                        f"so rings and highlights would not show; pick a darker or stronger accent, or {UNMAPPED}")
     return out, problems
 
 
