@@ -16,6 +16,8 @@ data-format are rewritten; the original is never edited, and CSS keys layout off
 [data-format="vertical"]. The root needs data-width and data-height. A failing format is named and
 exits non-zero; formats that rendered are kept. Without --format the composition renders as is.
 
+--prepare-only (with --format): write the per-format copies and stop; no render, no loudnorm.
+
 --no-fast-capture: for compositions that tween layout (height, width, position,
 padding); fast drawelement capture drops those changes.
 
@@ -224,6 +226,7 @@ def parse(argv: list[str]) -> tuple[argparse.Namespace, list[str]]:
     p.add_argument("output", type=Path)
     p.add_argument("--work", type=Path, required=True, help="folder for render.log")
     p.add_argument("--format", default=None, help="all, or a comma list of landscape,vertical,square; several formats write <name>-<format>.mp4")
+    p.add_argument("--prepare-only", action="store_true", help="with --format: write the per-format copies in <work>/formats/ and stop, for preview stills")
     p.add_argument("--no-fast-capture", action="store_true")
     p.add_argument("--no-loudnorm", action="store_true", help="skip loudness normalisation")
     return p.parse_args(ours), extra
@@ -231,6 +234,13 @@ def parse(argv: list[str]) -> tuple[argparse.Namespace, list[str]]:
 
 def main() -> None:
     a, extra = parse(sys.argv[1:])
+    if a.prepare_only:
+        if a.format is None:
+            raise SystemExit("--prepare-only needs --format")
+        for f in parse_formats(a.format):
+            size_copy(a.composition, a.work / "formats" / f, f)
+            print(f"prepared {a.work / 'formats' / f}")
+        return
     if a.format is None:  # today's behaviour: the composition's own size, no format flags
         render(a.composition, a.output, a.work, fast_capture=not a.no_fast_capture, extra=extra)
         outs = [(a.output, a.work)]

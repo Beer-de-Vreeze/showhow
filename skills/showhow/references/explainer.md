@@ -68,6 +68,24 @@ Later releases add rows here (cutaway, globe, hero number); `VISUALS` in `script
 A scene with no voice (a title, a hold) needs no `Visual:`.
 Every fact shown in a visual is also spoken in that scene (P-described).
 
+## Stop 2: preview stills
+
+Explainer only.
+After `npx hyperframes check` passes and before the render, write one still per scene in each chosen format to `work/preview/<format>/scene-NN.png`, show them, and wait for the user's approval.
+Other modes keep "render without waiting".
+
+- **Moment:** each scene's settled moment, when its visual has finished building and the scene's last caption cue has ended (the hold after the narration).
+  Captions are in the composition, so a scene with no gap after its last cue gets a longer hold, not a still with a caption over it.
+- **Which copy:** every format is snapshotted from its per-format copy in `work/formats/<format>/`, the copy the render will use.
+  `render.py` makes those copies during a render, so write them first without rendering:
+  `uv run --project <skill-dir>/scripts <skill-dir>/scripts/render.py composition <video-name>.mp4 --work work --format <formats> --prepare-only`.
+- **Command,** once per format, with the settled time of each scene in order (seconds):
+  `npx -y hyperframes@0.9.85 snapshot work/formats/<format> --no-end --describe false --at <t1>,<t2>,... -o work/preview/<format>`.
+  It writes `frame-00-at-<t1>s.png`, `frame-01-at-<t2>s.png` and so on; rename them in order to `scene-01.png`, `scene-02.png`, then delete `contact-sheet.jpg`.
+- **Approval:** list the stills by scene and format, say what each shows in one sentence, and stop.
+  A rejected still means fix the composition, re-run `check`, redo only the stills that changed and ask again.
+  Render only after the user approves.
+
 ## Plan template additions
 
 On top of `references/step-2-plan.md`:

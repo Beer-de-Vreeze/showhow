@@ -260,6 +260,22 @@ def main() -> None:
     finally:
         mod.render, mod.normalize_loudness, sys.argv = real
 
+    # prepare_only: --prepare-only writes the per-format copies and never renders or normalises.
+    with tempfile.TemporaryDirectory() as t:
+        pc = Path(t) / "comp"; pc.mkdir(); (pc / "index.html").write_text(ROOT_HTML, encoding="utf-8")
+        pw = Path(t) / "work"
+        seen.clear()
+        mod.render = lambda *a, **k: seen.append("render")
+        mod.normalize_loudness = lambda *a, **k: seen.append("loudnorm")
+        try:
+            sys.argv = ["render.py", str(pc), "o.mp4", "--work", str(pw), "--format", "landscape,vertical", "--prepare-only"]
+            mod.main()
+        finally:
+            mod.render, mod.normalize_loudness, sys.argv = real
+        assert seen == [], seen
+        assert 'data-format="vertical"' in (pw / "formats" / "vertical" / "index.html").read_text(encoding="utf-8")
+        assert (pw / "formats" / "landscape" / "index.html").is_file()
+
     print("render self-check passed")
 
 
