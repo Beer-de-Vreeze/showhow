@@ -23,15 +23,16 @@ ffprobe -v error -show_entries format=duration -of csv=p=0 <output-dir>/composit
 
 Set each scene's duration to `clip length + 0.5-1.0s` (longer after a step's result, shorter in `quick-tip`), and `clip length + about 2s` for a scene that ends a subtask (marked in the plan).
 Start each clip about 0.3s after its scene starts, so the voice doesn't collide with the transition.
+Each clip is an `<audio id="voice-NN" data-start data-duration data-track-index data-volume src>` in the composition; an `<audio>` without an `id` renders silent, and `check` fails it as `media_missing_id`.
 Update the scene durations in `showhow-plan.md` to the measured values.
 
 **Listen for mispronunciations** of product names and labels: transcribe the clips (see `media-use` / `npx hyperframes transcribe`) and compare with the script.
-`npx hyperframes transcribe` writes `transcript.json` and overwrites it on every run, so copy it right after each clip:
+`npx hyperframes transcribe` writes `transcript.json` into its project directory (`-d`; without it, 0.9.85 wrote it next to the audio, inside the composition) and overwrites it on every run, so point it at `work/tx` and rename it right after each clip:
 
 ```bash
 mkdir -p <output-dir>/work/tx
 for n in 01 02 03; do
-  npx hyperframes transcribe <output-dir>/composition/assets/voice/scene-$n.wav && cp transcript.json <output-dir>/work/tx/words-$n.json
+  npx hyperframes transcribe <output-dir>/composition/assets/voice/scene-$n.wav -d <output-dir>/work/tx && mv <output-dir>/work/tx/transcript.json <output-dir>/work/tx/words-$n.json
 done
 ```
 Fix by respelling in the TTS input only (e.g. "Azure" -> "Azhure"); captions keep the correct spelling.
@@ -159,7 +160,7 @@ If you render the project's own components or screenshot the running app:
 - Hide dev-only chrome (devtools, debug banners, browser UI) unless showing the browser is the point.
 - Keep one screenshot per step state, named `step-NN-<state>.png` in `composition/assets/screens/`.
 
-Stage the composition before building it, and again after any theme change:
+Stage the composition once `composition/index.html` exists with a `<head>` (stage.py writes its block there and stops without the file), before building the scenes, and again after any theme change or after replacing `index.html`:
 
 `uv run --project <skill-dir>/scripts python <skill-dir>/scripts/stage.py composition (--theme <name or folder> | --brand <name>)`
 

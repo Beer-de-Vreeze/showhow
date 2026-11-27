@@ -54,6 +54,8 @@ A new kind is one row here, one entry in `SCENE3D_KINDS` in `scripts/plan_gates.
 
 - Run `stage.py`: it stages three.js locally and writes the import map for `three` and `three/addons/` into `index.html`'s head; no CDN at render time.
 - Register an empty paused GSAP timeline in `window.__timelines`; HyperFrames' static guard wants one even when the frame is drawn from `hf-seek`.
+  In a composition that also builds a 2D timeline inside `document.fonts.ready`, register that one instead, at the end of the callback: an early registration fails `check` (StaticGuard).
+- One stage among other scenes: put the canvas in its scene's element (faded in and out by the 2D timeline) and return `(t) => render(Math.max(0, t - sceneStart))` from the `onSeek` build, so the recipe's clock starts with its scene.
 - Start from a fixture's `index.html` (`scripts/fixtures/gear-train/`).
 
 ### Every frame from t

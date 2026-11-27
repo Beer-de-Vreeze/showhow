@@ -42,6 +42,7 @@ Outcome -> Name the parts -> one scene per voiced sentence, grouped into section
 - Each scene's picture starts entering on the scene's first frame; later parts wait for their words.
   A visual that waits for its first word leaves the plain ground on screen for 6-12 frames between scenes, and G-blank fails it (seen on the first full render).
 - Group the sentence scenes into 2-4 sections; each section is a chapter in `chapters.txt`, named for what it explains.
+  The first section also holds the outcome and the parts scenes (chapters start at 00:00), and the last one the recap; the credits outro belongs to no section.
 - Length: SKILL.md's explainer shape sets the target and the limit, and P-time checks them; over the target is a warning, over the limit fails: cut sentences or split the video.
 - Style `friendly` unless the user names another.
   Music is on by default, bundled and ducked under the voice (`references/audio.md`); `--no-music` wins.
