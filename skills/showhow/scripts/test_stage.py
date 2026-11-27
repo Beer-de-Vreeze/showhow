@@ -117,6 +117,25 @@ def main() -> None:
                      '--font-display: "Inter", serif;', '--font-body: "Inter", sans-serif;'):
             assert decl in css, f"missing {decl} in brand theme.css:\n{css}"
 
+        # Stock Hyperframes presets (fixtures mimic their key shape: no accent key, no font files).
+        sys_stack = "system-ui, sans-serif;"
+        for name, decls in {
+            "stock-blue-professional": ("--paper: #fdfae7;", "--ink: #111111;", "--accent: #1e2bfa;", "--muted: #6b6b6b;",
+                                        f'--font-display: "Space Grotesk", {sys_stack}', f'--font-body: "Inter", {sys_stack}'),
+            "stock-capsule": ("--paper: #F5F5F0;", "--ink: #1A1A1A;", "--accent: #E85D4E;", "--muted: #1A1A1A;",
+                              f'--font-display: "Bodoni Moda", {sys_stack}', f'--font-body: "Space Grotesk", {sys_stack}'),
+        }.items():
+            comp = composition(tmp / name)
+            stage.stage(comp, HERE / "fixtures" / name, fetch=fetch)
+            css = (comp / "assets" / "theme.css").read_text(encoding="utf-8")
+            for decl in decls:
+                assert decl in css, f"missing {decl} in {name} theme.css:\n{css}"
+            assert "@font-face" not in css, css
+        nocolor = tmp / "no-accent"
+        nocolor.mkdir()
+        (nocolor / "FRAME.md").write_text('---\ncolors:\n  bg: "#ffffff"\n  text: "#111111"\n  gray: "#777777"\ntypography:\n  body: { fontFamily: "Inter", px: 20 }\n  h1: { fontFamily: "Inter", px: 60 }\n---\n', encoding="utf-8")
+        fails(lambda: stage.stage(composition(tmp / "c0"), nocolor, fetch=fetch), "accent")
+
         # Clear failures, never a half-staged fallback.
         fails(lambda: stage.resolve(theme="no-such-theme"), "no-such-theme")
         fails(lambda: stage.resolve(brand="no-such-brand", brands=tmp / "brands"), "no-such-brand")
@@ -132,8 +151,8 @@ def main() -> None:
         bad = tmp / "bad-theme"
         shutil.copytree(PRESET, bad)
         frame = bad / "FRAME.md"
-        frame.write_text(frame.read_text(encoding="utf-8").replace('  muted: "#5B5547"\n', ""), encoding="utf-8")
-        fails(lambda: stage.stage(composition(tmp / "c1"), bad, fetch=fetch), "muted")
+        frame.write_text(frame.read_text(encoding="utf-8").replace('  paper: "#F3ECDD"\n', ""), encoding="utf-8")
+        fails(lambda: stage.stage(composition(tmp / "c1"), bad, fetch=fetch), "paper")
         shutil.rmtree(bad)
         shutil.copytree(PRESET, bad)
         (bad / "fonts" / "EBGaramond-700.woff2").unlink()
