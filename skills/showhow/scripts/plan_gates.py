@@ -37,7 +37,8 @@ P-end:    a howto (and a general task) ends on a "Now try it" scene, not a recap
           after it is fine; quick-tip ends on the result and a general topic video on its recap.
 P-described: every number and **bold label** in a scene's optional "On screen:" line is also in that
           scene's "Narration:" line (WCAG 1.2.5); numbers match by digits ("40x" and "1,700" match
-          "40" and "1700"), labels ignore case. Runs in every mode; skipped without "On screen:" lines.
+          "40" and "1700"), labels ignore case. Runs in every mode; skipped without "On screen:" lines
+          and on outro, credit or end-card scenes (their credit line is not narrated).
 Explainer mode (no counters, so no P-steps or P-action; P-time has no step minimum):
 P-need:   no "[NEED" marker left in the narration (scenes or the "## Narration script" section).
 P-visual: every voiced scene has exactly one "Visual:" from VISUALS; parallax only on the first scene.
@@ -237,7 +238,8 @@ def check_plan(plan: dict) -> list[tuple[str, bool, str]]:
 def check_described(scenes: list[dict]) -> list[tuple[str, bool, str]]:
     if not any(s["on_screen"] for s in scenes):
         return []
-    gaps = [f"scene {s['n']} missing {', '.join(g)}" for s in scenes if s["on_screen"] and (g := described_gaps(s))]
+    # The outro's credit line ("CC BY 4.0") is a licence notice, not a fact the voice must say.
+    gaps = [f"scene {s['n']} missing {', '.join(g)}" for s in body_scenes(scenes) if s["on_screen"] and (g := described_gaps(s))]
     return [("P-described", not gaps, "on-screen facts are spoken" if not gaps else "; ".join(gaps))]
 
 

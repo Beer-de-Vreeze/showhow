@@ -75,6 +75,9 @@ def main() -> None:
     silent = plan("howto", scene(1, "Outcome", 4) + scene(2, "Heat", 5, on_screen="1,700 °C", narration="it gets very hot"))
     name, ok, msg = [r for r in check_plan(parse_plan(silent)) if r[0] == "P-described"][0]
     assert not ok and "scene 2" in msg and "1700" in msg, msg
+    # The outro credit line (step-3-compose.md, "Credit line") is a licence notice, not a fact to narrate.
+    credit = plan("howto", scene(1, "Outcome", 4) + scene(2, "Outro credits", 3, on_screen="Music: Sascha Ende (ende.app), CC BY 4.0"))
+    assert verdicts(credit)["P-described"], check_plan(parse_plan(credit))
     # Backwards compatibility: no On screen: field means nothing to check (existing plans above).
     assert "P-described" not in verdicts(good)
 
