@@ -10,11 +10,11 @@ tail on failure.
       <output-dir>/composition <output-dir>/<video-name>.mp4 --work <output-dir>/work [--no-fast-capture] [--no-loudnorm] [-- --docker --quality high]
 
 --format: one render per format, each to <video-name>-<format>.mp4 (landscape 1920x1080,
-vertical 1080x1920, square 1080x1080). Each run passes `--resolution landscape|portrait|square`
-and `--variables '{"format":"<format>"}'` to the CLI; the composition reads the variable with
-window.__hyperframes.getVariables() and sets data-format on its root. A single format keeps
-<video-name>.mp4. A failing format is named and exits non-zero; formats that rendered are kept.
-Without --format nothing is passed and the composition's own size is used.
+vertical 1080x1920, square 1080x1080); a single format keeps <video-name>.mp4. Each format renders
+a copy of the composition in <work>/formats/<format>/ whose root data-width, data-height and
+data-format are rewritten; the original is never edited, and CSS keys layout off
+[data-format="vertical"]. The root needs data-width and data-height. A failing format is named and
+exits non-zero; formats that rendered are kept. Without --format the composition renders as is.
 
 --no-fast-capture: for compositions that tween layout (height, width, position,
 padding); fast drawelement capture drops those changes.
@@ -157,8 +157,7 @@ def normalize_loudness(
     print(f"loudnorm: {i} LUFS, {tp} dBTP -> {TARGET} ({output})")
 
 
-# CLI --resolution preset per format; the same name goes to the composition as the `format` variable.
-FORMATS = {"landscape": "landscape", "vertical": "portrait", "square": "square"}
+FORMATS = {"landscape": (1920, 1080), "vertical": (1080, 1920), "square": (1080, 1080)}
 
 
 def parse_formats(spec: str) -> list[str]:
@@ -167,6 +166,26 @@ def parse_formats(spec: str) -> list[str]:
     if bad or not names:
         raise SystemExit(f"unknown format {', '.join(bad) or repr(spec)}; use all or a comma list of {', '.join(FORMATS)}")
     return list(dict.fromkeys(names))
+
+
+def size_copy(composition: Path, copy: Path, fmt: str) -> None:
+    """Copy the composition and set the copy's root data-width, data-height and data-format; the original is untouched."""
+    index = composition / "index.html"
+    if not index.is_file():
+        raise SystemExit(f"no index.html in {composition}; pass the composition folder")
+    html = index.read_text(encoding="utf-8")
+    m = re.search(r"<[^<>]*data-composition-id[^<>]*>", html)
+    root = m.group(0) if m else ""
+    if not all(re.search(rf"data-{k}=", root) for k in ("width", "height")):
+        raise SystemExit(f"{index}: the root element (data-composition-id) needs data-width and data-height to render several formats")
+    width, height = FORMATS[fmt]
+    new = re.sub(r'data-width="[^"]*"', f'data-width="{width}"', root)
+    new = re.sub(r'data-height="[^"]*"', f'data-height="{height}"', new)
+    new = re.sub(r'\s*data-format="[^"]*"', "", new)
+    new = new[:-1].rstrip("/").rstrip() + f' data-format="{fmt}"' + ("/>" if root.endswith("/>") else ">")
+    shutil.rmtree(copy, ignore_errors=True)
+    shutil.copytree(composition, copy)
+    (copy / "index.html").write_text(html.replace(root, new, 1), encoding="utf-8")
 
 
 def render_formats(
@@ -183,16 +202,17 @@ def render_formats(
     failed: list[str] = []
     for f in formats:
         out = output if len(formats) == 1 else output.with_name(f"{output.stem}-{f}{output.suffix}")
-        flags = ["--resolution", FORMATS[f], "--variables", json.dumps({"format": f})]
         try:
-            render(composition, out, work if len(formats) == 1 else work / f,
-                   fast_capture=fast_capture, extra=flags + (extra or []), run=run)
+            copy = work / "formats" / f
+            size_copy(composition, copy, f)
+            render(copy, out, work if len(formats) == 1 else work / f,
+                   fast_capture=fast_capture, extra=extra, run=run)
             done.append(out)
         except SystemExit as e:
-            failed.append(f)
+            failed.append(f); why = str(e).splitlines()[0]
             print(f"format {f} failed: {e}", file=sys.stderr)
     if failed:
-        raise SystemExit(f"render failed for format {', '.join(failed)}; kept: {', '.join(map(str, done)) or 'none'}")
+        raise SystemExit(f"render failed for format {', '.join(failed)} ({why}); kept: {', '.join(map(str, done)) or 'none'}")
     return done
 
 

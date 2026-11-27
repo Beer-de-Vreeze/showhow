@@ -61,7 +61,7 @@ Write `<output-dir>/composition-brief.md` before creating the composition.
 - Composition directory: `<output-dir>/composition/`
 - Rendered video: `<output-dir>/<video-name>.mp4`
 - Format: [landscape / vertical / square] - [width]x[height], 30fps
-- Several formats: one timeline; the root carries `data-format`, set at render time (see "Several formats")
+- Several formats: one timeline; the root carries `data-format`, rewritten per format by the wrapper (see "Several formats")
 - Duration: [sum of measured scene durations]
 
 ## Source Material
@@ -136,11 +136,10 @@ The brief is the boundary: teaching content, steps, labels and audio levels belo
 ## Several formats
 
 One composition and one timeline serve every format; captions and chapters are shared.
-Give the root `data-composition-variables` with `{"format": "landscape"}` as the default.
-The render wrapper runs once per format with `--variables '{"format":"vertical"}'` and `--resolution portrait`.
-A small script at the top of the composition reads `window.__hyperframes.getVariables().format` and sets `data-format` on the root before layout.
-Lay each format out for its frame with per-format CSS (`[data-format="vertical"] .stage { ... }`), not by cropping.
-Preview stills and snapshots set the same attribute by hand.
+Author the root at landscape: `data-width="1920" data-height="1080"` (the wrapper needs both) and `data-format="landscape"`.
+For each format the render wrapper copies the composition to `work/formats/<format>/` and rewrites only the copy's root `data-width`, `data-height` and `data-format`; your composition is never edited.
+Lay each format out for its frame with per-format CSS (`[data-format="vertical"] .stage { ... }`), not by cropping; use JS that reads the root's `data-format` only if CSS can't do it.
+Preview stills and snapshots set the same three attributes by hand.
 
 ## Building the screens
 
