@@ -103,7 +103,7 @@ Every promise on a change card is pictured in its demo, and each change opens on
 - **Same screen, same camera.** Between steps on one screen, zoom and pan; fade or cut only when the screen changes.
 - **Always oriented.** "Step 2 of 4" (howto) or "2 of 3" (update), same place every time; not in a `quick-tip`, and not on a hook or title before the first step.
 - **Readable.** Anything the voice names is legible at the chosen zoom (zoom 1.5-2.5x on small controls); on-screen labels hold 1.5s settled; camera moves take 0.6-1.0s.
-- **Captions match the voice** verbatim, one phrase at a time, max 2 lines of ~42 characters, never over the highlight.
+- **Captions match the voice** verbatim, one phrase at a time, at most 37 characters per line and 2 lines (3 on vertical), each cue on screen at least 0.3s per word, never over the highlight.
 - **Works muted.** The first 3 seconds and every title or change card make sense with the sound off.
   A hook with music and no voice carries its point as on-screen text, and the first voiced line says what the video is about.
 - **No flashing.** Nothing flashes more than three times in any second, in any style: no white or black flash frames, no strobe (WCAG 2.3.1).
@@ -128,10 +128,11 @@ All four work in every mode; freeform direction ("calm like Apple support videos
 The voice leads.
 Generate it per scene straight into the composition: `npx hyperframes tts "<text>" --voice <voice> --output composition/assets/voice/scene-NN.wav` (`<voice>` = `--voice`, default `af_heart`; or any local TTS if that's unavailable); measure each clip and let the clips set the scene lengths.
 Transcribe the clips to catch mispronounced product names; fix by respelling the TTS input only.
+Kokoro inline IPA markup (`[word](/ipa/)`) does not work here: `npx hyperframes tts` feeds the text to kokoro-onnx, which reads the markup aloud as symbols (checked 2026-11-27 on the kokoro-onnx phonemizer, not through the CLI itself), so respell; revisit if Hyperframes moves to misaki.
 `npx hyperframes transcribe` overwrites `transcript.json` on every run: copy it to `work/tx/words-NN.json` after each clip.
 Narration is English; if the user asks for another language, check `npx hyperframes tts --list` for a matching voice, and if there is none, offer English narration with captions in their language.
-Music: none by default in `clean`, `friendly` and `quick-tip` (it hurts retention in teaching videos); with `--music`, and always in `release`, a quiet bed ducked under the voice (about 0.1 under narration, 0.3 without), never cut off abruptly.
-Use a bundled track; when none fits the mood, an Incompetech track (CC BY); generate one with MusicGen only when the user asks or Incompetech has nothing (`references/audio.md`, Music).
+Music: none by default in `clean`, `friendly` and `quick-tip`, to keep background audio at least 20 dB below the voice (WCAG 1.4.7) and the voice clear; with `--music`, and always in `release`, a quiet bed ducked under the voice (about 0.1 under narration, 0.3 without), never cut off abruptly.
+Use a bundled track; when none fits the mood, an Incompetech track (CC BY); no generated music (`references/audio.md`, Music).
 How-tos: SFX mainly confirm visible actions (a soft click per click, soft ticks on typing, one accent on the result).
 Updates: score it with high energy around the demos (a soft reveal hit, card sounds, tag ticks, a payoff (bells allowed), music up and beat-locked on the hook, cards and outro), clicks and typing inside the demos.
 The full sound effect library is fair game in both; never mask a narrated word.
@@ -179,7 +180,7 @@ Keep creation and rendering local; publishing or uploading needs a separate expl
 - **`captions.srt`:** the script phrases with their absolute times, even when captions are burned in.
 - **`chapters.txt`:** `00:00 Title` style, one line per step (`Step N: ...`) or change (`Change N: ...`), from the real scene start times.
 - **Gates:** fix any FAIL and re-render, never argue it, and quote every line in the report:
-  `uv run --project <skill-dir>/scripts <skill-dir>/scripts/video_gates.py <video-name>.mp4 --srt captions.srt` (no run of more than 3 blank frames; the video ends at most 1.4s after the last caption, 3.5s with `credits.txt`) and
+  `uv run --project <skill-dir>/scripts <skill-dir>/scripts/video_gates.py <video-name>.mp4 --srt captions.srt` (no run of more than 3 blank frames; caption lines of at most 37 characters, 2 lines or 3 with `--vertical`, 0.3s per word; the video ends at most 1.4s after the last caption, 3.5s with `credits.txt`) and
   `uv run --project <skill-dir>/scripts <skill-dir>/scripts/plan_gates.py showhow-plan.md --chapters chapters.txt --video <video-name>.mp4` (the rendered steps match the plan and each lasts its minimum).
 - **`showhow.md`:** the written companion. howto: "How to [task]", prerequisites, numbered steps with labels in bold, result, tip. update: "What's new in [version]", one short section per change with where to find it, then how to get it.
 - **`credits.txt`:** only when a bundled or Incompetech music track is used, an image or sound license asks for attribution (title, author, license, URL, one line each), or a third-party app's screens are rebuilt (its trademark line).
