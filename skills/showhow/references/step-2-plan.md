@@ -177,7 +177,7 @@ If a step's narration needs more than ~15s, the step is too big; split it.
 ## Audio planning
 
 - **Voice** leads. Everything else sits under it.
-- **Music**: none by default for `clean`, `friendly` and `quick-tip`; a quiet bed with `--music` (see `audio.md` for levels). `release` plans music louder on the hook, bridges and outro, ducked under the voice, with strong cues picked for the hook, change cards and outro.
+- **Music**: none by default for `clean`, `friendly` and `quick-tip`, except in `explainer` mode, where it is on (SKILL.md); a quiet bed with `--music` (see `audio.md` for levels). `release` plans music louder on the hook, bridges and outro, ducked under the voice, with strong cues picked for the hook, change cards and outro.
 - **SFX (howto)**: mainly for visible actions - a soft click on each click, soft key ticks on typing, one gentle accent on the final result.
 - **SFX (update)**: plan them around the demos - a soft hit on the hook reveal, card sounds as each change card arrives, a tick for each "New"/"Fixed" tag, a payoff on the outro (a bell is fine). Inside the UI demo, clicks and typing only.
 - The full library is available (see `audio.md`); note the moment and intent in the plan, not the filename.
