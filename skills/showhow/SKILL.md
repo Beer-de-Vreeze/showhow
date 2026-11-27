@@ -17,15 +17,24 @@ Options (flags or plain language):
 | `--style <name>` (alias `--tone`; see Styles) or freeform | `clean` for howto and general, `release` for update, `friendly` for explainer |
 | `--format landscape\|vertical\|square` | landscape (1920x1080; vertical 1080x1920, square 1080x1080), 30fps; `--format all` or a comma list (`landscape,vertical`) renders several; explainer defaults to all three |
 | `--audience <who>` | inferred |
-| `--theme <frame preset>` (`../hyperframes/assets/frame-presets/`) | product theme; general and explainer: the preset that fits the topic |
+| `--theme <frame preset>` (`assets/frame-presets/` here, then `../hyperframes/assets/frame-presets/`) | product theme; general: the preset that fits the topic; explainer: `showhow` |
 | `--voice <Kokoro id>` (`npx hyperframes tts --list`) | `af_heart` |
 | `--title <text>` | inferred |
 | `--duration <seconds>` | none: the narration sets the length; a typed value is the target the script is written to, within the limits below |
 | `--no-voice`, `--no-captions`, `--no-sfx` | all on |
 | `--music` / `--no-music` | music bed off for `clean`, `friendly`, `quick-tip`, on for `release` and `explainer`; `--no-music` wins |
 
+**Theme lookup order.**
+This is the one place the video's theme is resolved; the other files point here.
+The first line that applies wins.
+
+1. A brand kit (`--brand`, a separate ticket; not built yet).
+2. `--theme <name>`: the folder `<name>` in `assets/frame-presets/` here, else in `../hyperframes/assets/frame-presets/`.
+3. The product's own theme (howto and update).
+4. The mode default: `showhow` for explainer; for general, the preset that fits the topic.
+
 **Other inputs.** `install`: on Windows run `powershell -NoProfile -ExecutionPolicy Bypass -File <skill-dir>/scripts/install.ps1`, report the result, tell the user to restart their agent app (a running session keeps its old PATH), and stop; elsewhere say the installer is Windows-only, list what README.md "Install" lists, and stop.
-`options`: list the styles, the themes (folder names in `../hyperframes/assets/frame-presets/`) and the voices, each with its flag, and stop.
+`options`: list the styles, the themes (folder names in `assets/frame-presets/` here, `showhow` first, then those in `../hyperframes/assets/frame-presets/`) and the voices, each with its flag, and stop.
 `learn <output-dir>`: make no video; record lessons from that run (`references/house-style.md`, "`/showhow learn`") and stop.
 
 `<skill-dir>` is the folder holding this file (Claude Code prints it as "Base directory for this skill"); bundled files are in `assets/` and `scripts/`.

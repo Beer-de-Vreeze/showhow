@@ -94,7 +94,7 @@ State carries forward across the switch: the token copied on the outside page is
 Mixed videos keep the product's theme; rebuilt third-party screens keep their own look inside it.
 In `general` mode there is no product theme to read. Unless the user names brand colors or fonts:
 
-1. Browse `../hyperframes/assets/frame-presets/` (the table in `../hyperframes/references/look.md`) and pick the preset that fits the topic and audience (`blue-professional` -> calm and neutral, `capsule` -> warm).
+1. Browse `assets/frame-presets/` here and `../hyperframes/assets/frame-presets/` (the lookup order is in `SKILL.md`; the table in `../hyperframes/references/look.md`) and pick the preset that fits the topic and audience (`blue-professional` -> calm and neutral, `capsule` -> warm).
 2. Copy its `FRAME.md` to `<output-dir>/composition/frame.md` and take the video's `:root` colors and fonts from it; add the user's brand colors or fonts if given. Fonts that aren't bundled need `@font-face` files.
 
 If the presets aren't installed, choose a calm palette and an embeddable font pairing per `../hyperframes/references/look.md` and write it into the plan.
