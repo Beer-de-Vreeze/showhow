@@ -90,7 +90,12 @@
     }
 
     // 2D motion styles. Starting states (hidden paths, offset words) belong in CSS; these tweens only run the entrance.
+    // A missing plugin would leave a still frame with no error; name it instead.
+    const need = (plugin, fn) => {
+      if (typeof window[plugin] === "undefined") throw new Error(`showhowKit: ${fn} needs the ${plugin} loaded and registered`);
+    };
     function draw(t, sel, d, { ease = "none" } = {}) {
+      need("DrawSVGPlugin", "draw");
       const e = el(sel);
       tl.fromTo(e, { drawSVG: "0%", opacity: 1 }, { drawSVG: "100%", opacity: 1, duration: d, ease, immediateRender: false }, t);
     }
@@ -98,7 +103,7 @@
     // Call after document.fonts.ready: SplitText measures the lines. gap 0.15s = 5 frames at 30fps.
     function words(t, sel, { gap = 0.15, duration = 0.33 } = {}) {
       const e = el(sel);
-      if (typeof SplitText === "undefined") throw new Error("showhowKit: words needs the SplitText plugin loaded and registered");
+      need("SplitText", "words");
       const s = SplitText.create(e, { type: "words", mask: "words" });
       tl.fromTo(s.words, { yPercent: 110 }, { yPercent: 0, duration, ease: "power3.out", stagger: gap, immediateRender: false }, t);
     }
@@ -114,6 +119,7 @@
     // so a second morph continues instead of snapping back to the HTML shape. toShape is path data or a path's selector.
     const shapes = new Map();
     function morph(t, sel, toShape, d, { ease = "power2.inOut" } = {}) {
+      need("MorphSVGPlugin", "morph");
       const e = el(sel);
       const end = /^\s*[Mm]/.test(toShape) ? toShape : el(toShape).getAttribute("d"); // stored as path data, never "#circle"
       tl.fromTo(e, { attr: { d: shapes.get(e) ?? e.getAttribute("d") } }, { morphSVG: toShape, duration: d, ease, immediateRender: false }, t);
@@ -121,6 +127,7 @@
     }
 
     function along(t, sel, path, d, { ease = "power1.inOut", autoRotate = false } = {}) {
+      need("MotionPathPlugin", "along");
       const e = el(sel);
       el(path);
       const mp = { path, align: path, alignOrigin: [0.5, 0.5], autoRotate };

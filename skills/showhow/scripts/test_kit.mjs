@@ -82,4 +82,11 @@ kit.morph(4, "#path", "#circle", 1);
 kit.morph(5, "#path", "M0 0L3 3", 1);
 if (froms.at(-1).attr.d !== "M9 9L1 1") throw new Error(`morph after a selector target started from ${froms.at(-1).attr.d}`);
 expectThrow(() => kit.morph(6, "#path", "#missing", 1), "no element #missing");
+// Every plugin-backed helper fails loudly when its plugin is missing, like words() does, instead of a still frame.
+for (const [plugin, run] of [["DrawSVGPlugin", () => kit.draw(1, "#a", 1)], ["MorphSVGPlugin", () => kit.morph(1, "#path", "M0 0", 1)], ["MotionPathPlugin", () => kit.along(1, "#a", "#path", 1)]]) {
+  const saved = globalThis[plugin];
+  delete globalThis[plugin];
+  expectThrow(run, plugin);
+  globalThis[plugin] = saved;
+}
 console.log("ok");
