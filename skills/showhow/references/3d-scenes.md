@@ -25,8 +25,8 @@ Params: {"kind": "machine", "driver": 12, "idler": 24, "driven": 36}
 | Kind | What it builds | Status |
 |---|---|---|
 | `machine` | Gears, shafts, discs, springs and blade rows from `Params` numbers, moving by closed-form kinematics | `assets/scene3d/machine.js` |
-| `globe` | Natural Earth globe, highlighted country, great-circle route arcs | #24 |
-| `hero-number` | One big extruded 3D number | #24 |
+| `globe` | Natural Earth globe, highlighted country, great-circle route arcs, zoom to the region, match cut to the flat map | `assets/scene3d/globe.js` |
+| `hero-number` | One key figure as extruded 3D text | `assets/scene3d/hero-number.js` |
 
 A new kind is one row here, one entry in `SCENE3D_KINDS` in `scripts/plan_gates.py`, and one module in `assets/scene3d/` built on `scene3d.js`.
 
@@ -92,6 +92,50 @@ A new kind is one row here, one entry in `SCENE3D_KINDS` in `scripts/plan_gates.
   The two 3s stills must match pixel for pixel; any difference is hidden state.
 - Do it with `--no-browser-gpu` (SwiftShader) and with `--browser-gpu`, and render one video on one path only: the two paths differ slightly from each other.
 - Look at a frame sheet across the scene: teeth interleaved at the mesh points, labels clear of the object.
+
+## Globe
+
+`Params`:
+
+```
+{"kind": "globe", "country": "BRA", "route": [{"name": "Seville", "lat": 37.39, "lon": -5.98, "side": "right"}, {"name": "Rio de Janeiro", "lat": -22.91, "lon": -43.17, "side": "left"}]}
+```
+
+- `country` is an ISO 3166-1 code, alpha-3 or alpha-2 (`BRA`, `BR`), from the Natural Earth `ADM0_A3` and `ISO_A2_EH` columns; it fills in the accent colour over the first second.
+- `route` lists places in order; each pair of neighbours becomes one great-circle arc that draws on over 2 s.
+  The plan states every coordinate; nothing is geocoded.
+  `lat` and `lon` are exempt from the "numbers are spoken" half of P-params; any other number in `Params` still has to be narrated.
+  `side` (`left` or `right`) is optional and picks the label column.
+- A globe needs a `country` or a `route` of 2 or more places; `plan_gates.py` fails it otherwise.
+  Say in the narration that the arc is the shortest path if the route is not literally flown.
+- `focus` (`{lat, lon}`) overrides the centre the globe settles on; the default is the mean direction of the route, or of the country.
+- Avoid antipodal route pairs: they have no single shortest arc.
+- Data: `assets/scene3d/data/ne_110m_admin_0_countries.min.geojson`, Natural Earth 110m, public domain (see `data/README.md`).
+  Pass its URL to `buildGlobe`; the file is fetched, so serve it next to the composition.
+- The country borders are baked into one 6144 px equirectangular canvas texture (flat fills, no lighting), the highlight into a second one on a slightly larger shell whose opacity is a function of `t`.
+  Arcs are rebuilt from `t` each frame (draw-on range and lift), which stays pure because nothing is accumulated.
+- three-globe was not used: plain three.js on the scaffold is about 150 lines, and the library's arc animation runs on its own clock.
+
+### Zoom and the match cut
+
+- `globeTiming(P)` gives the beats: legs from 1.2 s, then a 2.5 s zoom to `ZOOM_END` while the globe settles on the centre, then the cut at `zoomEnd + 0.3 s` with a 0.4 s dissolve.
+- The camera is orthographic and looks at the globe straight on, so the globe's final frame is an azimuthal orthographic map: `orthoProject(place, centre)` in `globe-math.js` is `d3.geoOrthographic().rotate([-centre.lon, -centre.lat])`.
+- The 2D locator map lines up when it uses that projection with the same centre and radius `R_px = 0.4 * frameHeight * ZOOM_END`, and the arcs have settled onto the surface (their lift reaches 0 by the end of the zoom).
+- `flatMap(canvas)` draws exactly that map, route, markers and names; the fixture stacks it above the 3D canvas and fades it in over the cut.
+  A different `map` visual (an SVG or an image) has to use the same projection, centre and radius, or the cut jumps; overlay the last 3D frame and the first 2D frame to check.
+- Measured on the fixture: the frames at 6.5 s (3D) and 7.2 s (flat) differ in the labels, the title plate edge and the anti-aliasing of the lines.
+- A perspective camera would not match `geoOrthographic`; do not switch the camera for the zoom.
+
+## Hero number
+
+`Params`: `{"kind": "hero-number", "value": 1200}`.
+
+- The text is `String(value)`, so the screen shows the digits P-params checked are spoken.
+- `TextGeometry` from `three/addons/geometries/TextGeometry.js` with the `helvetiker_bold` typeface JSON that ships with three.js (MIT); `buildHeroNumber(stage, P, { fontUrl })` takes another converted font.
+- The number swings in over 1.6 s with a slight sway after, all from `t`.
+- Use it for one number per scene, 1 to 8 glyphs; longer strings are heavy geometry and unreadable.
+
+Fixtures: `scripts/fixtures/globe-route/` and `scripts/fixtures/hero-number/`; both follow the gear-train recipe for the determinism check.
 
 ## Machine effects: cutaway, exploded view, slow motion, airflow
 

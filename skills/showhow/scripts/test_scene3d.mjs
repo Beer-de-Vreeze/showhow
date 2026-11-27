@@ -1,6 +1,7 @@
 // Self-check for the scene3d pure maths. Run: node <skill-dir>/scripts/test_scene3d.mjs
 import assert from "node:assert/strict";
 import { hash, timeMap, layoutLabels, labelEdges } from "../assets/scene3d/scene3d-math.js";
+import { greatCircle } from "../assets/scene3d/globe-math.js";
 import { gearOutline, meshAngle, crankSlider, explodeAmount, explodeOffsets, flowPoint } from "../assets/scene3d/machine-math.js";
 
 // hash: same input, same value, inside [0, 1), and spread out.
@@ -67,6 +68,17 @@ for (let k = 0; k < 16; k++) {
   assert.ok(Math.abs(Math.sin(rod) * 3.5 - Math.sin(a)) < 1e-9);
 }
 assert.ok(Math.abs(crankSlider(0, 1, 3.5).x - 4.5) < 1e-9 && Math.abs(crankSlider(Math.PI, 1, 3.5).x - 2.5) < 1e-9);
+
+// Great circle: the midpoint of Seville -> Rio de Janeiro equals the standard midpoint formula (computed here, from spherical trig).
+{
+  const rad = (d) => (d * Math.PI) / 180, deg = (r) => (r * 180) / Math.PI;
+  const [la1, lo1, la2, lo2] = [37.39, -5.98, -22.91, -43.17];
+  const bx = Math.cos(rad(la2)) * Math.cos(rad(lo2 - lo1)), by = Math.cos(rad(la2)) * Math.sin(rad(lo2 - lo1));
+  const latM = deg(Math.atan2(Math.sin(rad(la1)) + Math.sin(rad(la2)), Math.hypot(Math.cos(rad(la1)) + bx, by)));
+  const lonM = lo1 + deg(Math.atan2(by, Math.cos(rad(la1)) + bx));
+  const mid = greatCircle({ lat: la1, lon: lo1 }, { lat: la2, lon: lo2 }, 0.5);
+  assert.ok(Math.abs(mid.lat - latM) < 0.01 && Math.abs(mid.lon - lonM) < 0.01, JSON.stringify([mid, latM, lonM]));
+}
 
 // Exploded view: staggered ease per part index; worked values from at 8, stagger 0.2, dur 1.
 const ex = { at: 8, stagger: 0.2, dur: 1 };
