@@ -3,8 +3,7 @@
 ## Validate
 
 ```bash
-cd <output-dir>/composition
-npx hyperframes check   # the single pre-render gate - fix every error it reports
+npx hyperframes check composition   # from <output-dir>; the single pre-render gate - fix every error it reports
 ```
 
 Fix all errors, including WCAG contrast failures (they gate as errors).
@@ -30,13 +29,13 @@ Other escape hatches that exist: `data-layout-allow-overflow` (intentional ellip
 Then capture key frames and look at them:
 
 ```bash
-npx hyperframes snapshot   # PNG key frames
+npx hyperframes snapshot composition   # PNG key frames
 ```
 
 Snapshot every ring moment and every result, in one call, into `work/snap/`:
 
 ```bash
-npx hyperframes snapshot --no-end --describe false -o ../work/snap --at 4.5,16.5,21.5,24
+npx hyperframes snapshot composition --no-end --describe false -o work/snap --at 4.5,16.5,21.5,24
 ```
 
 Read the contact sheets it writes and **describe every frame in one sentence** (what is on screen, what the viewer should look at) before you judge any of them; a frame you can't describe, or that reads as an empty slide, is a finding.
@@ -58,7 +57,7 @@ Fix, re-run `check`, and re-snapshot only the frames you changed.
 ## Preview
 
 ```bash
-npx hyperframes preview
+npx hyperframes preview composition
 ```
 
 Tell the user the preview is running and give them the localhost URL.
@@ -102,7 +101,7 @@ When the composition tweens `height`, `width`, `top`/`left` or padding, add `--n
 **Check the mp4, not only the snapshots.** Pull frames from the rendered file at every ring and result moment into one sheet and look at it:
 
 ```bash
-uv run --project <skill-dir>/scripts <skill-dir>/scripts/frame_sheet.py ../<video-name>.mp4 --overlays ../work/rings.overlays.json --at 5.5,88 -o ../work/check.jpg
+uv run --project <skill-dir>/scripts <skill-dir>/scripts/frame_sheet.py <video-name>.mp4 --overlays work/rings.overlays.json --at 5.5,88 -o work/check.jpg
 ```
 
 Add `--crop x,y,w,h` (video pixels) to zoom every frame on one region when a ring is small.
@@ -117,8 +116,8 @@ Loudness is already normalised by the wrapper; earshot is for timing and masking
 Pass every SFX `data-start` from `index.html` as cues, so it reports where each one actually sounds:
 
 ```bash
-earshot measure ../<video-name>.mp4
-earshot timeline ../<video-name>.mp4 --cues "2.6,2.8,9.4" --out ../work/timeline.json
+earshot measure <video-name>.mp4
+earshot timeline <video-name>.mp4 --cues "2.6,2.8,9.4" --out work/timeline.json
 ```
 
 For a 45 s video, `measure` takes about 20 s and `timeline` about 50 s (most of it model loading), so run both once per render, not per fix.
