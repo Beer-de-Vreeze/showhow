@@ -3,16 +3,15 @@
 A 12-second `scene3d` globe: Brazil highlighted, a great-circle arc from Seville to Rio de Janeiro drawing on from 1.2 s, a zoom to the region and a match cut to the flat locator map at 6.7 s.
 Render it after changing `assets/scene3d/` or upgrading HyperFrames or three.js.
 
-From `skills/showhow/scripts`:
+From `skills/showhow/scripts`, stage a copy with `stage.py` (theme `showhow`) and snapshot it, the first and last time twice:
 
 ```bash
-mkdir -p fixtures/globe-route/assets/scene3d && cp -r ../assets/scene3d/* fixtures/globe-route/assets/scene3d/
-mkdir -p fixtures/globe-route/assets/gsap && (cd "$(mktemp -d)" && npm pack gsap@3.14.2 && tar xzf gsap-3.14.2.tgz && cp package/dist/gsap.min.js "$OLDPWD/fixtures/globe-route/assets/gsap/")
-npx hyperframes snapshot fixtures/globe-route --at 3,10,3 --no-end --no-browser-gpu -o out/globe-route
+uv run --project . python check_fixture.py globe-route
 ```
+
+It copies the fixture to `out/globe-route/composition`, stages it, diffs the first and last still (0 changed pixels, or it exits 1) and keeps the stills in `out/globe-route/stills`.
 
 Expect:
 
-- The two 3s stills identical pixel for pixel (diff them; the 10s still must differ).
 - At 6.5s (3D) and 7.2s (flat) the same map: coastlines, Seville and Rio markers and the route in the same places.
 - Labels fade in at the ends of the legs, left and right of the globe, and are gone once the zoom starts.

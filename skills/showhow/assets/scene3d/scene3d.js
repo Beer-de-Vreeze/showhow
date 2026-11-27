@@ -1,6 +1,6 @@
 // showhow scene3d scaffold: the base every 3D kind (machine, globe, hero-number) builds on.
 // Seek wiring, stage with camera presets, flat look, glTF model loading, projected labels (references/3d-scenes.md).
-// Needs an import map for "three" and "three/addons/" (see scripts/fixtures/gear-train/index.html).
+// Needs the import map for "three" and "three/addons/" and the theme tokens, both written by scripts/stage.py.
 // Rule: render(t) sets every transform from t; nothing here reads a clock or keeps per-frame state.
 import * as THREE from "three";
 import { LineSegments2 } from "three/addons/lines/LineSegments2.js";
@@ -14,14 +14,19 @@ export { THREE };
 
 // ---- Theme: colours come from the composition's CSS variables, never from this code ----------
 
-// --paper (ground), --ink (lines, text), --accent (the one part the narration names), --muted. The values below
-// are the `showhow` frame preset, used only when a variable is missing. Everything else is a tint of these.
-export const theme = { paper: "#F3ECDD", ink: "#23201B", accent: "#0F6E6A", muted: "#5B5547" };
+// --paper (ground), --ink (lines, text), --accent (the one part the narration names), --muted, and --font-body
+// (canvas text) as `font`: the token set stage.py writes into assets/theme.css. Everything else is a tint of these.
+export const theme = {};
 
-// Reads the variables as the element sees them (so a brand kit or a scene override wins); createStage calls it.
+// Reads the variables as the element sees them (so a scene override wins); createStage calls it.
+// A missing variable fails the build: the composition was not staged, and a guessed colour would ship.
 export function readTheme(el) {
   const cs = getComputedStyle(el);
-  for (const k of Object.keys(theme)) theme[k] = cs.getPropertyValue(`--${k}`).trim() || theme[k];
+  for (const k of ["paper", "ink", "accent", "muted", "font-body"]) {
+    const v = cs.getPropertyValue(`--${k}`).trim();
+    if (!v) throw new Error(`scene3d: --${k} is not set; run scripts/stage.py on the composition`);
+    theme[k === "font-body" ? "font" : k] = v;
+  }
   return theme;
 }
 

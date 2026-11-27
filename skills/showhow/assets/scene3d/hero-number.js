@@ -4,8 +4,9 @@ import { THREE, part, ease, lerp, theme, glyphOffsets } from "./scene3d.js";
 import { FontLoader } from "three/addons/loaders/FontLoader.js";
 import { TextGeometry } from "three/addons/geometries/TextGeometry.js";
 
-// A typeface JSON shipped with three.js (MIT); swap the URL for another converted font.
-export const FONT_URL = "https://cdn.jsdelivr.net/npm/three@0.184.0/examples/fonts/helvetiker_bold.typeface.json";
+// A typeface JSON from three's own package (examples/fonts, MIT), staged beside scene3d by stage.py; pass fontUrl
+// for another converted font.
+export const FONT_URL = new URL("../three/examples/fonts/helvetiker_bold.typeface.json", import.meta.url).href;
 
 // Fill defaults to the theme accent: the number is the one thing the narration points at.
 export async function buildHeroNumber(stage, P, { fontUrl = FONT_URL, color = theme.accent, width = 14, gap = 0.3 } = {}) {
