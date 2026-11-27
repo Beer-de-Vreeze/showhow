@@ -117,7 +117,7 @@ def main() -> None:
                      '--font-display: "Inter", serif;', '--font-body: "Inter", sans-serif;'):
             assert decl in css, f"missing {decl} in brand theme.css:\n{css}"
 
-        # Stock Hyperframes presets (frontmatter copied from the real ones: no accent key, no font files).
+        # Stock Hyperframes presets (fixtures mimic their key shape: no accent key, no font files).
         sys_stack = "system-ui, sans-serif;"
         for name, decls in {
             "stock-blue-professional": ("--paper: #fdfae7;", "--ink: #111111;", "--accent: #1e2bfa;", "--muted: #6b6b6b;",
