@@ -8,7 +8,7 @@ Reused from `general.md` as they are:
 - Sources, in order of trust, and "Never invent a label" (Step 1: Gather the facts).
 - Topic image order and licensing, credits, and the "Shown as of" note for rebuilt third-party screens.
 - Schematics for mechanisms, the 3D rule (never for UI, screens or charts), and honest charts in motion.
-- The design system: pick a frame preset that fits the topic and copy its `FRAME.md` into `composition/frame.md`.
+- The design system: the theme comes from the lookup order in `SKILL.md`, which defaults to the bundled `showhow` preset; copy its `FRAME.md` into `composition/frame.md`.
 
 What this file replaces: the step shape, the counters and the "Now try it" ending.
 
