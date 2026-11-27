@@ -22,6 +22,9 @@ Levels with narration:
 | SFX accents in `release` (reveals, change cards, payoffs) | 0.55-0.8 | Between narration lines, or at most 0.5 under the voice |
 | Final result accent | 0.5-0.65 | One per video |
 
+Check the 20 dB rule with numbers, not the table: measure a voice clip and the track (`ffmpeg -i <file> -af ebur128 -f null -`, the last `I:`), then pick the bed volume `10 ^ ((voice - music - 20) / 20)`.
+Measured 2026-11-27: Kokoro `af_heart` clips sit near -22 LUFS and the bundled tracks near -14 LUFS, so a bed under the voice needs about 0.035, well below the 0.08-0.14 above (which leaves only 12-16 dB); `explainer` and any style that keeps the bed under narration use the measured value.
+
 ---
 
 ## Audio-reactive visuals

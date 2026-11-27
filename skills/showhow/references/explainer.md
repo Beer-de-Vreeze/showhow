@@ -22,6 +22,8 @@ There are two inputs.
 - **A topic** gets a drafted script under the script rules in `references/step-2-plan.md`, every fact tied to a source in `work/sources.md`.
   Write `## Script source` as `drafted`, show the script, and **stop 1**: wait for the user's approval before building anything.
 
+For the Step 1 gate, answer the howto rubric as `general.md` adapts it for a topic (what the viewer will understand, who they are, the points instead of steps, the parts, the style) in `work/inspect.md`; `step-1-inspect.md` has no explainer rubric of its own.
+
 A fact you can't source is written `[NEED: <what is missing>]` in the script, never guessed.
 `plan_gates.py` fails P-need while any `[NEED` is left, so the video can't render with a hole in it; ask the user to fill each one.
 
@@ -82,7 +84,8 @@ Other modes keep "render without waiting".
   `uv run --project <skill-dir>/scripts <skill-dir>/scripts/render.py composition <video-name>.mp4 --work work --format <formats> --prepare-only`.
 - **Command,** once per format, with the settled time of each scene in order (seconds):
   `npx -y hyperframes@0.9.85 snapshot work/formats/<format> --no-end --describe false --at <t1>,<t2>,... -o work/preview/<format>`.
-  It writes `frame-00-at-<t1>s.png`, `frame-01-at-<t2>s.png` and so on; rename them in order to `scene-01.png`, `scene-02.png`, then delete `contact-sheet.jpg`.
+  It writes `frame-00-at-<t1>s.png`, `frame-01-at-<t2>s.png` and so on; rename them in order to `scene-01.png`, `scene-02.png` (sort by the frame number: `frame-10` sorts before `frame-2` as text), then look at the contact sheets (`contact-sheet.jpg`, or `contact-sheet-1.jpg`, `-2.jpg` past nine frames) and delete them.
+- **Captions and the still:** end each scene's last cue after the voice and its 0.3 s per word, and give the scene enough hold that the still lands after the cue; a cue held to the scene's end leaves no caption-free moment.
 - **Approval:** list the stills by scene and format, say what each shows in one sentence, and stop.
   A rejected still means fix the composition, re-run `check`, redo only the stills that changed and ask again.
   Render only after the user approves.

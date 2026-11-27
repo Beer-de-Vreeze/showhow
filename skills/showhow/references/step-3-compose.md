@@ -43,6 +43,7 @@ Captions show the script text, not the transcription.
 Get word timings by transcribing each narration clip (`npx hyperframes transcribe`, see `media-use`) and align the script's phrases to them.
 If transcription is unavailable, spread each scene's phrases evenly across its clip duration.
 Split phrases so each cue has lines of at most 37 characters, 2 lines (3 on vertical), and stays on screen at least 0.3s per word; Step 4's G-captions gate checks it.
+Kokoro speaks about 3 words a second, faster than 0.3s per word, so one-line cues that follow the voice phrase by phrase come out too short: put two phrases in one two-line cue, and let a scene's last cue run on into the hold.
 Keep the phrase list with timings; Step 4 writes it to `captions.srt`.
 
 With `--no-voice`, time the captions by reading speed (about 0.35s per word, min 1.5s per phrase) and let that set scene durations.
@@ -140,6 +141,9 @@ Author the root at landscape: `data-width="1920" data-height="1080"` (the wrappe
 For each format the render wrapper copies the composition to `work/formats/<format>/` and rewrites only the copy's root `data-width`, `data-height` and `data-format`; your composition is never edited.
 Lay each format out for its frame with per-format CSS (`[data-format="vertical"] .stage { ... }`), not by cropping; use JS that reads the root's `data-format` only if CSS can't do it.
 Preview stills and snapshots set the same three attributes by hand.
+Only the root `index.html` is rewritten, so keep the scenes in it (a sub-composition's own `data-width`/`data-height` stays landscape; untested).
+A 3D canvas is sized in pixels, so size it from its container at build time (`clientWidth`, `clientHeight`) and pass those to `createStage`; widen `viewHeight` on narrow frames so the object fits (`references/3d-scenes.md`).
+Vertical: keep captions clear of the right-hand app rail (`check` warns `outside_safe_zone`): a caption box inset more on the right than the left, about 38px type.
 
 ## Building the screens
 
@@ -230,7 +234,7 @@ Dim only the content area under a sheet, not the header.
 When `credits.txt` has lines (bundled or Incompetech music, CC BY images or sounds, the trademark line for a rebuilt third-party app from general.md), show them in the video too, so the credit travels with the file wherever it is shared.
 - Short form, one line per source: `Music: Sascha Ende (ende.app), CC BY 4.0`, `Photo: <author>, <license>`. Two lines at most; join more with ` · `.
 - On the outro, from the moment it settles to the last frame, at least 2.5s.
-- Bottom edge inside the safe area, centered or aligned with the outro text, in the theme's secondary text color at about 2% of the frame height (20-22px at 1080p), no plate.
+- Bottom edge inside the safe area, centered or aligned with the outro text, in the theme's secondary text color at 28px on a 1080px short side (`check`'s type floor; smaller text warns `text_below_floor`), no plate.
 - No caption on screen at the same time; end the last caption before the credit line appears.
 - It fades in with the outro and gets no motion or sound of its own.
 
