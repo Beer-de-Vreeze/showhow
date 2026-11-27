@@ -47,7 +47,7 @@ Get word timings by transcribing each narration clip (`npx hyperframes transcrib
 If transcription is unavailable, spread each scene's phrases evenly across its clip duration.
 Split phrases so every cue keeps the "Captions match the voice" law in SKILL.md (line length, line count, reading time); Step 4's G-captions gate checks it.
 Kokoro speaks about 3 words a second, faster than that reading time, so one-line cues that follow the voice phrase by phrase come out too short: put two phrases in one two-line cue, and let a scene's last cue run on into the hold.
-Break a two-line cue where its lines come out closest in length, not by filling line 1 to 37 characters: a greedy fill leaves one orphan word ("side.") on line 2, and G-captions does not catch it.
+Break a two-line cue where its lines come out closest in length, not by filling line 1 to the limit: a greedy fill leaves one orphan word ("side.") on line 2, and G-captions does not catch it.
 Keep the phrase list with timings; Step 4 writes it to `captions.srt`.
 
 With `--no-voice`, time the captions by reading speed (about 0.35s per word, min 1.5s per phrase) and let that set scene durations.
