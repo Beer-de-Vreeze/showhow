@@ -171,12 +171,14 @@ def main() -> None:
         assert (fcomp / "index.html").read_bytes() == original, "the user's composition must not be edited"
         assert sorted(p.name for p in base.parent.iterdir()) == ["video-landscape.mp4", "video-vertical.mp4"]
 
-        # single_format_keeps_name: one format writes <video-name>.mp4 from a square copy.
+        # single_format_is_named: --format square alone still writes <video-name>-square.mp4 and logs to work/square,
+        # so re-running one failed format of an "all" run lands next to the others.
         one_dir = root / "single"
         one_dir.mkdir()
         one = PerOutputRunner()
         render_formats(fcomp, one_dir / "video.mp4", root / "swork", parse_formats("square"), run=one)
-        assert [p.name for p in one_dir.iterdir()] == ["video.mp4"] and len(one.calls) == 1
+        assert [p.name for p in one_dir.iterdir()] == ["video-square.mp4"] and len(one.calls) == 1
+        assert (root / "swork" / "square" / "render.log").is_file()
         assert one.roots[0] == ('data-width="1080"', 'data-height="1080"', 'data-format="square"'), one.roots
 
         # root_without_size_fails: nothing to rewrite means a clear error and no render.
@@ -191,8 +193,12 @@ def main() -> None:
         fdir = root / "fail"
         fdir.mkdir()
         bad_run = PerOutputRunner(fail=("vertical",))
-        expect_exit(lambda: render_formats(fcomp, fdir / "video.mp4", root / "fwork", parse_formats("landscape,vertical"), run=bad_run), "vertical")
+        normalised: list[tuple[str, Path]] = []
+        expect_exit(lambda: render_formats(fcomp, fdir / "video.mp4", root / "fwork", parse_formats("landscape,vertical"), run=bad_run,
+                                           after=lambda o, w: normalised.append((o.name, w))), "vertical")
         assert (fdir / "video-landscape.mp4").is_file() and not (fdir / "video-vertical.mp4").exists()
+        # format_normalised_as_it_finishes: the kept landscape file is loudness-normalised even though vertical failed.
+        assert normalised == [("video-landscape.mp4", root / "fwork" / "landscape")], normalised
         assert "chrome crashed" in (root / "fwork" / "vertical" / "render.log").read_text(encoding="utf-8")
         assert parse_formats("all") == ["landscape", "vertical", "square"]
         expect_exit(lambda: parse_formats("wide"), "unknown format")

@@ -10,11 +10,12 @@ tail on failure.
       <output-dir>/composition <output-dir>/<video-name>.mp4 --work <output-dir>/work [--no-fast-capture] [--no-loudnorm] [-- --docker --quality high]
 
 --format: one render per format, each to <video-name>-<format>.mp4 (landscape 1920x1080,
-vertical 1080x1920, square 1080x1080); a single format keeps <video-name>.mp4. Each format renders
+vertical 1080x1920, square 1080x1080), also when only one is given. Each format renders
 a copy of the composition in <work>/formats/<format>/ whose root data-width, data-height and
 data-format are rewritten; the original is never edited, and CSS keys layout off
 [data-format="vertical"]. The root needs data-width and data-height. A failing format is named and
-exits non-zero; formats that rendered are kept. Without --format the composition renders as is.
+exits non-zero; formats that rendered are kept, each normalised as it finished. Without --format
+the composition renders as is.
 
 --prepare-only (with --format): write the per-format copies and stop; no render, no loudnorm.
 
@@ -198,17 +199,21 @@ def render_formats(
     fast_capture: bool = True,
     extra: list[str] | None = None,
     run: Callable[[list[str]], tuple[int, str]] = run_cli,
+    after: Callable[[Path, Path], None] | None = None,
 ) -> list[Path]:
-    """One render per format; a failed format is named at the end and never deletes the ones that worked."""
+    """One render per format, each to <stem>-<format>; `after(mp4, work)` (loudnorm) runs as each one finishes,
+    so a later failed format never leaves the earlier ones un-normalised. Failures are named at the end."""
     done: list[Path] = []
     failed: list[str] = []
     for f in formats:
-        out = output if len(formats) == 1 else output.with_name(f"{output.stem}-{f}{output.suffix}")
+        # Always suffixed, so re-running one failed format of an "all" run lands next to the others.
+        out = output.with_name(f"{output.stem}-{f}{output.suffix}")
         try:
             copy = work / "formats" / f
             size_copy(composition, copy, f)
-            render(copy, out, work if len(formats) == 1 else work / f,
-                   fast_capture=fast_capture, extra=extra, run=run)
+            render(copy, out, work / f, fast_capture=fast_capture, extra=extra, run=run)
+            if after:
+                after(out, work / f)
             done.append(out)
         except SystemExit as e:
             failed.append(f); why = str(e).splitlines()[0]
@@ -245,13 +250,12 @@ def main() -> None:
         render(a.composition, a.output, a.work, fast_capture=not a.no_fast_capture, extra=extra)
         outs = [(a.output, a.work)]
     else:
-        formats = parse_formats(a.format)
-        # A failed format exits here; the ones that worked stay on disk as rendered, un-normalised.
-        done = render_formats(a.composition, a.output, a.work, formats, fast_capture=not a.no_fast_capture, extra=extra)
-        outs = [(o, a.work if len(done) == 1 else a.work / f) for o, f in zip(done, formats)]
+        # Each format is normalised as it finishes; a failed format exits here and the others stay done.
+        render_formats(a.composition, a.output, a.work, parse_formats(a.format), fast_capture=not a.no_fast_capture,
+                       extra=extra, after=None if a.no_loudnorm else normalize_loudness)
+        return
     if not a.no_loudnorm:
-        for o, w in outs:
-            normalize_loudness(o, w)
+        normalize_loudness(a.output, a.work)
 
 
 if __name__ == "__main__":
