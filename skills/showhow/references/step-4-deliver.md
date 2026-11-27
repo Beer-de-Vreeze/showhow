@@ -213,6 +213,7 @@ One line per scene group, starting at `00:00`, in the YouTube chapter format (al
 ```
 
 Use the measured scene start times from the render.
+An update names its changes `Change N - <what changed>` (`00:12 Change 1 - Search by invoice number`), and a general task video its steps `Step N` or `Point N`; `plan_gates.py --chapters` counts those titles.
 
 ## Write credits.txt
 
