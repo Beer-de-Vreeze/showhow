@@ -5,8 +5,9 @@
 from plan_gates import check_plan, check_render, parse_chapters, parse_plan
 
 
-def scene(n: int, name: str, secs: float, counter: str = "none", action: str = "none") -> str:
-    return f"### Scene {n} - {name} - {secs}s\nCounter: {counter}\nAction: {action}\nResult: x\n\n"
+def scene(n: int, name: str, secs: float, counter: str = "none", action: str = "none", on_screen: str = "", narration: str = "") -> str:
+    extra = (f"On screen: {on_screen}\n" if on_screen else "") + (f"Narration: {narration}\n" if narration else "")
+    return f"### Scene {n} - {name} - {secs}s\nCounter: {counter}\nAction: {action}\nResult: x\n{extra}\n"
 
 
 def plan(mode: str, scenes: str, preset: str = "clean") -> str:
@@ -62,6 +63,15 @@ def main() -> None:
     assert chapters[4] == ("Step 4: Create API token", 2) and abs(chapters[-1][1] - 9.5) < 1e-9, chapters
     name, ok, msg = check_render(parse_plan(good), chapters)
     assert name == "P-render" and not ok and "10 rendered steps vs 2 planned" in msg and "'Step 4: Create API token' 2s" in msg, msg
+
+    # P-described: on-screen numbers and bold labels must be spoken in the same scene (WCAG 1.2.5).
+    spoken = plan("howto", scene(1, "Outcome", 4, on_screen="**Export**, 40×", narration="click **Export** to speed it up 40 times"))
+    assert verdicts(spoken)["P-described"], check_plan(parse_plan(spoken))
+    silent = plan("howto", scene(1, "Outcome", 4) + scene(2, "Heat", 5, on_screen="1,700 °C", narration="it gets very hot"))
+    name, ok, msg = [r for r in check_plan(parse_plan(silent)) if r[0] == "P-described"][0]
+    assert not ok and "scene 2" in msg and "1700" in msg, msg
+    # Backwards compatibility: no On screen: field means nothing to check (existing plans above).
+    assert "P-described" not in verdicts(good)
 
     for broken in ("no mode here", "## Mode\nhowto\n\n## Storyboard\nnothing\n"):
         try:
