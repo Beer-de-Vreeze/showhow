@@ -6,3 +6,7 @@ __pycache__/
 skills/showhow/scripts/fixtures/kit-demo/assets/kit/
 skills/showhow/scripts/fixtures/kit-demo/.hyperframes/
 skills/showhow/scripts/out/
+
+# gear-train fixture: scene3d is copied in before each run
+skills/showhow/scripts/fixtures/gear-train/assets/
+skills/showhow/scripts/fixtures/gear-train/.hyperframes/

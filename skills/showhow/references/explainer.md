@@ -56,8 +56,9 @@ Parallax or other decorative motion is for the intro only; it never competes wit
 | `map` | Where something is | Static map with a labelled locator for each place named |
 | `photo` | The real thing | A licensed photo (`general.md`), cropped or slowly zoomed to the part being discussed |
 | `card` | One number, name or quote | Big text, one idea, held until the sentence ends |
+| `scene3d` | Something whose shape is the point: a working machine, a globe, a hero number | One 3D stage per video, reused across scenes; `Params:` names the `kind` and its numbers, or a `model` (`references/3d-scenes.md`) |
 
-Later releases add rows here (2D motion styles, cutaway, globe, hero number); `VISUALS` in `scripts/plan_gates.py` is the single list the gate checks against, so a new type is one row here and one entry there.
+Later releases add rows here (2D motion styles); `VISUALS` in `scripts/plan_gates.py` is the single list the gate checks against, so a new type is one row here and one entry there.
 A scene with no voice (a title, a hold) needs no `Visual:`.
 Every fact shown in a visual is also spoken in that scene (P-described).
 
@@ -79,6 +80,7 @@ On top of `references/step-2-plan.md`:
 - **P-visual:** every voiced scene has exactly one known `Visual:`; an unknown type is named in the failure.
 - **P-time:** under 180s; a total outside 60-120s passes with a warning.
 - **P-end:** the last scene before the outro is a recap.
+- **P-params:** a `scene3d` scene has a known `Params.kind` or a `Params.model`, and every number in its `Params:` is spoken in the narration.
 - **P-described:** as in every mode.
 - There is no P-steps or P-action: explainers have no counters.
 

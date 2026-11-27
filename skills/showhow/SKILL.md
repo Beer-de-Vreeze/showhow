@@ -97,7 +97,7 @@ Every promise on a change card is pictured in its demo, and each change opens on
 No step counter; chapters per section.
 Target 60-120s, hard limit 180s.
 
-**Gate:** `uv run --project <skill-dir>/scripts <skill-dir>/scripts/plan_gates.py showhow-plan.md` passes (explainer: P-need, P-visual, P-time, P-end; every mode: including P-described: every number and bold label in a scene's `On screen:` line is also spoken in that scene's narration); fix the plan, never argue a FAIL.
+**Gate:** `uv run --project <skill-dir>/scripts <skill-dir>/scripts/plan_gates.py showhow-plan.md` passes (explainer: P-need, P-visual, P-time, P-end, P-params; every mode: including P-described: every number and bold label in a scene's `On screen:` line is also spoken in that scene's narration); fix the plan, never argue a FAIL.
 
 ## Teaching laws
 
