@@ -2,23 +2,13 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <!-- three.js pinned, loaded as ES modules the way the HyperFrames registry's 3D blocks load it. -->
-    <script type="importmap">
-      {
-        "imports": {
-          "three": "https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js",
-          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"
-        }
-      }
-    </script>
     <style>
-      /* The theme: scene3d reads --paper, --ink, --accent (the showhow frame preset) and tints everything from them. */
-      :root, #root { --paper: #F3ECDD; --ink: #23201B; --accent: #0F6E6A; --muted: #5B5547; }
+      /* The theme (assets/theme.css) comes from stage.py; this sheet only lays the fixture out. */
       html, body { margin: 0; background: var(--paper); }
-      #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: var(--paper); font-family: "Segoe UI", system-ui, sans-serif; }
+      #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: var(--paper); font-family: var(--font-body); }
       #stage, #flat { position: absolute; inset: 0; width: 1920px; height: 1080px; }
       #flat { opacity: 0; }
-      #title { position: absolute; left: 150px; top: 56px; padding: 8px 20px; border-radius: 10px; background: var(--paper); font-size: 44px; font-weight: 700; color: var(--ink); }
+      #title { position: absolute; left: 150px; top: 56px; padding: 8px 20px; border-radius: 10px; background: var(--paper); font-family: var(--font-display); font-size: 48px; font-weight: 700; color: var(--ink); }
       .s3d-leaders { position: absolute; inset: 0; pointer-events: none; }
       .s3d-leaders line { stroke: var(--ink); stroke-width: 2.5; }
       .s3d-leaders circle { fill: var(--accent); stroke: var(--ink); stroke-width: 2; }
@@ -33,7 +23,7 @@
       <canvas id="flat" width="1920" height="1080"></canvas>
       <div id="title">Seville to Rio de Janeiro</div>
     </div>
-    <script src="assets/gsap/gsap.min.js"></script><!-- local GSAP (README), never a CDN at render time -->
+    <script src="assets/gsap/gsap.min.js"></script><!-- local GSAP, staged by stage.py -->
     <script>
       // HyperFrames' contract wants a registered timeline; the 3D frame itself is drawn from hf-seek.
       window.__timelines = window.__timelines || {};

@@ -7,9 +7,7 @@ Each one is a kit helper (`assets/kit/showhow-kit.js`) over a GSAP plugin; the e
 ## Setup
 
 - GSAP and its plugins (DrawSVG, MorphSVG, SplitText, MotionPath) are free for commercial use since 2025-04-30.
-- Load them as local files from the npm `gsap` package (`dist/*.min.js` copied into `composition/assets/gsap/`), never a CDN at render time.
-  From `<output-dir>` in PowerShell:
-  `$t = New-Item -ItemType Directory -Force work/gsap-pkg; npm pack gsap@3.14.2 --pack-destination $t; tar -xzf "$t/gsap-3.14.2.tgz" -C $t; New-Item -ItemType Directory -Force composition/assets/gsap | Out-Null; 'gsap','DrawSVGPlugin','MorphSVGPlugin','SplitText','MotionPathPlugin' | ForEach-Object { Copy-Item "$t/package/dist/$_.min.js" composition/assets/gsap/ }`
+- Run `stage.py` (`step-3-compose.md`): it puts them in `composition/assets/gsap/` as local files; load them with `<script src="assets/gsap/<name>.min.js">`, never a CDN.
 - Register them once in `index.html`: `gsap.registerPlugin(DrawSVGPlugin, MorphSVGPlugin, SplitText, MotionPathPlugin)`.
 - Follow the kit rules in `step-3-compose.md`: one `fromTo` per element with `immediateRender:false`, starting states in CSS, measure by element after `document.fonts.ready`.
 - Motion earns its place: it shows the thing the sentence says, slowly enough to follow, and nothing moves for decoration.

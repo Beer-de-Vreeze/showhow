@@ -2,7 +2,7 @@
 
 A `scene3d` visual is one 3D stage per video, built in three.js and reused across scenes, so viewers see one consistent object.
 Use it only when the shape is the point (`general.md`, "3D when the shape is the point"); never for UI, screens or charts.
-The code lives in `assets/scene3d/`; copy that folder into the project's `assets/scene3d/` like the kit.
+The code lives in `assets/scene3d/`; `stage.py` (`step-3-compose.md`) puts it in the composition with three.js.
 The recipe below is the one that held up in the gear-train fixture (`scripts/fixtures/gear-train/`); the research behind it is `docs/research/3d-machine-cutaways.md` in the repo.
 
 ## Plan
@@ -52,9 +52,9 @@ A new kind is one row here, one entry in `SCENE3D_KINDS` in `scripts/plan_gates.
 
 ### Loading three.js
 
-- An import map pins `three` and `three/addons/` to `three@0.184.0` on jsdelivr, as the HyperFrames registry's 3D blocks do (`runtimes.md` does not ask for a vendored copy).
+- Run `stage.py`: it stages three.js locally and writes the import map for `three` and `three/addons/` into `index.html`'s head; no CDN at render time.
 - Register an empty paused GSAP timeline in `window.__timelines`; HyperFrames' static guard wants one even when the frame is drawn from `hf-seek`.
-- Copy the fixture's `index.html` head as the starting point.
+- Start from a fixture's `index.html` (`scripts/fixtures/gear-train/`).
 
 ### Every frame from t
 
@@ -81,9 +81,9 @@ A new kind is one row here, one entry in `SCENE3D_KINDS` in `scripts/plan_gates.
 ### Look
 
 - Light background, toon fills, dark 2.5 px edges, one accent colour for the part the narration names.
-- Colours come from the composition's CSS variables `--paper`, `--ink` and `--accent` (and `--muted`), read once by `createStage` into `theme`; the `showhow` frame preset's values are the fallback.
+- Colours come from the staged token set (`--paper`, `--ink`, `--accent`, `--muted`), and canvas text from `--font-body` as `theme.font`, read once by `createStage` into `theme`; a missing variable fails the build (the composition was not staged).
   Fills are `tint(theme.paper, theme.ink, u)` and the highlight is `theme.accent`, so a brand kit or another preset restyles the scene; never hard-code a hex in a recipe.
-  Define the variables on the composition root and use `var(--ink)` for the label plates and leaders (the fixtures show it).
+  Use `var(--ink)` for the label plates and leaders and `var(--font-body)` for their text (the fixtures show it).
 - Labels at least 40 px, at most 5 to 7 on screen, inside the title-safe band; check that no plate covers the object at the most zoomed frame.
 - Pass `avoid: machine` to `labels` and the plate columns step outward to stay 70 px clear of the object's screen bounds, whatever the zoom or exploded height (`labelEdges`).
 - Never hard-code 1920x1080: call `fitToRoot(root)` and pass its `width` and `height` to `createStage`; a fixed canvas renders a cropped landscape corner in the vertical and square copies (seen on a vertical still of the gear-train fixture).
@@ -98,6 +98,7 @@ A new kind is one row here, one entry in `SCENE3D_KINDS` in `scripts/plan_gates.
 
 - Snapshot a frame, a later one, then the first again in one run, and diff the two stills: `npx hyperframes snapshot <dir> --at 3,10,3 --no-end`; frames 90 and 300 at 30 fps.
   The two 3s stills must match pixel for pixel; any difference is hidden state.
+  For a fixture, `uv run --project scripts python scripts/check_fixture.py <fixture>` stages it, snapshots it and does the diff.
 - Do it with `--no-browser-gpu` (SwiftShader) and with `--browser-gpu`, and render one video on one path only: the two paths differ slightly from each other.
 - Look at a frame sheet across the scene: teeth interleaved at the mesh points, labels clear of the object.
 

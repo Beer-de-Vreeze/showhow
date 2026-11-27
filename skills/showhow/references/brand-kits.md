@@ -9,8 +9,8 @@ Kits are never committed to the showhow repo; keep them out of any checkout.
 Nothing but these.
 
 - `FRAME.md`: the same shape as `assets/frame-presets/showhow/FRAME.md` (frontmatter with `colors`, `typography`, then the prose sections).
-  The `colors` block must have `paper`, `ink` and `accent`; `muted` is expected.
-  The frontmatter adds `logo: <file>` and a `fonts:` list of the font files it uses (`- fonts/Brand-400.woff2`), and may add `voice: <Kokoro id>`, `music: <file in the kit>` and `outro: "<line>"` (for example `"ASAPCLOUD - asapcloud.nl"`).
+  The `colors` block must have `paper`, `ink`, `accent` and `muted`, and `typography` a `fontFamily` for `title` and `label`.
+  The frontmatter adds `logo: <file>` and a `fonts:` list of the font files it uses, named `fonts/<Family without spaces>-<weight>.woff2` (`- fonts/BrandSans-400.woff2`) so `stage.py` can declare them, and may add `voice: <Kokoro id>`, `music: <file in the kit>` and `outro: "<line>"` (for example `"ASAPCLOUD - asapcloud.nl"`).
 - The font files, in `fonts/`, with their licences.
 - The logo, SVG or PNG.
 
@@ -21,12 +21,10 @@ A fixture kit to copy the shape from: `scripts/fixtures/brand-kit/`.
 Order of precedence is the "Theme lookup order" in `SKILL.md`; it is not repeated here.
 Pick a kit with `--brand <name>`, or `brand: <name>` under `## Defaults` in `~/.showhow/verdicts.md`.
 
-1. Check it first (below).
-   A failing kit stops the run: tell the user which lines failed and do not fall back to another theme.
-2. Copy its `FRAME.md` to `composition/frame.md` and its fonts to `composition/assets/fonts/`, declared with `@font-face`, no CDN.
-3. Set the colours as CSS variables on the composition root: `--paper`, `--ink`, `--accent`, `--muted`, taken from `colors`.
-   scene3d and the 2D kit helpers read those variables (`--sh-accent` falls back to `--accent`), so no hex goes into scene code.
-4. Use the logo on the title and outro cards, `outro` as the outro line, `voice` as the voice and `music` as the music bed unless the user typed their own flags.
+1. Stage the composition with it: `stage.py composition --brand <name>` (`step-3-compose.md`).
+   It runs the check below first; a failing kit stops the run: tell the user which lines failed and do not fall back to another theme.
+   It writes the kit's colours and fonts as the one token set the kit, scene3d and `bake_highlights.py` read, so no hex goes into scene code.
+2. Use the logo on the title and outro cards, `outro` as the outro line, `voice` as the voice and `music` as the music bed unless the user typed their own flags.
 
 ## Checking a kit
 

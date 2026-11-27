@@ -110,5 +110,5 @@ Chart values come from the script or the source; the sample numbers (60, 120, 18
 
 - Motion is out of scope; the showhow motion signature lives in the design floor.
 - Sampled on one scene (title, labelled part, bar chart); maps, timelines and 3D need their own pass.
-- Fonts are the OFL files in `fonts/` beside this file (licences next to them); copy them to `composition/assets/fonts/` and declare `@font-face` with `src: url(assets/fonts/...)`.
+- Fonts are the OFL files in `fonts/` beside this file (licences next to them), named `<Family>-<weight>.woff2`; `scripts/stage.py` copies them into the composition and declares them.
   No CDN.

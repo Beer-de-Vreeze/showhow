@@ -96,7 +96,8 @@ Mixed videos keep the product's theme; rebuilt third-party screens keep their ow
 In `general` mode there is no product theme to read. Unless the user names brand colors or fonts:
 
 1. Browse `assets/frame-presets/` here and `../hyperframes/assets/frame-presets/` (the lookup order is in `SKILL.md`; the table in `../hyperframes/references/look.md`) and pick the preset that fits the topic and audience (`blue-professional` -> calm and neutral, `capsule` -> warm).
-2. Copy its `FRAME.md` to `<output-dir>/composition/frame.md` and take the video's `:root` colors and fonts from it; add the user's brand colors or fonts if given. Fonts that aren't bundled need `@font-face` files.
+2. Stage the composition with it: `stage.py composition --theme <name>` (`step-3-compose.md`).
+   A preset without `paper`, `ink`, `accent` and `muted` colours or without its font files fails staging, naming what is missing: then write `work/theme/FRAME.md` with those keys mapped from the preset (and the user's brand colors or fonts if given), put the font files in `work/theme/fonts/`, and pass `--theme work/theme`.
 
 If the presets aren't installed, choose a calm palette and an embeddable font pairing per `../hyperframes/references/look.md` and write it into the plan.
 

@@ -53,6 +53,7 @@ const texture = (canvas) => {
 export async function buildGlobe(stage, root, P, url) {
   OCEAN = tint(theme.paper, theme.ink, 0.1); LAND = tint(theme.paper, theme.ink, 0.28); BORDER = theme.ink; ACCENT = theme.accent;
   const features = await loadCountries(url);
+  await document.fonts.load(`600 40px ${theme.font}`); // flatMap draws names on a canvas, which never waits for a font
   const route = P.route || [];
   // A place without coordinates would draw at NaN and vanish; P-params catches it, this names it if a plan skipped the gate.
   for (const p of route) if (!Number.isFinite(p?.lat) || !Number.isFinite(p?.lon)) throw new Error(`globe: route place ${JSON.stringify(p)} needs numeric lat and lon`);
@@ -161,7 +162,7 @@ export async function buildGlobe(stage, root, P, url) {
       g.fillStyle = ACCENT;
       for (const p of route) { g.beginPath(); g.arc(...at(p), 9, 0, 2 * Math.PI); g.fill(); }
       g.restore();
-      g.fillStyle = BORDER; g.font = "600 40px 'Segoe UI', system-ui, sans-serif";
+      g.fillStyle = BORDER; g.font = `600 40px ${theme.font}`; // the theme font, staged locally, so every render path draws the same names
       g.strokeStyle = OCEAN; g.lineWidth = 8; for (const p of route) { const [x, y] = at(p); g.strokeText(p.name, x + 16, y - 20); g.fillText(p.name, x + 16, y - 20); }
     },
   };

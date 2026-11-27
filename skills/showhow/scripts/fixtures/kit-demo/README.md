@@ -3,15 +3,15 @@
 A 6-second composition that uses every showhow kit function: `move`, `ring`, `ripple` and `counter`.
 Render it after changing the kit or upgrading HyperFrames, and look at the frames from the mp4.
 
-From `skills/showhow/scripts`:
+From `skills/showhow/scripts`, stage a copy with `stage.py` (theme `showhow`) and snapshot it, the first and last time twice:
 
 ```bash
-mkdir -p fixtures/kit-demo/assets/kit && cp ../assets/kit/* fixtures/kit-demo/assets/kit/
-mkdir -p fixtures/kit-demo/assets/gsap && (cd "$(mktemp -d)" && npm pack gsap@3.14.2 && tar xzf gsap-3.14.2.tgz && cp package/dist/gsap.min.js "$OLDPWD/fixtures/kit-demo/assets/gsap/")
-(cd fixtures/kit-demo && npx hyperframes check)
-uv run --project . render.py fixtures/kit-demo out/kit-demo.mp4 --work out/work
+uv run --project . python check_fixture.py kit-demo --at 1.6,4,1.6
+uv run --project . render.py out/kit-demo/composition out/kit-demo.mp4 --work out/work
 uv run --project . frame_sheet.py out/kit-demo.mp4 --at 0,1.2,1.6,2.0,3.5,4.0,4.5,5.8 -o out/work/check.jpg --cols 4
 ```
+
+It copies the fixture to `out/kit-demo/composition`, stages it, diffs the first and last still (0 changed pixels, or it exits 1) and keeps the stills in `out/kit-demo/stills`.
 
 Expect in the sheet:
 

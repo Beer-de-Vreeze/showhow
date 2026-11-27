@@ -2,26 +2,8 @@
 __pycache__/
 *.pyc
 
-# kit-demo fixture: kit is copied in before each run; render output and CLI artifacts
-skills/showhow/scripts/fixtures/kit-demo/assets/kit/
-skills/showhow/scripts/fixtures/kit-demo/assets/gsap/
-skills/showhow/scripts/fixtures/kit-demo/.hyperframes/
+# fixture checks and renders: check_fixture.py stages copies of the fixtures here
 skills/showhow/scripts/out/
 
-# gear-train fixture: scene3d is copied in before each run
-skills/showhow/scripts/fixtures/gear-train/assets/
-skills/showhow/scripts/fixtures/gear-train/.hyperframes/
-
-# globe-route and hero-number fixtures: scene3d is copied in before each run
-skills/showhow/scripts/fixtures/globe-route/assets/
-skills/showhow/scripts/fixtures/globe-route/.hyperframes/
-skills/showhow/scripts/fixtures/hero-number/assets/
-skills/showhow/scripts/fixtures/hero-number/.hyperframes/
-
-# machine-effects fixture: scene3d is copied in before each run
-skills/showhow/scripts/fixtures/machine-effects/assets/
-skills/showhow/scripts/fixtures/machine-effects/.hyperframes/
-
-# motion-2d fixture: kit and GSAP are copied in before each run
-skills/showhow/scripts/fixtures/motion-2d/assets/
-skills/showhow/scripts/fixtures/motion-2d/.hyperframes/
+# hyperframes state written next to any composition it previews or snapshots
+.hyperframes/
