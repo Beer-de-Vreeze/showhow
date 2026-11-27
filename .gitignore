@@ -4,3 +4,6 @@ __pycache__/
 
 # fixture checks and renders: check_fixture.py stages copies of the fixtures here
 skills/showhow/scripts/out/
+
+# hyperframes state written next to any composition it previews or snapshots
+.hyperframes/
